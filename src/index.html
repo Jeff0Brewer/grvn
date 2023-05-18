@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<link rel="stylesheet" type="text/css" href="../def_style.css">
+	<title>GRVIN</title>
+</head>
+<body style="margin: 0; overflow: hidden;">
+	<div class="sidebar noselect" id="sidebar">
+		<div class="vis_tabs">
+			<div class="vis_tab noselect" id="fs_tab">Full Sample</div>
+			<div class="vis_tab noselect tab_passive" id="sm_tab">Selections</div>
+		</div>
+		<div class="tab_underline" id="tab_underline"></div>
+		<div id="sm_menu_0" class=" hidden">
+			<div class="button_section new_section noselect">
+				<div class="button_header">Layout</div>
+				<div class="toggle_button button_wide noselect toggle_active" id="standard_layout">Standard</div>
+				<div class="toggle_button button_thin noselect toggle_passive" id="tiled_layout">Tiled</div>
+			</div>
+		</div>
+		<div id="fs_menu_0" class="">
+			<div class="button_section new_section noselect">
+				<div class="button_header">Representation</div>
+				<div class="toggle_button button_thin noselect toggle_passive" id="flow_toggle">Motion</div>
+				<div class="toggle_button button_wide noselect toggle_active" id="vector_toggle">Contact Forces</div>
+			</div>
+		</div>
+		<div class="scroll_side">
+			<div class="list_section new_section">
+				<div class="list_section_header noselect">
+					Global Fields
+					<input class="add_color_map noselect" id="add_global" type="file" multiple="false">
+					<label id="add_global_button" class="add_color_map_button" for="add_global">
+						<div class="list_header_button noselect">+</div>
+					</label>
+				</div>
+				<div class="global_section hidden" id="global_section">
+					<div class="global_tabs" id="global_tabs">
+						<input type="text" class="global_tab global_tab_active noselect hidden" id="global_tab_source">
+					</div>
+					<div class="global_axis_label_container">
+						<div class="global_axis_label noselect left" id="global_low"></div>
+						<div class="global_axis_label noselect right" id="global_high"></div>
+					</div>
+					<canvas class="global_canvas" id="global_canvas"></canvas>
+					<div class="global_time_container">
+						<div class="global_time_workspace left" id="global_work_left"></div>
+						<div class="global_time_workspace right" id="global_work_right"></div>
+					</div>
+					<div class="global_time_bar_container">
+						<div class="global_time_bar" id="global_time_bar"></div>
+					</div>
+				</div>
+			</div>
+			<div id="fs_menu_1" class="">
+				<div class="list_section new_section">
+					<div class="list_section_header noselect">
+						Slices
+						<div class="list_header_button" id="add_slice">+</div>
+					</div>
+					<div class="section_list" id="slice_list">
+						<div class="hidden" id="slice_proto">
+							<div class="list_item selection_highlight">
+								<canvas class="item_canvas"></canvas>
+								<div class="item_label noselect">Slice </div>
+								<div class="item_delete noselect hidden"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div id="sm_menu_1" class=" hidden">
+				<div class="list_section new_section">
+					<div class="list_section_header noselect">
+						Color Map
+						<input class="add_color_map" id="add_cmap" type="file" multiple="false">
+				        <label id="add_cmap_button" class="add_color_map_button" for="add_cmap">
+							<div class="list_header_button">+</div>
+				        </label>
+					</div>
+					<div class="color_map_section hidden" id="color_map_container">
+						<div class="color_map_bar color_map_main">
+							<div class="color_label left" id="cm_low_val"></div>
+							<div class="color_label right" id="cm_high_val"></div>
+						</div>
+						<div class="color_map_bar color_map_main" id="cm_bar">
+							<div class="color_end left" id="cm_low"></div>
+							<div class="handle_container left">
+								<div class="color_handle color_handle_left" id="cm_h_low">
+									<svg width="6" height="21">
+										<polygon points="0,0 6,0 6,2 2,2 2,19, 6,19 6,21 0,21 0,0"/>
+									</svg>
+								</div>
+							</div>
+							<div class="color_gradient left" id="cm_g"></div>
+							<div class="handle_container left">
+								<div class="color_handle color_handle_right" id="cm_h_high">
+									<svg width="6" height="21">
+										<polygon points="6,0 0,0 0,2 4,2 4,19, 0,19 0,21 6,21 6,0"/>
+									</svg></div>
+							</div>
+							<div class="color_end left" id="cm_high"></div>
+						</div>
+						<div class="color_map_bar">
+							<div class="color_label left" id="cm_min"></div>
+							<div class="color_label right" id="cm_max"></div>
+						</div>
+						<div class="color_map_button_container">
+							<button class="color_map_button hidden" id="edit_color_map">Apply</button>
+						</div>
+						<div class="color_map_bar color_map_hover_section hidden" id="cm_hover_section">
+							<div class="color_map_hover_line" id="cm_hover_line"></div>
+							<div class="color_label color_hover_label" id="cm_hover_label">2234</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="list_section new_section">
+				<div class="list_section_header noselect">
+					Selected Grains
+					<div class="list_header_button" id="add_selection">+</div>
+				</div>
+				<div class="section_list selection_list_fs" id="selection_list">
+					<div class="selection_dropdown_container hidden" id="select_dropdown">
+						<div class="selection_dropdown">
+							<button class="selection_dropdown_button" id="sel_chain">Select Chain</button>
+							<button class="selection_dropdown_button" id="sel_cross">Select Plane</button>
+						</div>
+					</div>
+					<div class="hidden" id="selection_proto">
+						<div class="list_item selection_highlight">
+							<canvas class="item_canvas"></canvas>
+							<div class="item_label noselect"></div>
+							<div class="selection_arrow hidden">
+								<svg class="inline" width="5" height="5">
+									<polygon points="0,0 5,0 2.5,5 0,0"/>
+								</svg>
+							</div>
+							<div class="item_delete noselect hidden"></div>
+							<div class="selection_ind_list hidden">
+								<div class="selection_ind"></div>
+							</div>
+							<div class="sm_time_container hidden">
+								<div class="sm_label noselect"></div>
+								<div class="sm_inputs_container">
+									<div class="sm_input">
+										<input type="text" class="sm_time_box noselect">
+										<div class="sm_time_label noselect">initial</div>
+									</div>
+									<div class="sm_input">
+										<input type="text" class="sm_time_box noselect">
+										<div class="sm_time_label noselect">end</div>
+									</div>
+									<div class="sm_input">
+										<input type="text" class="sm_time_box noselect">
+										<div class="sm_time_label noselect">interval</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="context_container">
+			<div class="list_section_header noselect">
+				Orientation
+			</div>
+			<canvas id="context_image" class="context_canvas new_section"></canvas>
+		</div>
+	</div>
+	<div class="fold_sidebar" id="fold_sidebar">
+		<svg class="inline" width="7" height="10">
+			<polygon id="collapse_arrow" points="0,0 0,10, 7,5 0,0"/>
+		</svg>
+	</div>
+	<div class="timeline_container noselect" id="timeline_container">
+		<div class="timeline_body" id="timeline_body">
+			<canvas class="timeline_canvas" id="timeline_canvas"></canvas>
+			<div class="outside_work left" id="outside_left"></div>
+			<div class="handle_container left">
+				<div class="work work_left" id="work_left">
+				<svg width="6" height="20">
+					<polygon points="0,0, 6,0 6,3 3,3 3,17 6,17 6,20 0,20 0,0" style="fill:rgb(216,216,216);"/>
+				</svg>
+			</div>
+			</div>
+			<div class="play_state left" id="play_state"></div>
+			<div class="outside_work right" id="outside_right"></div>
+			<div class="handle_container right">
+				<div class="work work_right" id="work_right">
+					<svg width="6" height="20">
+						<polygon points="6,0, 0,0 0,3 3,3 3,17 0,17 0,20 6,20 6,0" style="fill:rgb(216,216,216);"/>
+					</svg>
+				</div>
+			</div>
+		</div>
+		<div class="timeline_controls">
+			<div class="play_pause left inline" id="play_pause">
+				<svg width="15" height="17" style="visibility: visible" id="pause_icon">
+					<polygon points="0,0, 5.5,0 5.5,17 0,17 0,0" style="fill:rgb(108,108,108);"/>
+					<polygon points="17,0, 9.5,0 9.5,17 17,17 17,0" style="fill:rgb(108,108,108);"/>
+				<svg>
+				<svg width="15" height="17" style="visibility: hidden" id="play_icon">
+					<polygon points="0,0, 15,8.5 0,17 0,0" style="fill:rgb(108,108,108);"/>
+				<svg>
+			</div>
+			<div class="timeline_button_section">
+				<button class="timeline_button left" id="create_bookmark">Bookmark</button>
+			</div>
+			<div class="timeline_button_section">
+				<div class="timeline_button_label noselect left">Speed</div>
+				<button class="timeline_button left timeline_button_divider" id="play_full">1x</button>
+				<button class="timeline_button left timeline_button_divider timeline_button_passive" id="play_half">.5x</button>
+				<button class="timeline_button left timeline_button_passive" id="play_quarter">.25x</button>
+			</div>
+		</div>
+	</div>
+	<button class="apply_button hidden" id="apply_slice">Apply Slices</button>
+	<button class="apply_button hidden" id="select_button"></button>
+	<div class="mouse_icon" id="mouse_icon"></div>
+
+	<canvas id="canvas" class="gl"></canvas>
+	<canvas id="mousecanvas" class="overlaycanvas"></canvas>
+	<canvas id="slicecanvas" class="overlaycanvas"></canvas>
+	<canvas id="selectcanvas" class="overlaycanvas"></canvas>
+	<canvas id="smcanvas" class="overlaycanvas"></canvas>
+
+	<input class="infile noselect" id="in" type="file" onchange="file_in()" multiple="true">
+
+	<div class="centerblock">
+		<div class="load_container hidden" id="load">
+			<div class="load_text">Loading Data</div>
+			<div id="loadbg" class="loadbg">
+				<div id="loadbar" class="loadbar"></div>
+			</div>
+		</div>
+	</div>
+
+	<script src="../_lib/webgl-utils.js"></script>
+	<script src="../_lib/webgl-debug.js"></script>
+	<script src="../_lib/cuon-utils.js"></script>
+	<script src="../_lib/cuon-matrix-quat.js"></script>
+	<script src="../_lib/util.js"></script>
+	<script src="../_lib/concave_hull.js"></script>
+	<script src="../_lib/msgpack.js"></script>
+	<script src="../_lib/viewport.js"></script>
+	<script src="../_lib/timeline.js"></script>
+	<script src="../_lib/plane_filter.js"></script>
+	<script src="../_lib/mouse_move.js"></script>
+	<script src="../_lib/compare_mouse.js"></script>
+	<script src="../_lib/slice_interface.js"></script>
+	<script src="../_lib/slice_item.js"></script>
+	<script src="../_lib/select_interface.js"></script>
+	<script src="../_lib/selection_item.js"></script>
+	<script src="../_lib/sm_viewer.js"></script>
+	<script src="../_lib/context_image.js"></script>
+	<script src="../_lib/color_map.js"></script>
+	<script src="../_lib/color_map_slider.js"></script>
+	<script src="../_lib/global_fields.js"></script>
+	<script src="../_lib/global_gl.js"></script>
+	<script src="context_axis.js"></script>
+	<script src="grain_surfaces.js"></script>
+	<script src="ribbon_flow.js"></script>
+	<script src="fn_vectors.js"></script>
+	<script src="index.js"></script>
+</body>
+</html>
