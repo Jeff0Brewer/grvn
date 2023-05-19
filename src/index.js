@@ -149,7 +149,6 @@ const setMetadata = data => {
 
 fr.onloadend = function(){
     const data = msgpack.unpack(fr.result)
-    const dataType = infile.files[file_ind].name
 
     if(infile.files[file_ind].name.includes('_fn_')){
         addForceVertices(data)
@@ -183,20 +182,9 @@ fr.onloadend = function(){
         fr.readAsBinaryString(infile.files[file_ind]);
     }
     else{
-        fr.result = '';
-
-        //construct vis classes
-        ribbon_flow = new RibbonFlow(pos_data, rot_data, for_data[1], for_data[0], num_t, num_g, p_fpv, c_fpv, v_fpv);
-        pos_data = [];
-        rot_data = [];
-        for_data = [];
-
-        grain_surfaces.finish_add();
-
-        context_axis = new Axis(50, 4, p_fpv, c_fpv, v_fpv);
-
         add_class(document.getElementById('load'), ' hidden');
         infile.parentNode.removeChild(infile);
+
         main();
     }
 }
@@ -248,6 +236,14 @@ var projMatrix = new Matrix4();
 var g_last = Date.now();
 
 function main() {
+        //construct vis classes
+        ribbon_flow = new RibbonFlow(pos_data, rot_data, for_data[1], for_data[0], num_t, num_g, p_fpv, c_fpv, v_fpv);
+        pos_data = [];
+        rot_data = [];
+        for_data = [];
+        grain_surfaces.finish_add();
+        context_axis = new Axis(50, 4, p_fpv, c_fpv, v_fpv);
+
 	timeline = make_timeline(num_t);
 
 	window.addEventListener("keyup", keyup, false);
