@@ -71,83 +71,109 @@ var cmap_reader = new FileReader();
 var fs_camera = new FSCamera(.5, .1);
 var scrolling;
 
+const processGrainSurface = data => {
+    const scale = 1 / data[0]
+    const surface = data[1]
+    const numSurfaceFiles = data[2]
+    for (let i = 0; i < surface.length; i++) {
+        surface[i] *= scale
+    }
+    _grain.push(surface)
+    if (_grain.length === numSurfaceFiles) {
+        const joined = [].concat(..._grain)
+        grain_surfaces.make_position_buffer(joined)
+        _grain = []
+    }
+}
+
+const processPositionData = data => {
+    const scale = 1 / data[0]
+    const positions = data[1]
+    const numPositionFiles = data[2]
+    for (let time = 0; time < positions.length; time++) {
+        for (let grain = 0; grain < positions[time].length; grain++) {
+            for (let xyz = 0; xyz < 3; xyz++) {
+                positions[time][grain][xyz] *= scale
+            }
+        }
+    }
+    _pos.push(positions)
+    if (_pos.length === numPositionFiles) {
+        const joined = [].concat(..._pos)
+        grain_surfaces.add_positions(joined)
+        pos_data = joined
+        _pos = []
+    }
+}
+
+const processRotationData = data => {
+    const scale = 1 / data[0]
+    const rotations = data[1]
+    const numRotationFiles = data[2]
+    for (let time = 0; time < rotations.length; time++) {
+        for (let grain = 0; grain < rotations[time].length; grain++) {
+            for (let quat = 0; quat < 4; quat++) {
+                rotations[time][grain][quat] *= scale
+            }
+        }
+    }
+    _rot.push(rotations)
+    if (_rot.length === numRotationFiles) {
+        const joined = [].concat(..._rot)
+        grain_surfaces.add_rotations(joined)
+        _rot = []
+    }
+}
+
+const addForceVertices = data => {
+    fn_vectors.add_vbos(data)
+}
+
+const setRotationMagnitudeData = data => {
+    rot_data = data
+}
+
+const setForceData = data => {
+    for_data = data
+}
+
+const setGrainSurfaceInds = data => {
+    grain_surfaces.add_inds(data)
+}
+
+const setMetadata = data => {
+    num_t = data[0]
+    num_g = data[1]
+}
+
+
 fr.onloadend = function(){
+    const data = msgpack.unpack(fr.result)
+    const dataType = infile.files[file_ind].name
+
     if(infile.files[file_ind].name.includes('_fn_')){
-        let data = msgpack.unpack(fr.result);
-        fn_vectors.add_vbos(data);
+        addForceVertices(data)
     }
     else if(infile.files[file_ind].name.includes('_grain')){
-        let out = msgpack.unpack(fr.result);
-        let data = out[1];
-        let detail = 1.0*out[0];
-        for(let i = 0; i < data.length; i++){
-            data[i] /= detail;
-        }
-        _grain.push(data);
-
-        if(_grain.length == out[2]){
-            let cat = _grain[0];
-            for(let i = 1; i < _grain.length; i++)
-            cat = cat.concat(_grain[i]);
-            grain_surfaces.make_position_buffer(cat);
-            _grain = [];
-        }
+        processGrainSurface(data)
     }
     else if(infile.files[file_ind].name.includes('_pos')){
-        let out = msgpack.unpack(fr.result);
-        let data = out[1];
-        let detail = 1.0*out[0];
-        for(let t = 0; t < data.length; t++){
-            for(let g = 0; g < data[t].length; g++){
-                for(let r = 0; r < data[t][g].length; r++){
-                    data[t][g][r] /= detail;
-                }
-            }
-        }
-        _pos.push(data);
-
-        if(_pos.length == out[2]){
-            let cat = _pos[0];
-            for(let i = 1; i < _pos.length; i++)
-            cat = cat.concat(_pos[i]);
-            grain_surfaces.add_positions(cat);
-            pos_data = cat;
-        }
+        processPositionData(data)
     }
     else if(infile.files[file_ind].name.includes('_mag')){
-        rot_data = msgpack.unpack(fr.result);
+        setRotationMagnitudeData(data)
     }
     else if(infile.files[file_ind].name.includes('_for')){
-        for_data = msgpack.unpack(fr.result);
+        setForceData(data)
     }
     else if(infile.files[file_ind].name.includes('_rot')){
-        let out = msgpack.unpack(fr.result);
-        let data = out[1];
-        let detail = 1.0*out[0];
-        for(let t = 0; t < data.length; t++){
-            for(let g = 0; g < data[t].length; g++){
-                for(let r = 0; r < data[t][g].length; r++){
-                    data[t][g][r] /= detail;
-                }
-            }
-        }
-        _rot.push(data);
-
-        if(_rot.length == out[2]){
-            let cat = _rot[0];
-            for(let i = 1; i < _rot.length; i++)
-            cat = cat.concat(_rot[i]);
-            grain_surfaces.add_rotations(cat);
-            _rot = [];
-        }
+        processRotationData(data)
     }
     else if(infile.files[file_ind].name.includes('_inds')){
-        grain_surfaces.add_inds(msgpack.unpack(fr.result));
+        setGrainSurfaceInds(data)
     }
     else if(infile.files[file_ind].name.includes('__head')){
-        let out = msgpack.unpack(fr.result);
-        num_t = out[0];
-        num_g = out[1];
+        setMetadata(data)
     }
 
     file_ind++;
