@@ -11,7 +11,6 @@ var fs_menu = [document.getElementById('fs_menu_0'), document.getElementById('fs
 var sm_tab = document.getElementById('sm_tab');
 var sm_menu = [document.getElementById('sm_menu_0'), document.getElementById('sm_menu_1')];
 
-
 var maxload = document.getElementById('loadbg').clientWidth;
 
 var frozen = false;
