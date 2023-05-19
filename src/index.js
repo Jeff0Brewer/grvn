@@ -185,21 +185,30 @@ const processFile = (blob, fileName) => {
     }
 }
 
-const infile = document.getElementById('in');
-const file_in = async () => {
-    // remove file input from dom
-    infile.parentNode.removeChild(infile);
+const load_data = async () => {
+    const DATA_DIR = 'fs_0'
+    const files = []
+    files.push('__head')
+    for (let i = 0; i <= 75; i++) { files.push(`_fn_${i}`) }
+    files.push('_for')
+    for (let i = 0; i <= 3; i++) { files.push(`_grains_${i}`) }
+    files.push('_inds')
+    for (let i = 0; i <= 3; i++) { files.push(`_pos_${i}`) }
+    files.push('_r_mag')
+    for (let i = 0; i <= 3; i++) { files.push(`_rot_${i}`) }
 
     // show load bar
     remove_class(document.getElementById('load'), ' hidden');
 
-    for (let i = 0; i < infile.files.length; i++) {
+    for (let i = 0; i < files.length; i++) {
         // read and process data file
-        const blob = await readFileAsync(infile.files[i])
-        processFile(blob, infile.files[i].name)
+        const res = await fetch(`${DATA_DIR}/${files[i]}.msgpack`)
+        const blob = await res.blob()
+        const data = await readFileAsync(blob)
+        processFile(data, files[i])
         
         // update load progress bar
-        document.getElementById('loadbar').style.width = (maxload - i/(infile.files.length - 1)*maxload).toString() + "px";
+        document.getElementById('loadbar').style.width = (maxload - i/(files.length - 1)*maxload).toString() + "px";
     }
 
     // hide load bar
@@ -208,6 +217,7 @@ const file_in = async () => {
     // run main when data load finished
     main();
 }
+load_data()
 
 var VSHADER_SOURCE =
 	"attribute vec4 a_Position;\n" +
