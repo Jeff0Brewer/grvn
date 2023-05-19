@@ -62,47 +62,13 @@ var cmap_reader = new FileReader();
 var fs_camera = new FSCamera(.5, .1);
 var scrolling;
 
-var VSHADER_SOURCE =
-	"attribute vec4 a_Position;\n" +
-	"attribute vec4 a_Color;\n" +
-	"attribute float a_Visibility;\n" +
-
-	"uniform mat4 u_ModelMatrix;\n" +
-	"uniform mat4 u_ViewMatrix;\n" +
-	"uniform mat4 u_ProjMatrix;\n" +
-
-	"varying vec3 v_Position;\n" +
-	"varying vec4 v_Color;\n"+
-	"varying float v_Visibility;\n" +
-
-	"void main() {\n" +
-		"gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n" +
-		"v_Position = vec3(u_ModelMatrix * a_Position);\n" +
-		"v_Visibility = a_Visibility;\n" +
-		"v_Color = a_Color;\n" +
-	"}\n";
-
-var FSHADER_SOURCE =
-	"precision highp float;\n" +
-	"varying vec4 v_Color;\n"+
-	"varying float v_Visibility;\n" +
-
-	"void main() { \n" +
-		"if(v_Visibility == 0.0) { \n" +
-			"gl_FragColor = v_Color;\n" +
-		"}\n" +
-		"else {\n" + 
-			  "discard;\n" +
-		"}\n" +
-	"}";
-
 modelMatrix = new Matrix4();
 var viewMatrix = new Matrix4();
 var projMatrix = new Matrix4();
 
 var g_last = Date.now();
 
-function main() {
+async function main() {
         //construct vis classes
         ribbon_flow = new RibbonFlow(pos_data, rot_data, for_data[1], for_data[0], num_t, num_g, p_fpv, c_fpv, v_fpv);
         pos_data = [];
@@ -128,7 +94,7 @@ function main() {
 		setup_gl();
 	}, false);
 
-	setup_gl();
+	await setup_gl();
 
 	//init viewports
 	viewports = [new ViewPort(0, 0, canvas.width, canvas.height, canvas.width, canvas.height)];
@@ -294,7 +260,8 @@ function draw(elapsed) {
 	}
 }
 
-function setup_gl(){	
+
+const setup_gl = async () => {
 	console.log('initializing gl');
 
 	gl = getWebGLContext(canvas);
@@ -303,6 +270,9 @@ function setup_gl(){
 	gl.enable(gl.SCISSOR_TEST);
 	gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 	gl.clearColor(0, 0, 0, 1);
+
+        const VSHADER_SOURCE = await fetch('./shaders/vert.glsl').then(res => res.text())
+        const FSHADER_SOURCE = await fetch('./shaders/frag.glsl').then(res => res.text())
 
 	initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE);
 	init_buffers();

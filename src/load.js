@@ -161,7 +161,7 @@ const getFiles = () => {
 }
 
 const load_data = async () => {
-    const DATA_DIR = 'data'
+    const DATA_DIR = 'data_old'
     const files = getFiles()
 
     // show load bar
