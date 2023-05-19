@@ -11,8 +11,6 @@ var fs_menu = [document.getElementById('fs_menu_0'), document.getElementById('fs
 var sm_tab = document.getElementById('sm_tab');
 var sm_menu = [document.getElementById('sm_menu_0'), document.getElementById('sm_menu_1')];
 
-var infile = document.getElementById('in');
-var fr = new FileReader();
 
 var maxload = document.getElementById('loadbg').clientWidth;
 
@@ -30,8 +28,6 @@ var _grain = [];
 var con_data = [];
 var max_force_mag = 0;
 var max_force_comp = 0;
-
-var file_ind = 0;
 
 var viewports;
 var viewport_count;
@@ -70,6 +66,20 @@ var cmap_reader = new FileReader();
 
 var fs_camera = new FSCamera(.5, .1);
 var scrolling;
+
+const readFileAsync = file => {
+    const fileReader = new FileReader()
+    return new Promise((resolve, reject) => {
+        fileReader.onerror = () => {
+            fileReader.abort()
+            reject(new Error('File read failed'))
+        }
+        fileReader.onload = () => {
+            resolve(fileReader.result)
+        }
+        fileReader.readAsBinaryString(file)
+    })
+}
 
 const processGrainSurface = data => {
     const scale = 1 / data[0]
@@ -146,53 +156,57 @@ const setMetadata = data => {
     num_g = data[1]
 }
 
+const processFile = (blob, fileName) => {
+    const data = msgpack.unpack(blob)
 
-fr.onloadend = function(){
-    const data = msgpack.unpack(fr.result)
-
-    if(infile.files[file_ind].name.includes('_fn_')){
+    if(fileName.includes('_fn_')){
         addForceVertices(data)
     }
-    else if(infile.files[file_ind].name.includes('_grain')){
+    else if(fileName.includes('_grain')){
         processGrainSurface(data)
     }
-    else if(infile.files[file_ind].name.includes('_pos')){
+    else if(fileName.includes('_pos')){
         processPositionData(data)
     }
-    else if(infile.files[file_ind].name.includes('_mag')){
+    else if(fileName.includes('_mag')){
         setRotationMagnitudeData(data)
     }
-    else if(infile.files[file_ind].name.includes('_for')){
+    else if(fileName.includes('_for')){
         setForceData(data)
     }
-    else if(infile.files[file_ind].name.includes('_rot')){
+    else if(fileName.includes('_rot')){
         processRotationData(data)
     }
-    else if(infile.files[file_ind].name.includes('_inds')){
+    else if(fileName.includes('_inds')){
         setGrainSurfaceInds(data)
     }
-    else if(infile.files[file_ind].name.includes('__head')){
+    else if(fileName.includes('__head')){
         setMetadata(data)
-    }
-
-    file_ind++;
-    document.getElementById('loadbar').style.width = (maxload - file_ind/(infile.files.length - 1)*maxload).toString() + "px";
-
-    if(file_ind < infile.files.length){
-        fr.readAsBinaryString(infile.files[file_ind]);
-    }
-    else{
-        add_class(document.getElementById('load'), ' hidden');
-        infile.parentNode.removeChild(infile);
-
-        main();
     }
 }
 
-function file_in(){
-    infile.style.visibility = "hidden";
+const infile = document.getElementById('in');
+const file_in = async () => {
+    // remove file input from dom
+    infile.parentNode.removeChild(infile);
+
+    // show load bar
     remove_class(document.getElementById('load'), ' hidden');
-    fr.readAsBinaryString(infile.files[file_ind]);
+
+    for (let i = 0; i < infile.files.length; i++) {
+        // read and process data file
+        const blob = await readFileAsync(infile.files[i])
+        processFile(blob, infile.files[i].name)
+        
+        // update load progress bar
+        document.getElementById('loadbar').style.width = (maxload - i/(infile.files.length - 1)*maxload).toString() + "px";
+    }
+
+    // hide load bar
+    add_class(document.getElementById('load'), ' hidden');
+
+    // run main when data load finished
+    main();
 }
 
 var VSHADER_SOURCE =
