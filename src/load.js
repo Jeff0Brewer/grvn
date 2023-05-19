@@ -1,16 +1,8 @@
-const readFileAsync = file => {
-    const fileReader = new FileReader()
-    return new Promise((resolve, reject) => {
-        fileReader.onerror = () => {
-            fileReader.abort()
-            reject(new Error('File read failed'))
-        }
-        fileReader.onload = () => {
-            resolve(fileReader.result)
-        }
-        fileReader.readAsBinaryString(file)
-    })
-}
+// accumulators for data split between files
+// temporary hack from legacy code, to be fixed
+const _rot = []
+const _pos = []
+const _grain = []
 
 const processGrainSurface = data => {
     const scale = 1 / data[0]
@@ -23,7 +15,9 @@ const processGrainSurface = data => {
     if (_grain.length === numSurfaceFiles) {
         const joined = [].concat(..._grain)
         grain_surfaces.make_position_buffer(joined)
-        _grain = []
+
+        // empty accumulator to free memory
+        _grain.splice(0, _grain.length)
     }
 }
 
@@ -43,7 +37,9 @@ const processPositionData = data => {
         const joined = [].concat(..._pos)
         grain_surfaces.add_positions(joined)
         pos_data = joined
-        _pos = []
+
+        // empty accumulator to free memory
+        _pos.splice(0, _pos.length)
     }
 }
 
@@ -62,7 +58,9 @@ const processRotationData = data => {
     if (_rot.length === numRotationFiles) {
         const joined = [].concat(..._rot)
         grain_surfaces.add_rotations(joined)
-        _rot = []
+
+        // empty accumulator to free memory
+        _rot.splice(0, _rot.length)
     }
 }
 
@@ -116,6 +114,26 @@ const processFile = (blob, fileName) => {
     }
 }
 
+const readFileAsync = file => {
+    // temp file reader for single file
+    const fileReader = new FileReader()
+
+    // wrap loaded value in promise for async ops
+    return new Promise((resolve, reject) => {
+        // log errors
+        fileReader.onerror = () => {
+            fileReader.abort()
+            reject(new Error('File read failed'))
+        }
+        // return result
+        fileReader.onload = () => {
+            resolve(fileReader.result)
+        }
+        // start read
+        fileReader.readAsBinaryString(file)
+    })
+}
+
 const load_data = async () => {
     const DATA_DIR = 'data'
     const files = []
@@ -148,4 +166,5 @@ const load_data = async () => {
     // run main when data load finished
     main()
 }
+
 load_data()

@@ -21,10 +21,6 @@ var pos_data;
 var rot_data;
 var for_data;
 
-var _rot = [];
-var _pos = [];
-var _grain = [];
-
 var con_data = [];
 var max_force_mag = 0;
 var max_force_comp = 0;
