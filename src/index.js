@@ -74,11 +74,7 @@ var scrolling;
 fr.onloadend = function(){
     if(infile.files[file_ind].name.includes('_fn_')){
         let data = msgpack.unpack(fr.result);
-        // data[0] = detail
-        // data[1] = pos buffer * detail
-        // data[2] = col buffer * detail
         fn_vectors.add_vbos(data);
-        console.log(data)
     }
     else if(infile.files[file_ind].name.includes('_grain')){
         let out = msgpack.unpack(fr.result);
@@ -103,12 +99,12 @@ fr.onloadend = function(){
         let detail = 1.0*out[0];
         for(let t = 0; t < data.length; t++){
             for(let g = 0; g < data[t].length; g++){
-            for(let r = 0; r < data[t][g].length; r++){
+                for(let r = 0; r < data[t][g].length; r++){
                     data[t][g][r] /= detail;
                 }
             }
         }
-    _pos.push(data);
+        _pos.push(data);
 
         if(_pos.length == out[2]){
             let cat = _pos[0];
@@ -130,12 +126,12 @@ fr.onloadend = function(){
         let detail = 1.0*out[0];
         for(let t = 0; t < data.length; t++){
             for(let g = 0; g < data[t].length; g++){
-            for(let r = 0; r < data[t][g].length; r++){
+                for(let r = 0; r < data[t][g].length; r++){
                     data[t][g][r] /= detail;
                 }
             }
         }
-    _rot.push(data);
+        _rot.push(data);
 
         if(_rot.length == out[2]){
             let cat = _rot[0];
@@ -154,41 +150,35 @@ fr.onloadend = function(){
         num_g = out[1];
     }
 
-	file_ind++;
-	document.getElementById('loadbar').style.width = (maxload - file_ind/(infile.files.length - 1)*maxload).toString() + "px";
+    file_ind++;
+    document.getElementById('loadbar').style.width = (maxload - file_ind/(infile.files.length - 1)*maxload).toString() + "px";
 
-	if(file_ind < infile.files.length){
-		if(infile.files[file_ind].name.includes('msgpack'))
-			fr.readAsBinaryString(infile.files[file_ind]);
-		else
-			fr.readAsText(infile.files[file_ind]);
-	}
-	else{
-		fr.result = '';
+    if(file_ind < infile.files.length){
+        fr.readAsBinaryString(infile.files[file_ind]);
+    }
+    else{
+        fr.result = '';
 
-		//construct vis classes
-		ribbon_flow = new RibbonFlow(pos_data, rot_data, for_data[1], for_data[0], num_t, num_g, p_fpv, c_fpv, v_fpv);
-		pos_data = [];
-		rot_data = [];
-		for_data = [];
+        //construct vis classes
+        ribbon_flow = new RibbonFlow(pos_data, rot_data, for_data[1], for_data[0], num_t, num_g, p_fpv, c_fpv, v_fpv);
+        pos_data = [];
+        rot_data = [];
+        for_data = [];
 
-		grain_surfaces.finish_add();
+        grain_surfaces.finish_add();
 
-		context_axis = new Axis(50, 4, p_fpv, c_fpv, v_fpv);
+        context_axis = new Axis(50, 4, p_fpv, c_fpv, v_fpv);
 
-		add_class(document.getElementById('load'), ' hidden');
-		infile.parentNode.removeChild(infile);
-		main();
-	}
+        add_class(document.getElementById('load'), ' hidden');
+        infile.parentNode.removeChild(infile);
+        main();
+    }
 }
 
 function file_in(){
-	infile.style.visibility = "hidden";
-	remove_class(document.getElementById('load'), ' hidden');
-	if(infile.files[file_ind].name.includes('msgpack'))
-		fr.readAsBinaryString(infile.files[file_ind]);
-	else
-		fr.readAsText(infile.files[file_ind]);
+    infile.style.visibility = "hidden";
+    remove_class(document.getElementById('load'), ' hidden');
+    fr.readAsBinaryString(infile.files[file_ind]);
 }
 
 var VSHADER_SOURCE =
