@@ -94,32 +94,34 @@ const setMetadata = data => {
     num_g = data[1]
 }
 
-const processFile = (blob, fileName) => {
+const processFile = (blob, fileType) => {
     const data = msgpack.unpack(blob)
 
-    if(fileName.includes('_fn_')){
-        processForceVerts(data)
-    }
-    else if(fileName.includes('_grain')){
-        processGrainSurface(data)
-    }
-    else if(fileName.includes('_pos')){
-        processPositionData(data)
-    }
-    else if(fileName.includes('_mag')){
-        setRotationMagnitudeData(data)
-    }
-    else if(fileName.includes('_for')){
-        setForceData(data)
-    }
-    else if(fileName.includes('_rot')){
-        processRotationData(data)
-    }
-    else if(fileName.includes('_inds')){
-        setGrainSurfaceInds(data)
-    }
-    else if(fileName.includes('__head')){
-        setMetadata(data)
+    switch (fileType) {
+        case 'fn':
+            processForceVerts(data)
+            break
+        case 'grains':
+            processGrainSurface(data)
+            break
+        case 'pos':
+            processPositionData(data)
+            break
+        case 'rmag':
+            setRotationMagnitudeData(data)
+            break
+        case 'for':
+            setForceData(data)
+            break
+        case 'rot':
+            processRotationData(data)
+            break
+        case 'inds':
+            setGrainSurfaceInds(data)
+            break
+        case 'head':
+            setMetadata(data)
+            break
     }
 }
 
@@ -146,14 +148,14 @@ const readFileAsync = file => {
 // temp fn to get static list of curr data
 const getFiles = () => {
     const files = []
-    files.push('__head') // metadata
-    for (let i = 0; i <= 75; i++) { files.push(`_fn_${i}`) } // force plot verts
-    for (let i = 0; i <= 3; i++) { files.push(`_pos_${i}`) } // grain positions
-    for (let i = 0; i <= 3; i++) { files.push(`_rot_${i}`) } // grain rotations
-    for (let i = 0; i <= 3; i++) { files.push(`_grains_${i}`) } // grain surfaces
-    files.push('_inds') // grain surface vbo inds
-    files.push('_for') // force magnitudes
-    files.push('_r_mag') // rotation magnitude
+    files.push('head') // metadata
+    for (let i = 0; i <= 75; i++) { files.push(`fn${i}`) } // force plot verts
+    for (let i = 0; i <= 3; i++) { files.push(`pos${i}`) } // grain positions
+    for (let i = 0; i <= 3; i++) { files.push(`rot${i}`) } // grain rotations
+    for (let i = 0; i <= 3; i++) { files.push(`grains${i}`) } // grain surfaces
+    files.push('inds') // grain surface vbo inds
+    files.push('for') // force magnitudes
+    files.push('rmag') // rotation magnitude
 
     return files
 }
@@ -166,11 +168,14 @@ const load_data = async () => {
     remove_class(document.getElementById('load'), ' hidden')
 
     for (let i = 0; i < files.length; i++) {
-        // read and process data file
+        // read data file
         const res = await fetch(`${DATA_DIR}/${files[i]}.msgpack`)
         const blob = await res.blob()
         const data = await readFileAsync(blob)
-        processFile(data, files[i])
+
+        // get data type from file name, process data
+        const fileType = files[i].replace(/\d/g, '')
+        processFile(data, fileType)
         
         // update load progress bar
         document.getElementById('loadbar').style.width = (maxload - i/(files.length - 1)*maxload).toString() + "px"
