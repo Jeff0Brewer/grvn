@@ -13,18 +13,12 @@ class FnVectors{
 		this.visibility_buffers = [];
 	}
 
-	add_vbos(msg_out){
-		let detail = msg_out[0];
-		let ind = this.position_buffers.length;
-		this.position_buffers.push(new Float32Array(msg_out[1]));
-		this.color_buffers.push(new Float32Array(msg_out[2]));
+	add_vbos(pos, col){
+		this.position_buffers.push(new Float32Array(pos));
+		this.color_buffers.push(new Float32Array(col));
 
-		for(let i = 0; i < this.position_buffers[ind].length; i++)
-			this.position_buffers[ind][i] /= (1.0*detail);
-		for(let i = 0; i < this.color_buffers[ind].length; i++)
-			this.color_buffers[ind][i] /= (1.0*detail);
-
-		this.visibility_buffers.push(new Float32Array(msg_out[1].length/this.p_fpv));
+                const ind = this.visibility_buffers.length
+		this.visibility_buffers.push(new Float32Array(pos.length/this.p_fpv));
 		for(let i = 0; i < this.visibility_buffers[ind].length; i++)
 			this.visibility_buffers[ind][i] = 0;
 	}

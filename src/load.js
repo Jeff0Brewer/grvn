@@ -64,6 +64,19 @@ const processRotationData = data => {
     }
 }
 
+const processForceVerts = data => {
+    const scale = 1 / data[0]
+    const pos = data[1]
+    const col = data[2]
+    for (let i = 0; i < pos.length; i++) {
+        pos[i] *= scale
+    }
+    for (let i = 0; i < col.length; i++) {
+        col[i] *= scale
+    }
+    fn_vectors.add_vbos(pos, col)
+}
+
 const addForceVertices = data => {
     fn_vectors.add_vbos(data)
 }
@@ -89,7 +102,7 @@ const processFile = (blob, fileName) => {
     const data = msgpack.unpack(blob)
 
     if(fileName.includes('_fn_')){
-        addForceVertices(data)
+        processForceVerts(data)
     }
     else if(fileName.includes('_grain')){
         processGrainSurface(data)
