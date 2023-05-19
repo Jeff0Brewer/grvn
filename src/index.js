@@ -186,7 +186,7 @@ const processFile = (blob, fileName) => {
 }
 
 const load_data = async () => {
-    const DATA_DIR = 'fs_0'
+    const DATA_DIR = 'data'
     const files = []
     files.push('__head')
     for (let i = 0; i <= 75; i++) { files.push(`_fn_${i}`) }
