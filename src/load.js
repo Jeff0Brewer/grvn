@@ -77,10 +77,6 @@ const processForceVerts = data => {
     fn_vectors.add_vbos(pos, col)
 }
 
-const addForceVertices = data => {
-    fn_vectors.add_vbos(data)
-}
-
 const setRotationMagnitudeData = data => {
     rot_data = data
 }
@@ -147,17 +143,24 @@ const readFileAsync = file => {
     })
 }
 
+// temp fn to get static list of curr data
+const getFiles = () => {
+    const files = []
+    files.push('__head') // metadata
+    for (let i = 0; i <= 75; i++) { files.push(`_fn_${i}`) } // force plot verts
+    for (let i = 0; i <= 3; i++) { files.push(`_pos_${i}`) } // grain positions
+    for (let i = 0; i <= 3; i++) { files.push(`_rot_${i}`) } // grain rotations
+    for (let i = 0; i <= 3; i++) { files.push(`_grains_${i}`) } // grain surfaces
+    files.push('_inds') // grain surface vbo inds
+    files.push('_for') // force magnitudes
+    files.push('_r_mag') // rotation magnitude
+
+    return files
+}
+
 const load_data = async () => {
     const DATA_DIR = 'data'
-    const files = []
-    files.push('__head')
-    for (let i = 0; i <= 75; i++) { files.push(`_fn_${i}`) }
-    files.push('_for')
-    for (let i = 0; i <= 3; i++) { files.push(`_grains_${i}`) }
-    files.push('_inds')
-    for (let i = 0; i <= 3; i++) { files.push(`_pos_${i}`) }
-    files.push('_r_mag')
-    for (let i = 0; i <= 3; i++) { files.push(`_rot_${i}`) }
+    const files = getFiles()
 
     // show load bar
     remove_class(document.getElementById('load'), ' hidden')
