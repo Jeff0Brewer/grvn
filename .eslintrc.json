@@ -10,7 +10,8 @@
         "ecmaVersion": "latest"
     },
     "rules": {
-        "indent": ["error", 4],
-        "no-var": 0
+        "indent": ["error", 4, { "SwitchCase": 1 }],
+        "no-var": 0,
+        "camelcase": 0
     }
 }

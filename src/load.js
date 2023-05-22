@@ -166,6 +166,8 @@ const load_data = async () => {
 
     // show load bar
     remove_class(document.getElementById('load'), ' hidden')
+    // get load bar width
+    const maxload = document.getElementById('loadbg').clientWidth
 
     for (let i = 0; i < files.length; i++) {
         // read data file
@@ -176,9 +178,9 @@ const load_data = async () => {
         // get data type from file name, process data
         const fileType = files[i].replace(/\d/g, '')
         processFile(data, fileType)
-        
+
         // update load progress bar
-        document.getElementById('loadbar').style.width = (maxload - i/(files.length - 1)*maxload).toString() + "px"
+        document.getElementById('loadbar').style.width = (maxload - i / (files.length - 1) * maxload).toString() + 'px'
     }
 
     // hide load bar
