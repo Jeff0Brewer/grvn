@@ -182,7 +182,9 @@ function draw (elapsed) {
             viewport_ind++
             viewports[viewport_ind].clear()
             fn_vectors.draw(
-                u_ModelMatrix,
+                modelMatrix,
+                viewMatrix,
+                projMatrix,
                 fs_camera.rotation.x,
                 fs_camera.rotation.z,
                 viewports[viewport_ind]
