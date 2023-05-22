@@ -356,7 +356,7 @@ const setup_gl = async () => {
     const FSHADER_SOURCE = await fetch('./shaders/frag.glsl').then(res => res.text())
 
     initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)
-    init_buffers()
+    await init_buffers()
 
     u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
     u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
@@ -364,8 +364,8 @@ const setup_gl = async () => {
 }
 
 // init visualization buffers
-function init_buffers () {
-    fn_vectors.init_gl(gl)
+const init_buffers = async () => {
+    await fn_vectors.init_gl(gl)
     context_axis.init_buffers()
     ribbon_flow.init_buffers()
     grain_surfaces.init_buffers()

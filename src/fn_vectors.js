@@ -23,7 +23,14 @@ class FnVectors {
         }
     }
 
-    init_gl (gl) {
+    async init_gl (gl) {
+        const vertSource = await fetch('./shaders/vert.glsl').then(res => res.text())
+        const fragSource = await fetch('./shaders/frag.glsl').then(res => res.text())
+
+        const oldProgram = gl.program
+        this.program = initProgram(gl, vertSource, fragSource)
+        bindProgram(gl, this.program)
+
         this.bindPos = initAttribBuffer(gl, 'a_Position', this.p_fpv, this.posData[0], gl.DYNAMIC_DRAW)
         this.bindCol = initAttribBuffer(gl, 'a_Color', this.c_fpv, this.colData[0], gl.DYNAMIC_DRAW)
         this.bindVis = initAttribBuffer(gl, 'a_Visibility', this.v_fpv, this.visData[0], gl.DYNAMIC_DRAW)
@@ -31,12 +38,17 @@ class FnVectors {
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
+
+        bindProgram(gl, oldProgram)
     }
 
     draw (gl, modelMatrix, viewMatrix, projMatrix, timestep, rx, rz, viewport) {
         // buffer data if timestep changed
         this.buffer_changed ||= timestep !== this.last_step
         this.last_step = timestep
+
+        const oldProgram = gl.program
+        bindProgram(gl, this.program)
 
         this.bindPos(gl)
         if (this.buffer_changed) {
@@ -67,6 +79,8 @@ class FnVectors {
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.drawArrays(gl.LINES, 0, this.posData[timestep].length / this.p_fpv)
+
+        bindProgram(gl, oldProgram)
     }
 
     slice (planefilters) {
