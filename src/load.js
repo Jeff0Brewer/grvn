@@ -67,14 +67,14 @@ const processRotationData = data => {
 const processForceVerts = data => {
     const scale = 1 / data[0]
     const pos = data[1]
-    const col = data[2]
+    const alp = data[2]
     for (let i = 0; i < pos.length; i++) {
         pos[i] *= scale
     }
-    for (let i = 0; i < col.length; i++) {
-        col[i] *= scale
+    for (let i = 0; i < alp.length; i++) {
+        alp[i] *= scale
     }
-    fn_vectors.add_vbos(pos, col)
+    fn_vectors.add_vbos(pos, alp)
 }
 
 const setRotationMagnitudeData = data => {
@@ -161,7 +161,7 @@ const getFiles = () => {
 }
 
 const load_data = async () => {
-    const DATA_DIR = 'data_old'
+    const DATA_DIR = 'data'
     const files = getFiles()
 
     // show load bar

@@ -1,20 +1,20 @@
 class FnVectors {
-    constructor (p_fpv, c_fpv, v_fpv) {
-        this.p_fpv = p_fpv
-        this.c_fpv = c_fpv
-        this.v_fpv = v_fpv
+    constructor () {
+        this.p_fpv = 3
+        this.a_fpv = 1
+        this.v_fpv = 1
 
         this.last_step = 0
         this.buffer_changed = false
 
         this.posData = []
-        this.colData = []
+        this.alpData = []
         this.visData = []
     }
 
-    add_vbos (pos, col) {
+    add_vbos (pos, alp) {
         this.posData.push(new Float32Array(pos))
-        this.colData.push(new Float32Array(col))
+        this.alpData.push(new Float32Array(alp))
 
         const ind = this.visData.length
         this.visData.push(new Float32Array(pos.length / this.p_fpv))
@@ -24,15 +24,15 @@ class FnVectors {
     }
 
     async init_gl (gl) {
-        const vertSource = await fetch('./shaders/vert.glsl').then(res => res.text())
-        const fragSource = await fetch('./shaders/frag.glsl').then(res => res.text())
+        const vertSource = await fetch('./shaders/force-vert.glsl').then(res => res.text())
+        const fragSource = await fetch('./shaders/force-frag.glsl').then(res => res.text())
 
         const oldProgram = gl.program
         this.program = initProgram(gl, vertSource, fragSource)
         bindProgram(gl, this.program)
 
         this.bindPos = initAttribBuffer(gl, 'a_Position', this.p_fpv, this.posData[0], gl.DYNAMIC_DRAW)
-        this.bindCol = initAttribBuffer(gl, 'a_Color', this.c_fpv, this.colData[0], gl.DYNAMIC_DRAW)
+        this.bindAlp = initAttribBuffer(gl, 'a_Alpha', this.a_fpv, this.alpData[0], gl.DYNAMIC_DRAW)
         this.bindVis = initAttribBuffer(gl, 'a_Visibility', this.v_fpv, this.visData[0], gl.DYNAMIC_DRAW)
 
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
@@ -54,9 +54,9 @@ class FnVectors {
         if (this.buffer_changed) {
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.posData[timestep])
         }
-        this.bindCol(gl)
+        this.bindAlp(gl)
         if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.colData[timestep])
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.alpData[timestep])
         }
         this.bindVis(gl)
         if (this.buffer_changed) {
