@@ -12,6 +12,7 @@
     "rules": {
         "indent": ["error", 4, { "SwitchCase": 1 }],
         "no-var": 0,
-        "camelcase": 0
+        "camelcase": 0,
+        "no-undef": 0
     }
 }
