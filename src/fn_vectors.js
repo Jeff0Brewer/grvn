@@ -51,6 +51,10 @@ class FnVectors {
         this.a_Visibility = gl.getAttribLocation(gl.program, 'a_Visibility')
         gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
         gl.enableVertexAttribArray(this.a_Visibility)
+
+        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
+        this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
+        this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
     }
 
     draw (modelMatrix, viewMatrix, projMatrix, rx, rz, viewport) {
@@ -83,7 +87,9 @@ class FnVectors {
         model.rotate(rx, 1, 0, 0)
         model.rotate(rz, 0, 0, 1)
         model.translate(0, 0, -800)
-        gl.uniformMatrix4fv(u_ModelMatrix, false, model.elements)
+        gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
+        gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
