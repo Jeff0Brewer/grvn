@@ -3,9 +3,9 @@ class FnVectors {
         this.p_fpv = p_fpv
         this.c_fpv = c_fpv
         this.v_fpv = v_fpv
-        this.curr_step = 0
+
+        this.last_step = 0
         this.buffer_changed = false
-        this.paused = false
 
         this.position_buffers = []
         this.color_buffers = []
@@ -22,12 +22,12 @@ class FnVectors {
     }
 
     init_buffers () {
-        this.fsize = this.position_buffers[this.curr_step].BYTES_PER_ELEMENT
+        this.fsize = this.position_buffers[0].BYTES_PER_ELEMENT
 
         // position buffer
         this.gl_pos_buf = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.position_buffers[this.curr_step], gl.DYNAMIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, this.position_buffers[0], gl.DYNAMIC_DRAW)
 
         this.a_Position = gl.getAttribLocation(gl.program, 'a_Position')
         gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
@@ -36,7 +36,7 @@ class FnVectors {
         // color buffer
         this.gl_col_buf = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.color_buffers[this.curr_step], gl.DYNAMIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, this.color_buffers[0], gl.DYNAMIC_DRAW)
 
         this.a_Color = gl.getAttribLocation(gl.program, 'a_Color')
         gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
@@ -45,7 +45,7 @@ class FnVectors {
         // visibility buffers
         this.gl_vis_buf = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_vis_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.visibility_buffers[this.curr_step], gl.DYNAMIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, this.visibility_buffers[0], gl.DYNAMIC_DRAW)
 
         this.a_Visibility = gl.getAttribLocation(gl.program, 'a_Visibility')
         gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
@@ -56,25 +56,29 @@ class FnVectors {
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
     }
 
-    draw (modelMatrix, viewMatrix, projMatrix, rx, rz, viewport) {
+    draw (modelMatrix, viewMatrix, projMatrix, timestep, rx, rz, viewport) {
+        // buffer data if timestep changed
+        this.buffer_changed ||= timestep !== this.last_step
+        this.last_step = timestep
+
         // position buffer
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
         if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.position_buffers[this.curr_step])
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.position_buffers[timestep])
         }
         gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
 
         // color buffer
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
         if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[this.curr_step])
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[timestep])
         }
         gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
 
         // visibility buffers
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_vis_buf)
         if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visibility_buffers[this.curr_step])
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visibility_buffers[timestep])
         }
         gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
 
@@ -92,7 +96,7 @@ class FnVectors {
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.drawArrays(gl.LINES, 0, this.position_buffers[this.curr_step].length / this.p_fpv)
+        gl.drawArrays(gl.LINES, 0, this.position_buffers[timestep].length / this.p_fpv)
     }
 
     slice (planefilters) {
@@ -141,16 +145,5 @@ class FnVectors {
                 this.visibility_buffers[t][v] = 0
             }
         }
-    }
-
-    set_step (step) {
-        if (!this.paused) {
-            this.buffer_changed = this.curr_step != step || this.buffer_changed
-            this.curr_step = step
-        }
-    }
-
-    toggle_pause () {
-        this.paused = !this.paused
     }
 }

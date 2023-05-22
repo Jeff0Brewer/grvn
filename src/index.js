@@ -162,7 +162,6 @@ function draw (elapsed) {
             timeline.tick(elapsed)
         }
         ribbon_flow.set_step(timeline.timestep)
-        fn_vectors.set_step(timeline.timestep)
         if (global_fields.tabs.length >= 0) {
             global_fields.set_time(timeline.timestep, num_t)
         }
@@ -185,6 +184,7 @@ function draw (elapsed) {
                 modelMatrix,
                 viewMatrix,
                 projMatrix,
+                timeline.timestep,
                 fs_camera.rotation.x,
                 fs_camera.rotation.z,
                 viewports[viewport_ind]
