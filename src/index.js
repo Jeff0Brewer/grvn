@@ -27,7 +27,7 @@ var viewport_count
 
 var context_axis
 var ribbon_flow
-var fn_vectors = new FnVectors(num_t, p_fpv, c_fpv, v_fpv)
+var fn_vectors = new FnVectors(p_fpv, c_fpv, v_fpv)
 var grain_surfaces = new GrainSurfaces(p_fpv, c_fpv, v_fpv)
 
 var flow_visible = false

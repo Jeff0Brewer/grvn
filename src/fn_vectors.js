@@ -1,11 +1,10 @@
 class FnVectors {
-    constructor (num_t, p_fpv, c_fpv, v_fpv) {
+    constructor (p_fpv, c_fpv, v_fpv) {
         this.p_fpv = p_fpv
         this.c_fpv = c_fpv
         this.v_fpv = v_fpv
         this.curr_step = 0
         this.buffer_changed = false
-        this.num_t = num_t
         this.paused = false
 
         this.position_buffers = []
@@ -97,7 +96,7 @@ class FnVectors {
     }
 
     slice (planefilters) {
-        for (let t = 0; t < this.num_t; t++) {
+        for (let t = 0; t < this.visibility_buffers.length; t++) {
             for (let v = 0; v < this.visibility_buffers[t].length; v++) {
                 const pos_ind = v / this.v_fpv * this.p_fpv
                 const pos = [
@@ -117,7 +116,7 @@ class FnVectors {
     }
 
     unslice (planefilters) {
-        for (let t = 0; t < this.num_t; t++) {
+        for (let t = 0; t < this.visibility_buffers.length; t++) {
             for (let v = 0; v < this.visibility_buffers[t].length; v++) {
                 const pos_ind = v / this.v_fpv * this.p_fpv
                 const pos = [
@@ -137,7 +136,7 @@ class FnVectors {
     }
 
     reset_slices () {
-        for (let t = 0; t < this.num_t; t++) {
+        for (let t = 0; t < this.visibility_buffers.length; t++) {
             for (let v = 0; v < this.visibility_buffers[t].length; v++) {
                 this.visibility_buffers[t][v] = 0
             }
