@@ -51,15 +51,22 @@ const initAttribBuffer = (gl, name, fpv, data, usage) => {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, data, usage)
 
+    let glType
+    if (data.BYTES_PER_ELEMENT === 4) {
+        glType = gl.FLOAT
+    } else if (data.BYTES_PER_ELEMENT === 1) {
+        glType = gl.UNSIGNED_BYTE
+    }
+
     const attrib = gl.getAttribLocation(gl.program, name)
     const bind = gl => {
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
         gl.vertexAttribPointer(
             attrib,
             fpv,
-            gl.FLOAT,
+            glType,
             false,
-            Float32Array.BYTES_PER_ELEMENT * fpv,
+            data.BYTES_PER_ELEMENT * fpv,
             0 // non-swizzled buffers, no stride
         )
     }

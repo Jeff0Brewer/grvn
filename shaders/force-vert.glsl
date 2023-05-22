@@ -14,5 +14,5 @@ void main() {
     gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
     v_Position = vec3(u_ModelMatrix * a_Position);
     v_Visibility = a_Visibility;
-    v_Alpha = a_Alpha;
+    v_Alpha = a_Alpha / 255.0;
 }

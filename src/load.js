@@ -67,10 +67,6 @@ const processRotationData = data => {
 const processForceVerts = data => {
     const pos = data[0]
     const alp = data[1]
-    const bytescale = 1 / 255
-    for (let i = 0; i < alp.length; i++) {
-        alp[i] *= bytescale
-    }
     fn_vectors.add_vbos(pos, alp)
 }
 

@@ -14,7 +14,7 @@ class FnVectors {
 
     add_vbos (pos, alp) {
         this.posData.push(new Float32Array(pos))
-        this.alpData.push(new Float32Array(alp))
+        this.alpData.push(new Uint8Array(alp))
 
         const ind = this.visData.length
         this.visData.push(new Float32Array(pos.length / this.p_fpv))
