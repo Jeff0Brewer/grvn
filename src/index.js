@@ -181,6 +181,7 @@ function draw (elapsed) {
             viewport_ind++
             viewports[viewport_ind].clear()
             fn_vectors.draw(
+                gl,
                 modelMatrix,
                 viewMatrix,
                 projMatrix,
@@ -364,9 +365,9 @@ const setup_gl = async () => {
 
 // init visualization buffers
 function init_buffers () {
+    fn_vectors.init_gl(gl)
     context_axis.init_buffers()
     ribbon_flow.init_buffers()
-    fn_vectors.init_buffers()
     grain_surfaces.init_buffers()
 }
 
