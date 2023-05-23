@@ -110,15 +110,6 @@ async function main () {
 
     context_image = new ContextImage('rgb(35,35,35)', 'rgb(108,108,108)', grain_surfaces.positions)
 
-    const chains = [
-        [26315, 27280, 27286, 28154, 28983, 29303, 30104, 31012, 31749, 32694, 33549, 34065, 35550, 36277, 36799, 37533, 38977],
-        [26658, 27372, 28025, 28608, 29465, 30381, 31370, 31708, 32654, 32696],
-        [20162, 20874, 21614, 23105, 23223, 24656, 24821, 25962, 27261, 28543, 29312, 29916]
-    ]
-    for (let i = 0; i < chains.length; i++, select_ind++) {
-        selections.push(make_selection_item(chains[i], grain_surfaces.get_positions_t(chains[i]), num_t, select_ind))
-    }
-
     var tick = function () {
         const now = Date.now()
         const elapsed = now - g_last
