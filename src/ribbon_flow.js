@@ -98,8 +98,12 @@ class RibbonFlow {
                 }
             }
 
-            for (let pp = 0; pp < p_fpv * 2; pp++, pos_ind++) { this.position_buffer[pos_ind] = positions[num_t - 1][g][pp % p_fpv] }
-            for (let pc = 0; pc < c_fpv * 2; pc++, col_ind++) { this.color_buffer[col_ind] = 0 }
+            for (let pp = 0; pp < p_fpv * 2; pp++, pos_ind++) {
+                this.position_buffer[pos_ind] = positions[num_t - 1][g][pp % p_fpv]
+            }
+            for (let pc = 0; pc < c_fpv * 2; pc++, col_ind++) {
+                this.color_buffer[col_ind] = 0
+            }
         }
 
         const num_v = this.position_buffer.length / this.p_fpv
@@ -118,67 +122,32 @@ class RibbonFlow {
     }
 
     init_buffers () {
-        this.fsize = this.position_buffer.BYTES_PER_ELEMENT
-
-        // position buffer
-        this.gl_pos_buf = gl.createBuffer()
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.position_buffer, gl.STATIC_DRAW)
-
-        this.a_Position = gl.getAttribLocation(gl.program, 'a_Position')
-        gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
-        gl.enableVertexAttribArray(this.a_Position)
-
-        // color buffer
-        this.gl_col_buf = gl.createBuffer()
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.color_buffer, gl.STATIC_DRAW)
-
-        this.a_Color = gl.getAttribLocation(gl.program, 'a_Color')
-        gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
-        gl.enableVertexAttribArray(this.a_Color)
-
-        // visibility buffers
-        this.gl_vis_buf = gl.createBuffer()
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_vis_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.visibility_buffers[this.curr_step], gl.DYNAMIC_DRAW)
-
-        this.a_Visibility = gl.getAttribLocation(gl.program, 'a_Visibility')
-        gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
-        gl.enableVertexAttribArray(this.a_Visibility)
+        this.bindPos = initAttribBuffer(gl, 'a_Position', this.p_fpv, this.position_buffer, gl.STATIC_DRAW)
+        this.bindCol = initAttribBuffer(gl, 'a_Color', this.c_fpv, this.color_buffer, gl.STATIC_DRAW)
+        this.bindVis = initAttribBuffer(gl, 'a_Visibility', this.v_fpv, this.visibility_buffers[this.curr_step], gl.DYNAMIC_DRAW)
     }
 
     draw (u_ModelMatrix, rx, rz, viewport) {
-        // position buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
-        gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
-
-        // color buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
-        gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
-
-        // visibility buffers
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_vis_buf)
-        if (this.buffer_changed) { gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visibility_buffers[this.curr_step]) }
-        gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
-
+        this.bindPos(gl)
+        this.bindCol(gl)
+        this.bindVis(gl)
+        if (this.buffer_changed) {
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visibility_buffers[this.curr_step])
+        }
         this.buffer_changed = false
 
         // drawing
-        pushMatrix(modelMatrix)
+        const model = new Matrix4(modelMatrix)
+        model.scale(0.025, 0.025, 0.025)
+        model.translate(0, 0, 800)
+        model.rotate(rx, 1, 0, 0)
+        model.rotate(rz, 0, 0, 1)
+        model.translate(0, 0, -800)
 
-        modelMatrix.scale(0.025, 0.025, 0.025)
-        modelMatrix.translate(0, 0, 800)
-        modelMatrix.rotate(rx, 1, 0, 0)
-        modelMatrix.rotate(rz, 0, 0, 1)
-        modelMatrix.translate(0, 0, -800)
-
-        gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
+        gl.uniformMatrix4fv(u_ModelMatrix, false, model.elements)
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.position_buffer.length / this.p_fpv)
-
-        modelMatrix = popMatrix()
     }
 
     slice (planefilters) {
