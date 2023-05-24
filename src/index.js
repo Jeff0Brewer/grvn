@@ -152,7 +152,6 @@ function draw (elapsed) {
         if (!global_fields.dragging && !fs_camera.dragging) {
             timeline.tick(elapsed)
         }
-        ribbon_flow.set_step(timeline.timestep)
         if (global_fields.tabs.length >= 0) {
             global_fields.set_time(timeline.timestep, num_t)
         }
@@ -161,7 +160,9 @@ function draw (elapsed) {
             viewport_ind++
             viewports[viewport_ind].clear()
             ribbon_flow.draw(
+                gl,
                 u_ModelMatrix,
+                timeline.timestep,
                 fs_camera.rotation.x,
                 fs_camera.rotation.z,
                 viewports[viewport_ind]

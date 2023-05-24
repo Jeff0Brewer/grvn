@@ -3,10 +3,9 @@ class RibbonFlow {
         this.p_fpv = p_fpv
         this.c_fpv = c_fpv
         this.v_fpv = v_fpv
-        this.curr_step = 0
-        this.buffer_changed = false
         this.num_t = num_t
-        this.paused = false
+        this.buffer_changed = false
+        this.last_step = -1
 
         const lw = 0.2
         const hw = 15
@@ -124,16 +123,20 @@ class RibbonFlow {
     init_buffers () {
         this.bindPos = initAttribBuffer(gl, 'a_Position', this.p_fpv, this.position_buffer, gl.STATIC_DRAW)
         this.bindCol = initAttribBuffer(gl, 'a_Color', this.c_fpv, this.color_buffer, gl.STATIC_DRAW)
-        this.bindVis = initAttribBuffer(gl, 'a_Visibility', this.v_fpv, this.visibility_buffers[this.curr_step], gl.DYNAMIC_DRAW)
+        this.bindVis = initAttribBuffer(gl, 'a_Visibility', this.v_fpv, this.visibility_buffers[0], gl.DYNAMIC_DRAW)
     }
 
-    draw (u_ModelMatrix, rx, rz, viewport) {
+    draw (gl, u_ModelMatrix, timestep, rx, rz, viewport) {
+        this.buffer_changed ||= timestep !== this.last_step
+        this.last_step = timestep
+
         this.bindPos(gl)
         this.bindCol(gl)
         this.bindVis(gl)
         if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visibility_buffers[this.curr_step])
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visibility_buffers[timestep])
         }
+
         this.buffer_changed = false
 
         // drawing
@@ -198,16 +201,5 @@ class RibbonFlow {
                 }
             }
         }
-    }
-
-    set_step (step) {
-        if (!this.paused) {
-            this.buffer_changed = this.curr_step != step || this.buffer_changed
-            this.curr_step = step
-        }
-    }
-
-    toggle_pause () {
-        this.paused = !this.paused
     }
 }
