@@ -105,25 +105,46 @@ class RibbonFlow {
             }
         }
 
-        const num_v = this.position_buffer.length / this.p_fpv
-
         this.visibility_buffers = []
         const ribbon_len = (num_t + 2) * 2
         for (let t = 0; t < num_t; t++) {
-            this.visibility_buffers.push(new Float32Array(num_v))
+            this.visibility_buffers.push(new Uint8Array(this.position_buffer.length / this.p_fpv * this.v_fpv))
             let ribbon_ind = 0
             for (let v = 0; v < this.visibility_buffers[t].length; v++, ribbon_ind = (ribbon_ind + 1) % ribbon_len) {
-                if (ribbon_ind - 2 <= t * 2) { this.visibility_buffers[t][v] = 0 } else {
-                    this.visibility_buffers[t][v] = -1
+                if (ribbon_ind - 2 <= t * 2) {
+                    this.visibility_buffers[t][v] = 0
+                } else {
+                    this.visibility_buffers[t][v] = 1
                 }
             }
         }
     }
 
     init_buffers () {
-        this.bindPos = initAttribBuffer(gl, 'a_Position', this.p_fpv, this.position_buffer, gl.STATIC_DRAW)
-        this.bindCol = initAttribBuffer(gl, 'a_Color', this.c_fpv, this.color_buffer, gl.STATIC_DRAW)
-        this.bindVis = initAttribBuffer(gl, 'a_Visibility', this.v_fpv, this.visibility_buffers[0], gl.DYNAMIC_DRAW)
+        this.bindPos = initAttribBuffer(
+            gl,
+            'a_Position',
+            this.p_fpv,
+            this.position_buffer,
+            gl.FLOAT,
+            gl.STATIC_DRAW
+        )
+        this.bindCol = initAttribBuffer(
+            gl,
+            'a_Color',
+            this.c_fpv,
+            this.color_buffer,
+            gl.FLOAT,
+            gl.STATIC_DRAW
+        )
+        this.bindVis = initAttribBuffer(
+            gl,
+            'a_Visibility',
+            this.v_fpv,
+            this.visibility_buffers[0],
+            gl.UNSIGNED_BYTE,
+            gl.DYNAMIC_DRAW
+        )
     }
 
     draw (gl, u_ModelMatrix, timestep, rx, rz, viewport) {
@@ -166,7 +187,7 @@ class RibbonFlow {
                 outside = planefilters[f].check(pos)
             }
             if (outside) {
-                for (let t = 0; t < this.num_t; t++) { this.visibility_buffers[t][v] -= 1 }
+                for (let t = 0; t < this.num_t; t++) { this.visibility_buffers[t][v] += 1 }
             }
         }
         this.buffer_changed = true
@@ -185,7 +206,7 @@ class RibbonFlow {
                 outside = planefilters[f].check(pos)
             }
             if (outside) {
-                for (let t = 0; t < this.num_t; t++) { this.visibility_buffers[t][v] += 1 }
+                for (let t = 0; t < this.num_t; t++) { this.visibility_buffers[t][v] -= 1 }
             }
         }
         this.buffer_changed = true
@@ -196,8 +217,10 @@ class RibbonFlow {
         for (let t = 0; t < this.num_t; t++) {
             let ribbon_ind = 0
             for (let v = 0; v < this.visibility_buffers[t].length; v++, ribbon_ind = (ribbon_ind + 1) % ribbon_len) {
-                if (ribbon_ind - 2 <= t * 2) { this.visibility_buffers[t][v] = 0 } else {
-                    this.visibility_buffers[t][v] = -1
+                if (ribbon_ind - 2 <= t * 2) {
+                    this.visibility_buffers[t][v] = 0
+                } else {
+                    this.visibility_buffers[t][v] = 1
                 }
             }
         }

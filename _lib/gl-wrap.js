@@ -46,17 +46,10 @@ const initShader = (gl, source, type) => {
 }
 
 // initialize single attribute buffer
-const initAttribBuffer = (gl, name, fpv, data, usage) => {
+const initAttribBuffer = (gl, name, fpv, data, glType, usage) => {
     const buffer = gl.createBuffer()
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
     gl.bufferData(gl.ARRAY_BUFFER, data, usage)
-
-    let glType
-    if (data.BYTES_PER_ELEMENT === 4) {
-        glType = gl.FLOAT
-    } else if (data.BYTES_PER_ELEMENT === 1) {
-        glType = gl.UNSIGNED_BYTE
-    }
 
     const attrib = gl.getAttribLocation(gl.program, name)
     const bind = gl => {

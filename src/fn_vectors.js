@@ -17,7 +17,7 @@ class FnVectors {
         this.alpData.push(new Uint8Array(alp))
 
         const ind = this.visData.length
-        this.visData.push(new Float32Array(pos.length / this.p_fpv))
+        this.visData.push(new Uint8Array(pos.length / this.p_fpv))
         for (let i = 0; i < this.visData[ind].length; i++) {
             this.visData[ind][i] = 0
         }
@@ -31,9 +31,30 @@ class FnVectors {
         this.program = initProgram(gl, vertSource, fragSource)
         bindProgram(gl, this.program)
 
-        this.bindPos = initAttribBuffer(gl, 'a_Position', this.p_fpv, this.posData[0], gl.DYNAMIC_DRAW)
-        this.bindAlp = initAttribBuffer(gl, 'a_Alpha', this.a_fpv, this.alpData[0], gl.DYNAMIC_DRAW)
-        this.bindVis = initAttribBuffer(gl, 'a_Visibility', this.v_fpv, this.visData[0], gl.DYNAMIC_DRAW)
+        this.bindPos = initAttribBuffer(
+            gl,
+            'a_Position',
+            this.p_fpv,
+            this.posData[0],
+            gl.FLOAT,
+            gl.DYNAMIC_DRAW
+        )
+        this.bindAlp = initAttribBuffer(
+            gl,
+            'a_Alpha',
+            this.a_fpv,
+            this.alpData[0],
+            gl.UNSIGNED_BYTE,
+            gl.DYNAMIC_DRAW
+        )
+        this.bindVis = initAttribBuffer(
+            gl,
+            'a_Visibility',
+            this.v_fpv,
+            this.visData[0],
+            gl.UNSIGNED_BYTE,
+            gl.DYNAMIC_DRAW
+        )
 
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
@@ -97,7 +118,7 @@ class FnVectors {
                 for (let f = 0; !outside && f < planefilters.length; f++) {
                     outside = planefilters[f].check(pos)
                 }
-                if (outside) { this.visData[t][v] -= 1 }
+                if (outside) { this.visData[t][v] += 1 }
             }
         }
         this.buffer_changed = true
@@ -117,7 +138,7 @@ class FnVectors {
                 for (let f = 0; !outside && f < planefilters.length; f++) {
                     outside = planefilters[f].check(pos)
                 }
-                if (outside) { this.visData[t][v] += 1 }
+                if (outside) { this.visData[t][v] -= 1 }
             }
         }
         this.buffer_changed = true
