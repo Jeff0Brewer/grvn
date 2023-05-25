@@ -73,7 +73,7 @@ async function main () {
     rot_data = []
     for_data = []
     grain_surfaces.finish_add()
-    context_axis = new Axis(50, 4)
+    context_axis = new Axis(100, 100)
 
     timeline = make_timeline(num_t)
 
@@ -248,35 +248,19 @@ function draw (elapsed) {
         if (rotated[0]) {
             const off = selections[sm_viewer.rotating[0]].offsets[rotated[1]]
             if (off) {
-                if (rotated[2]) {
-                    context_axis.draw_front(
-                        gl,
-                        modelMatrix,
-                        viewMatrix,
-                        projMatrix,
-                        off.x,
-                        off.y,
-                        off.z,
-                        selections[sm_viewer.rotating[0]].rotation.x,
-                        selections[sm_viewer.rotating[0]].rotation.z,
-                        sm_viewer.rotating_vp,
-                        selections[sm_viewer.rotating[0]].max_disp
-                    )
-                } else {
-                    context_axis.draw_back(
-                        gl,
-                        modelMatrix,
-                        viewMatrix,
-                        projMatrix,
-                        off.x,
-                        off.y,
-                        off.z,
-                        selections[sm_viewer.rotating[0]].rotation.x,
-                        selections[sm_viewer.rotating[0]].rotation.z,
-                        sm_viewer.rotating_vp,
-                        selections[sm_viewer.rotating[0]].max_disp
-                    )
-                }
+                context_axis.draw(
+                    gl,
+                    modelMatrix,
+                    viewMatrix,
+                    projMatrix,
+                    off.x,
+                    off.y,
+                    off.z,
+                    selections[sm_viewer.rotating[0]].rotation.x,
+                    selections[sm_viewer.rotating[0]].rotation.z,
+                    sm_viewer.rotating_vp,
+                    selections[sm_viewer.rotating[0]].max_disp
+                )
             }
         }
 
@@ -297,35 +281,19 @@ function draw (elapsed) {
         if (rotated[0]) {
             const off = selections[sm_viewer.rotating[0]].offsets[rotated[1]]
             if (off) {
-                if (rotated[2]) {
-                    context_axis.draw_back(
-                        gl,
-                        modelMatrix,
-                        viewMatrix,
-                        projMatrix,
-                        off.x,
-                        off.y,
-                        off.z,
-                        selections[sm_viewer.rotating[0]].rotation.x,
-                        selections[sm_viewer.rotating[0]].rotation.z,
-                        sm_viewer.rotating_vp,
-                        selections[sm_viewer.rotating[0]].max_disp
-                    )
-                } else {
-                    context_axis.draw_front(
-                        gl,
-                        modelMatrix,
-                        viewMatrix,
-                        projMatrix,
-                        off.x,
-                        off.y,
-                        off.z,
-                        selections[sm_viewer.rotating[0]].rotation.x,
-                        selections[sm_viewer.rotating[0]].rotation.z,
-                        sm_viewer.rotating_vp,
-                        selections[sm_viewer.rotating[0]].max_disp
-                    )
-                }
+                context_axis.draw(
+                    gl,
+                    modelMatrix,
+                    viewMatrix,
+                    projMatrix,
+                    off.x,
+                    off.y,
+                    off.z,
+                    selections[sm_viewer.rotating[0]].rotation.x,
+                    selections[sm_viewer.rotating[0]].rotation.z,
+                    sm_viewer.rotating_vp,
+                    selections[sm_viewer.rotating[0]].max_disp
+                )
             }
         }
         let one_visible = false
