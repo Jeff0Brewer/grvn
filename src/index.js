@@ -73,7 +73,7 @@ async function main () {
     rot_data = []
     for_data = []
     grain_surfaces.finish_add()
-    context_axis = new Axis(50, 4, p_fpv, c_fpv, v_fpv)
+    context_axis = new Axis(50, 4)
 
     timeline = make_timeline(num_t)
 
@@ -209,7 +209,10 @@ function draw (elapsed) {
         if (fs_camera.dragging) {
             for (let i = 0; i < viewports.length; i++) {
                 context_axis.draw(
-                    u_ModelMatrix,
+                    gl,
+                    modelMatrix,
+                    viewMatrix,
+                    projMatrix,
                     0,
                     0,
                     800,
@@ -247,7 +250,10 @@ function draw (elapsed) {
             if (off) {
                 if (rotated[2]) {
                     context_axis.draw_front(
-                        u_ModelMatrix,
+                        gl,
+                        modelMatrix,
+                        viewMatrix,
+                        projMatrix,
                         off.x,
                         off.y,
                         off.z,
@@ -258,7 +264,10 @@ function draw (elapsed) {
                     )
                 } else {
                     context_axis.draw_back(
-                        u_ModelMatrix,
+                        gl,
+                        modelMatrix,
+                        viewMatrix,
+                        projMatrix,
                         off.x,
                         off.y,
                         off.z,
@@ -290,7 +299,10 @@ function draw (elapsed) {
             if (off) {
                 if (rotated[2]) {
                     context_axis.draw_back(
-                        u_ModelMatrix,
+                        gl,
+                        modelMatrix,
+                        viewMatrix,
+                        projMatrix,
                         off.x,
                         off.y,
                         off.z,
@@ -301,7 +313,10 @@ function draw (elapsed) {
                     )
                 } else {
                     context_axis.draw_front(
-                        u_ModelMatrix,
+                        gl,
+                        modelMatrix,
+                        viewMatrix,
+                        projMatrix,
                         off.x,
                         off.y,
                         off.z,
@@ -358,7 +373,7 @@ const setup_gl = async () => {
 // init visualization buffers
 const init_buffers = async () => {
     await fn_vectors.init_gl(gl)
-    context_axis.init_buffers()
+    await context_axis.init_gl(gl)
     ribbon_flow.init_buffers()
     grain_surfaces.init_buffers()
 }
