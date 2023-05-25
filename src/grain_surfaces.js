@@ -47,7 +47,9 @@ class GrainSurfaces {
                 this.color_buffers[0][col_ind] = col[c]
             }
         }
-        for (let t = 0; t < this.num_t; t++) { this.color_buffers.push(this.color_buffers[0].slice()) }
+        for (let t = 0; t < this.num_t; t++) {
+            this.color_buffers.push(this.color_buffers[0].slice())
+        }
 
         for (let v = 0; v < num_v; v++) {
             this.visibility_buffer[v] = 0
@@ -115,13 +117,26 @@ class GrainSurfaces {
         for (let i = 0; i < inds.length; i++) {
             pushMatrix(modelMatrix)
 
-            modelMatrix.translate(this.positions[t][inds[i]][0], this.positions[t][inds[i]][1], this.positions[t][inds[i]][2])
+            modelMatrix.translate(
+                this.positions[t][inds[i]][0],
+                this.positions[t][inds[i]][1],
+                this.positions[t][inds[i]][2]
+            )
             const quat = new Matrix4()
-            quat.setFromQuat(this.rotations[t][inds[i]][0], this.rotations[t][inds[i]][1], this.rotations[t][inds[i]][2], this.rotations[t][inds[i]][3])
+            quat.setFromQuat(
+                this.rotations[t][inds[i]][0],
+                this.rotations[t][inds[i]][1],
+                this.rotations[t][inds[i]][2],
+                this.rotations[t][inds[i]][3]
+            )
             modelMatrix.multiply(quat)
 
             gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
-            gl.drawArrays(gl.TRIANGLES, this.inds[inds[i]][1], this.inds[inds[i]][2] - this.inds[inds[i]][1])
+            gl.drawArrays(
+                gl.TRIANGLES,
+                this.inds[inds[i]][1],
+                this.inds[inds[i]][2] - this.inds[inds[i]][1]
+            )
 
             modelMatrix = popMatrix()
         }
@@ -193,9 +208,18 @@ class GrainSurfaces {
         for (let i = 0; i < selectitem.inds.length; i++) {
             pushMatrix(modelMatrix)
 
-            modelMatrix.translate(this.positions[t][selectitem.inds[i]][0], this.positions[t][selectitem.inds[i]][1], this.positions[t][selectitem.inds[i]][2])
+            modelMatrix.translate(
+                this.positions[t][selectitem.inds[i]][0],
+                this.positions[t][selectitem.inds[i]][1],
+                this.positions[t][selectitem.inds[i]][2]
+            )
             const quat = new Matrix4()
-            quat.setFromQuat(this.rotations[t][selectitem.inds[i]][0], this.rotations[t][selectitem.inds[i]][1], this.rotations[t][selectitem.inds[i]][2], this.rotations[t][selectitem.inds[i]][3])
+            quat.setFromQuat(
+                this.rotations[t][selectitem.inds[i]][0],
+                this.rotations[t][selectitem.inds[i]][1],
+                this.rotations[t][selectitem.inds[i]][2],
+                this.rotations[t][selectitem.inds[i]][3]
+            )
             modelMatrix.multiply(quat)
 
             if (selectitem.inds[i] == highlighted) {
@@ -214,13 +238,21 @@ class GrainSurfaces {
                 gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
 
                 gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
-                gl.drawArrays(gl.TRIANGLES, this.inds[selectitem.inds[i]][1], this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1])
+                gl.drawArrays(
+                    gl.TRIANGLES,
+                    this.inds[selectitem.inds[i]][1],
+                    this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1]
+                )
 
                 modelMatrix = popMatrix()
             }
 
             gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
-            gl.drawArrays(gl.TRIANGLES, this.inds[selectitem.inds[i]][1], this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1])
+            gl.drawArrays(
+                gl.TRIANGLES,
+                this.inds[selectitem.inds[i]][1],
+                this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1]
+            )
 
             modelMatrix = popMatrix()
         }
@@ -319,7 +351,9 @@ class GrainSurfaces {
                 }
             }
             let canidates = []
-            if (canidates.length == 0 && near.length > 0) { canidates = near }
+            if (canidates.length == 0 && near.length > 0) {
+                canidates = near
+            }
             const triangles = []
             for (let i = 0; i < canidates.length; i++) {
                 for (let tri = this.inds[canidates[i]][1]; tri < this.inds[canidates[i]][2]; tri += 3) {
@@ -329,7 +363,9 @@ class GrainSurfaces {
                     for (let p = 0; p < 3; p++) {
                         triangles[ind].push([])
                         for (let x = 0; x < this.p_fpv; x++) {
-                            triangles[ind][p].push(this.position_buffer[(tri + p) * this.p_fpv + x] + this.positions[t][canidates[i]][x])
+                            triangles[ind][p].push(
+                                this.position_buffer[(tri + p) * this.p_fpv + x] + this.positions[t][canidates[i]][x]
+                            )
                         }
                         dist_from_cam += dist(triangles[ind][p], vec[0])
                     }
