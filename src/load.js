@@ -147,27 +147,19 @@ const loadData = async () => {
         loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
 
-    // load all data async
     loadWrap.classList.remove('hidden')
-    const [
-        { numT, numG },
-        { posBuffers, alpBuffers },
-        positions,
-        rotations,
-        surfaces,
-        inds,
-        { maxForce, forces },
-        rotationMagnitudes
-    ] = await Promise.all([
-        loadMetadata(DATA_DIR, updateLoad),
-        loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad),
-        loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad),
-        loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad),
-        loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad),
-        loadGrainInds(DATA_DIR, updateLoad),
-        loadForces(DATA_DIR, updateLoad),
-        loadRotationMagnitudes(DATA_DIR, updateLoad)
-    ])
+
+    // load all data sequentially to
+    // prevent multiple large blobs / file readers in memory
+    const { numT, numG } = await loadMetadata(DATA_DIR, updateLoad)
+    const { posBuffers, alpBuffers } = await loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad)
+    const positions = await loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad)
+    const rotations = await loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad)
+    const surfaces = await loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad)
+    const inds = await loadGrainInds(DATA_DIR, updateLoad)
+    const { maxForce, forces } = await loadForces(DATA_DIR, updateLoad)
+    const rotationMagnitudes = await loadRotationMagnitudes(DATA_DIR, updateLoad)
+
     loadWrap.classList.add('hidden')
 
     // call main with loaded data
