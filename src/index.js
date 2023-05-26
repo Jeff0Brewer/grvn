@@ -63,6 +63,9 @@ async function main (data) {
         data.forcePlot.posBuffers,
         data.forcePlot.alpBuffers
     )
+    // lose force plot reference for gc
+    // largest memory footprint so use and discard first
+    data.forcePlot = {}
     ribbon_flow = new RibbonFlow(
         data.grains.positions,
         data.rotationMagnitudes,
@@ -79,11 +82,10 @@ async function main (data) {
         data.numT,
         data.numG
     )
-    context_axis = new Axis(100, 100)
-
     // lose reference to dataset for gc
     data = {}
 
+    context_axis = new Axis(100, 100)
     timeline = make_timeline(num_t)
 
     window.addEventListener('keyup', keyup, false)

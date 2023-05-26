@@ -10,14 +10,10 @@ class FnVectors {
         this.posData = []
         this.alpData = []
         this.visData = []
-        for (const buf of posBuffers) {
-            this.posData.push(new Float32Array(buf))
-        }
-        for (const buf of alpBuffers) {
-            this.alpData.push(new Uint8Array(buf))
-        }
         const numVertex = posBuffers[0].length / this.p_fpv
         for (let t = 0; t < posBuffers.length; t++) {
+            this.posData.push(new Float32Array(posBuffers[t]))
+            this.alpData.push(new Uint8Array(alpBuffers[t]))
             this.visData.push(new Uint8Array(numVertex))
         }
     }
