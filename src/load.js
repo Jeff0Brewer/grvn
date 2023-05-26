@@ -110,9 +110,9 @@ const loadGrainInds = async (dataDir, loadCallback) => {
 
 const loadForces = async (dataDir, loadCallback) => {
     const filePath = `${dataDir}/for.msgpack`
-    const forces = await readMsgpack(filePath)
+    const [maxForce, forces] = await readMsgpack(filePath)
     loadCallback()
-    return forces
+    return { maxForce, forces }
 }
 
 const loadRotationMagnitudes = async (dataDir, loadCallback) => {
@@ -144,17 +144,35 @@ const load_data = async () => {
 
     const { numT, numG } = await loadMetadata(DATA_DIR, updateLoad)
     const { posBuffers, alpBuffers } = await loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad)
-    const grainPositions = await loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad)
-    const grainRotations = await loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad)
-    const grainSurfaces = await loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad)
+    const positions = await loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad)
+    const rotations = await loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad)
+    const surfaces = await loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad)
     const inds = await loadGrainInds(DATA_DIR, updateLoad)
-    const forces = await loadForces(DATA_DIR, updateLoad)
-    const rotationMags = await loadRotationMagnitudes(DATA_DIR, updateLoad)
+    const { maxForce, forces } = await loadForces(DATA_DIR, updateLoad)
+    const rotationMagnitudes = await loadRotationMagnitudes(DATA_DIR, updateLoad)
 
     loadWrap.classList.add('hidden')
 
+    const dataSet = {
+        numT,
+        numG,
+        forcePlot: {
+            posBuffers,
+            alpBuffers
+        },
+        grains: {
+            positions,
+            rotations,
+            surfaces,
+            inds
+        },
+        forces,
+        maxForce,
+        rotationMagnitudes
+    }
+
     // run main when data load finished
-    main()
+    main(dataSet)
 }
 
 load_data()

@@ -1,8 +1,8 @@
 class RibbonFlow {
-    constructor (positions, rotations, forces, max_force, num_t, num_g, p_fpv, c_fpv, v_fpv) {
-        this.p_fpv = p_fpv
-        this.c_fpv = c_fpv
-        this.v_fpv = v_fpv
+    constructor (positions, rotations, forces, max_force, num_t, num_g) {
+        this.p_fpv = 3
+        this.c_fpv = 4
+        this.v_fpv = 1
         this.num_t = num_t
         this.buffer_changed = false
         this.last_step = -1

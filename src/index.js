@@ -27,8 +27,8 @@ var viewport_count
 
 var context_axis
 var ribbon_flow
-var fn_vectors = new FnVectors(p_fpv, c_fpv, v_fpv)
-var grain_surfaces = new GrainSurfaces(p_fpv, c_fpv, v_fpv)
+var fn_vectors
+var grain_surfaces
 
 var flow_visible = false
 var vector_visible = true
@@ -66,14 +66,35 @@ var projMatrix = new Matrix4()
 
 var g_last = Date.now()
 
-async function main () {
+async function main (data) {
+    num_t = data.numT
+    num_g = data.numG
+
     // construct vis classes
-    ribbon_flow = new RibbonFlow(pos_data, rot_data, for_data[1], for_data[0], num_t, num_g, p_fpv, c_fpv, v_fpv)
-    pos_data = []
-    rot_data = []
-    for_data = []
-    grain_surfaces.finish_add()
+    fn_vectors = new FnVectors(
+        data.forcePlot.posBuffers,
+        data.forcePlot.alpBuffers
+    )
+    ribbon_flow = new RibbonFlow(
+        data.grains.positions,
+        data.rotationMagnitudes,
+        data.forces,
+        data.maxForce,
+        data.numT,
+        data.numG
+    )
+    grain_surfaces = new GrainSurfaces(
+        data.grains.surfaces,
+        data.grains.inds,
+        data.grains.positions,
+        data.grains.rotations,
+        data.numT,
+        data.numG
+    )
     context_axis = new Axis(100, 100)
+
+    // lose reference to dataset for gc
+    data = {}
 
     timeline = make_timeline(num_t)
 

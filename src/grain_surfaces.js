@@ -1,58 +1,30 @@
 class GrainSurfaces {
-    constructor (p_fpv, c_fpv, v_fpv) {
-        this.p_fpv = p_fpv
-        this.c_fpv = c_fpv
-        this.v_fpv = v_fpv
-
-        this.num_t = -1
-        this.num_g = -1
-
-        this.inds = []
-        this.positions = []
-        this.rotations = []
-        this.position_buffer = []
-        this.color_buffers = []
-        this.visibility_buffer = []
-
+    constructor (surfaces, inds, positions, rotations, numT, numG) {
+        this.p_fpv = 3
+        this.c_fpv = 4
+        this.v_fpv = 1
+        this.num_t = numT
+        this.num_g = numG
         this.buffer_changed = false
-    }
 
-    add_inds (inds) {
         this.inds = inds
-    }
-
-    add_positions (positions) {
         this.positions = positions
-        this.num_t = positions.length
-        this.num_g = positions[0].length
-    }
-
-    add_rotations (rotations) {
         this.rotations = rotations
-    }
 
-    make_position_buffer (vbo) {
-        this.position_buffer = new Float32Array(vbo)
-    }
+        this.position_buffer = new Float32Array(surfaces)
 
-    finish_add () {
-        const num_v = this.position_buffer.length / this.p_fpv
-        this.visibility_buffer = new Float32Array(num_v)
+        const numVertex = this.position_buffer.length / this.p_fpv
+        this.visibility_buffer = new Float32Array(numVertex * this.v_fpv)
 
-        const col = [1, 1, 1, 0.5]
-        let col_ind = 0
-        this.color_buffers.push(new Float32Array(num_v * this.c_fpv))
-        for (let v = 0; v < num_v; v++) {
-            for (let c = 0; c < this.c_fpv; c++, col_ind++) {
-                this.color_buffers[0][col_ind] = col[c]
-            }
+        // set default color for all color buffers
+        const colorBuffer = new Float32Array(numVertex * this.c_fpv)
+        const color = [1, 1, 1, 0.5]
+        for (let i = 0; i < colorBuffer.length; i++) {
+            colorBuffer[i] = color[i % this.c_fpv]
         }
-        for (let t = 0; t < this.num_t; t++) {
-            this.color_buffers.push(this.color_buffers[0].slice())
-        }
-
-        for (let v = 0; v < num_v; v++) {
-            this.visibility_buffer[v] = 0
+        this.color_buffers = []
+        for (let t = 0; t < numT; t++) {
+            this.color_buffers.push(colorBuffer.slice())
         }
     }
 
@@ -71,7 +43,7 @@ class GrainSurfaces {
         // color buffer
         this.gl_col_buf = gl.createBuffer()
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.color_buffers[this.num_t], gl.STATIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, this.color_buffers[0], gl.STATIC_DRAW)
 
         this.a_Color = gl.getAttribLocation(gl.program, 'a_Color')
         gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
@@ -95,7 +67,7 @@ class GrainSurfaces {
         // color buffer
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
         if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[this.num_t])
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[t])
             this.buffer_changed = false
         }
         gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
@@ -233,7 +205,8 @@ class GrainSurfaces {
                     this.inds[selectitem.inds[i]][1] * this.c_fpv * this.fsize,
                     this.color_buffers[t].slice(
                         this.inds[selectitem.inds[i]][1] * this.c_fpv,
-                        this.inds[selectitem.inds[i]][2] * this.c_fpv)
+                        this.inds[selectitem.inds[i]][2] * this.c_fpv
+                    )
                 )
                 gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
 

@@ -1,5 +1,5 @@
 class FnVectors {
-    constructor () {
+    constructor (posBuffers, alpBuffers) {
         this.p_fpv = 3
         this.a_fpv = 1
         this.v_fpv = 1
@@ -10,17 +10,19 @@ class FnVectors {
         this.posData = []
         this.alpData = []
         this.visData = []
-    }
-
-    add_vbos (pos, alp) {
-        this.posData.push(new Float32Array(pos))
-        this.alpData.push(new Uint8Array(alp))
-
-        const ind = this.visData.length
-        this.visData.push(new Uint8Array(pos.length / this.p_fpv))
-        for (let i = 0; i < this.visData[ind].length; i++) {
-            this.visData[ind][i] = 0
+        for (const buf of posBuffers) {
+            this.posData.push(new Float32Array(buf))
         }
+        for (const buf of alpBuffers) {
+            this.alpData.push(new Uint8Array(buf))
+        }
+        const numVertex = posBuffers[0].length / this.p_fpv
+        for (let t = 0; t < posBuffers.length; t++) {
+            this.visData.push(new Uint8Array(numVertex))
+        }
+        console.log(`pos: ${this.posData.length}x${this.posData[0].length}`)
+        console.log(`alp: ${this.alpData.length}x${this.alpData[0].length}`)
+        console.log(`vis: ${this.visData.length}x${this.visData[0].length}`)
     }
 
     async init_gl (gl) {
