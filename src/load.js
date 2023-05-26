@@ -1,123 +1,3 @@
-// accumulators for data split between files
-// temporary hack from legacy code, to be fixed
-const _rot = []
-const _pos = []
-const _grain = []
-
-const processGrainSurface = data => {
-    const scale = 1 / data[0]
-    const surface = data[1]
-    const numSurfaceFiles = data[2]
-    for (let i = 0; i < surface.length; i++) {
-        surface[i] *= scale
-    }
-    _grain.push(surface)
-    if (_grain.length === numSurfaceFiles) {
-        const joined = [].concat(..._grain)
-        grain_surfaces.make_position_buffer(joined)
-
-        // empty accumulator to free memory
-        _grain.splice(0, _grain.length)
-    }
-}
-
-const processPositionData = data => {
-    const scale = 1 / data[0]
-    const positions = data[1]
-    const numPositionFiles = data[2]
-    for (let time = 0; time < positions.length; time++) {
-        for (let grain = 0; grain < positions[time].length; grain++) {
-            for (let xyz = 0; xyz < 3; xyz++) {
-                positions[time][grain][xyz] *= scale
-            }
-        }
-    }
-    _pos.push(positions)
-    if (_pos.length === numPositionFiles) {
-        const joined = [].concat(..._pos)
-        grain_surfaces.add_positions(joined)
-        pos_data = joined
-
-        // empty accumulator to free memory
-        _pos.splice(0, _pos.length)
-    }
-}
-
-const processRotationData = data => {
-    const scale = 1 / data[0]
-    const rotations = data[1]
-    const numRotationFiles = data[2]
-    for (let time = 0; time < rotations.length; time++) {
-        for (let grain = 0; grain < rotations[time].length; grain++) {
-            for (let quat = 0; quat < 4; quat++) {
-                rotations[time][grain][quat] *= scale
-            }
-        }
-    }
-    _rot.push(rotations)
-    if (_rot.length === numRotationFiles) {
-        const joined = [].concat(..._rot)
-        grain_surfaces.add_rotations(joined)
-
-        // empty accumulator to free memory
-        _rot.splice(0, _rot.length)
-    }
-}
-
-const processForceVerts = data => {
-    const pos = data[0]
-    const alp = data[1]
-    fn_vectors.add_vbos(pos, alp)
-}
-
-const setRotationMagnitudeData = data => {
-    rot_data = data
-}
-
-const setForceData = data => {
-    for_data = data
-}
-
-const setGrainSurfaceInds = data => {
-    grain_surfaces.add_inds(data)
-}
-
-const setMetadata = data => {
-    num_t = data[0]
-    num_g = data[1]
-}
-
-const processFile = (blob, fileType) => {
-    const data = msgpack.unpack(blob)
-
-    switch (fileType) {
-        case 'fn':
-            processForceVerts(data)
-            break
-        case 'grains':
-            processGrainSurface(data)
-            break
-        case 'pos':
-            processPositionData(data)
-            break
-        case 'rmag':
-            setRotationMagnitudeData(data)
-            break
-        case 'for':
-            setForceData(data)
-            break
-        case 'rot':
-            processRotationData(data)
-            break
-        case 'inds':
-            setGrainSurfaceInds(data)
-            break
-        case 'head':
-            setMetadata(data)
-            break
-    }
-}
-
 const readFileAsync = file => {
     // temp file reader for single file
     const fileReader = new FileReader()
@@ -138,46 +18,140 @@ const readFileAsync = file => {
     })
 }
 
-// temp fn to get static list of curr data
-const getFiles = () => {
-    const files = []
-    files.push('head') // metadata
-    for (let i = 0; i <= 75; i++) { files.push(`fn${i}`) } // force plot verts
-    for (let i = 0; i <= 3; i++) { files.push(`pos${i}`) } // grain positions
-    for (let i = 0; i <= 3; i++) { files.push(`rot${i}`) } // grain rotations
-    for (let i = 0; i <= 3; i++) { files.push(`grains${i}`) } // grain surfaces
-    files.push('inds') // grain surface vbo inds
-    files.push('for') // force magnitudes
-    files.push('rmag') // rotation magnitude
+const scale3DArray = (arr, scale) => {
+    for (let i = 0; i < arr.length; i++) {
+        for (let j = 0; j < arr[i].length; j++) {
+            for (let k = 0; k < arr[i][j].length; k++) {
+                arr[i][j][k] *= scale
+            }
+        }
+    }
+}
 
-    return files
+// read / unpack .msgpack file, return contents
+const readMsgpack = async (file) => {
+    const res = await fetch(file)
+    const blob = await res.blob()
+    const data = await readFileAsync(blob)
+    return msgpack.unpack(data)
+}
+
+const loadMetadata = async (dataDir, loadCallback) => {
+    const filePath = `${dataDir}/head.msgpack`
+    const data = await readMsgpack(filePath)
+    const [numT, numG] = data
+    loadCallback()
+    return { numT, numG }
+}
+
+const loadForceVerts = async (dataDir, numFiles, loadCallback) => {
+    const posBuffers = []
+    const alpBuffers = []
+    for (let i = 0; i < numFiles; i++) {
+        const filePath = `${dataDir}/fn${i}.msgpack`
+        const data = await readMsgpack(filePath)
+        posBuffers.push(data[0])
+        alpBuffers.push(data[1])
+        loadCallback()
+    }
+    return { posBuffers, alpBuffers }
+}
+
+const loadGrainPositions = async (dataDir, numFiles, loadCallback) => {
+    const positions = []
+    for (let i = 0; i < numFiles; i++) {
+        const filePath = `${dataDir}/pos${i}.msgpack`
+        const data = await readMsgpack(filePath)
+        const scale = 1 / data[0]
+        const pos = data[1]
+        scale3DArray(pos, scale)
+        positions.push(pos)
+        loadCallback()
+    }
+    return [].concat(...positions)
+}
+
+const loadGrainRotations = async (dataDir, numFiles, loadCallback) => {
+    const rotations = []
+    for (let i = 0; i < numFiles; i++) {
+        const filePath = `${dataDir}/rot${i}.msgpack`
+        const data = await readMsgpack(filePath)
+        const scale = 1 / data[0]
+        const rot = data[1]
+        scale3DArray(rot, scale)
+        rotations.push(rot)
+        loadCallback()
+    }
+    return [].concat(...rotations)
+}
+
+const loadGrainSurfaces = async (dataDir, numFiles, loadCallback) => {
+    const surfaces = []
+    for (let i = 0; i < numFiles; i++) {
+        const filePath = `${dataDir}/grains${i}.msgpack`
+        const data = await readMsgpack(filePath)
+        const scale = 1 / data[0]
+        const surf = data[1]
+        for (let i = 0; i < surf.length; i++) {
+            surf[i] *= scale
+        }
+        surfaces.push(surf)
+        loadCallback()
+    }
+    return [].concat(...surfaces)
+}
+
+const loadGrainInds = async (dataDir, loadCallback) => {
+    const filePath = `${dataDir}/inds.msgpack`
+    const inds = await readMsgpack(filePath)
+    loadCallback()
+    return inds
+}
+
+const loadForces = async (dataDir, loadCallback) => {
+    const filePath = `${dataDir}/for.msgpack`
+    const forces = await readMsgpack(filePath)
+    loadCallback()
+    return forces
+}
+
+const loadRotationMagnitudes = async (dataDir, loadCallback) => {
+    const filePath = `${dataDir}/rmag.msgpack`
+    const rotationMagnitudes = await readMsgpack(filePath)
+    loadCallback()
+    return rotationMagnitudes
 }
 
 const load_data = async () => {
+    const NUM_FORCE_VERT_FILES = 76
+    const NUM_GRAIN_POS_FILES = 4
+    const NUM_GRAIN_ROT_FILES = 4
+    const NUM_GRAIN_SURFACE_FILES = 4
+    const NUM_FILES = NUM_FORCE_VERT_FILES + NUM_GRAIN_POS_FILES + NUM_GRAIN_ROT_FILES + NUM_GRAIN_SURFACE_FILES
     const DATA_DIR = 'data'
-    const files = getFiles()
 
-    // show load bar
-    remove_class(document.getElementById('load'), ' hidden')
-    // get load bar width
-    const maxload = document.getElementById('loadbg').clientWidth
-
-    for (let i = 0; i < files.length; i++) {
-        // read data file
-        const res = await fetch(`${DATA_DIR}/${files[i]}.msgpack`)
-        const blob = await res.blob()
-        const data = await readFileAsync(blob)
-
-        // get data type from file name, process data
-        const fileType = files[i].replace(/\d/g, '')
-        processFile(data, fileType)
-
-        // update load progress bar
-        document.getElementById('loadbar').style.width = (maxload - i / (files.length - 1) * maxload).toString() + 'px'
+    let filesLoaded = 0
+    const loadBar = document.getElementById('loadbar')
+    const maxLoadWidth = document.getElementById('loadbg').clientWidth
+    const updateLoad = () => {
+        filesLoaded++
+        const loadProgress = filesLoaded / NUM_FILES
+        loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
+    const loadWrap = document.getElementById('load')
 
-    // hide load bar
-    add_class(document.getElementById('load'), ' hidden')
+    loadWrap.classList.remove('hidden')
+
+    const { numT, numG } = await loadMetadata(DATA_DIR, updateLoad)
+    const { posBuffers, alpBuffers } = await loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad)
+    const grainPositions = await loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad)
+    const grainRotations = await loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad)
+    const grainSurfaces = await loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad)
+    const inds = await loadGrainInds(DATA_DIR, updateLoad)
+    const forces = await loadForces(DATA_DIR, updateLoad)
+    const rotationMags = await loadRotationMagnitudes(DATA_DIR, updateLoad)
+
+    loadWrap.classList.add('hidden')
 
     // run main when data load finished
     main()
