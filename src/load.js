@@ -1,8 +1,9 @@
+// wrap filereader events in promise for async ops
 const readFileAsync = file => {
     // temp file reader for single file
     const fileReader = new FileReader()
 
-    // wrap loaded value in promise for async ops
+    // wrap loaded value in promise
     return new Promise((resolve, reject) => {
         // log errors
         fileReader.onerror = () => {
@@ -18,6 +19,14 @@ const readFileAsync = file => {
     })
 }
 
+// read / unpack .msgpack file, return contents
+const readMsgpack = async (file) => {
+    const res = await fetch(file)
+    const blob = await res.blob()
+    const data = await readFileAsync(blob)
+    return msgpack.unpack(data)
+}
+
 const scale3DArray = (arr, scale) => {
     for (let i = 0; i < arr.length; i++) {
         for (let j = 0; j < arr[i].length; j++) {
@@ -26,14 +35,6 @@ const scale3DArray = (arr, scale) => {
             }
         }
     }
-}
-
-// read / unpack .msgpack file, return contents
-const readMsgpack = async (file) => {
-    const res = await fetch(file)
-    const blob = await res.blob()
-    const data = await readFileAsync(blob)
-    return msgpack.unpack(data)
 }
 
 const loadMetadata = async (dataDir, loadCallback) => {
@@ -142,14 +143,25 @@ const load_data = async () => {
 
     loadWrap.classList.remove('hidden')
 
-    const { numT, numG } = await loadMetadata(DATA_DIR, updateLoad)
-    const { posBuffers, alpBuffers } = await loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad)
-    const positions = await loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad)
-    const rotations = await loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad)
-    const surfaces = await loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad)
-    const inds = await loadGrainInds(DATA_DIR, updateLoad)
-    const { maxForce, forces } = await loadForces(DATA_DIR, updateLoad)
-    const rotationMagnitudes = await loadRotationMagnitudes(DATA_DIR, updateLoad)
+    const [
+        { numT, numG },
+        { posBuffers, alpBuffers },
+        positions,
+        rotations,
+        surfaces,
+        inds,
+        { maxForce, forces },
+        rotationMagnitudes
+    ] = await Promise.all([
+        loadMetadata(DATA_DIR, updateLoad),
+        loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad),
+        loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad),
+        loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad),
+        loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad),
+        loadGrainInds(DATA_DIR, updateLoad),
+        loadForces(DATA_DIR, updateLoad),
+        loadRotationMagnitudes(DATA_DIR, updateLoad)
+    ])
 
     loadWrap.classList.add('hidden')
 

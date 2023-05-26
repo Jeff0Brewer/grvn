@@ -18,8 +18,8 @@ class RibbonFlow {
         const mr = 2
         const cmap = 1
 
-        this.position_buffer = new Float32Array((num_t * num_g + num_g * 2) * 2 * p_fpv)
-        this.color_buffer = new Float32Array((num_t * num_g + num_g * 2) * 2 * c_fpv)
+        this.position_buffer = new Float32Array((num_t * num_g + num_g * 2) * 2 * this.p_fpv)
+        this.color_buffer = new Float32Array((num_t * num_g + num_g * 2) * 2 * this.c_fpv)
         let pos_ind = 0
         let col_ind = 0
 
@@ -43,12 +43,12 @@ class RibbonFlow {
                 -2 / (positions[1][g][2] - this_pos[2])
             ])
 
-            for (let pp = 0; pp < p_fpv * 2; pp++, pos_ind++) {
-                this.position_buffer[pos_ind] = positions[0][g][pp % p_fpv]
-                last_pos[pp] = positions[0][g][pp % p_fpv]
-                this_pos[pp] = positions[0][g][pp % p_fpv]
+            for (let pp = 0; pp < this.p_fpv * 2; pp++, pos_ind++) {
+                this.position_buffer[pos_ind] = positions[0][g][pp % this.p_fpv]
+                last_pos[pp] = positions[0][g][pp % this.p_fpv]
+                this_pos[pp] = positions[0][g][pp % this.p_fpv]
             }
-            for (let pc = 0; pc < c_fpv * 2; pc++, col_ind++) {
+            for (let pc = 0; pc < this.c_fpv * 2; pc++, col_ind++) {
                 this.color_buffer[col_ind] = 0
             }
 
@@ -64,7 +64,7 @@ class RibbonFlow {
                     pow_map(mapper, 0, mr, lc[2], hc[2], cr)
                 ]
 
-                for (let pp = 0; pp < p_fpv; pp++) {
+                for (let pp = 0; pp < this.p_fpv; pp++) {
                     this_pos[pp] = positions[t][g][pp]
                     this_pll[pp] = this_pos[pp] - last_pos[pp]
                 }
@@ -79,28 +79,28 @@ class RibbonFlow {
 
                 const ribbon_size = pow_map(forces[t][g], 0, max_force, lw, hw, wf)
 
-                for (let p = 0; p < p_fpv; p++, pos_ind++) { this.position_buffer[pos_ind] = positions[t][g][p] + ribbon_vec[p] * ribbon_size }
-                for (let p = 0; p < p_fpv; p++, pos_ind++) { this.position_buffer[pos_ind] = positions[t][g][p] - ribbon_vec[p] * ribbon_size }
+                for (let p = 0; p < this.p_fpv; p++, pos_ind++) { this.position_buffer[pos_ind] = positions[t][g][p] + ribbon_vec[p] * ribbon_size }
+                for (let p = 0; p < this.p_fpv; p++, pos_ind++) { this.position_buffer[pos_ind] = positions[t][g][p] - ribbon_vec[p] * ribbon_size }
 
                 const op = Math.pow((14 - magnitude(this_pll)) / 14, 10)
-                for (let c = 0; c < c_fpv - 1; c++, col_ind++) { this.color_buffer[col_ind] = col[c] }
+                for (let c = 0; c < this.c_fpv - 1; c++, col_ind++) { this.color_buffer[col_ind] = col[c] }
                 this.color_buffer[col_ind] = op
                 col_ind++
 
-                for (let c = 0; c < c_fpv - 1; c++, col_ind++) { this.color_buffer[col_ind] = col[c] }
+                for (let c = 0; c < this.c_fpv - 1; c++, col_ind++) { this.color_buffer[col_ind] = col[c] }
                 this.color_buffer[col_ind] = op
                 col_ind++
 
-                for (let pp = 0; pp < p_fpv; pp++) {
+                for (let pp = 0; pp < this.p_fpv; pp++) {
                     last_pos[pp] = this_pos[pp]
                     last_pll[pp] = this_pll[pp]
                 }
             }
 
-            for (let pp = 0; pp < p_fpv * 2; pp++, pos_ind++) {
-                this.position_buffer[pos_ind] = positions[num_t - 1][g][pp % p_fpv]
+            for (let pp = 0; pp < this.p_fpv * 2; pp++, pos_ind++) {
+                this.position_buffer[pos_ind] = positions[num_t - 1][g][pp % this.p_fpv]
             }
-            for (let pc = 0; pc < c_fpv * 2; pc++, col_ind++) {
+            for (let pc = 0; pc < this.c_fpv * 2; pc++, col_ind++) {
                 this.color_buffer[col_ind] = 0
             }
         }

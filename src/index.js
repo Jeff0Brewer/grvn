@@ -1,10 +1,6 @@
 var num_t = -1
 var num_g = -1
 
-var p_fpv = 3
-var c_fpv = 4
-var v_fpv = 1
-
 var sidebar = document.getElementById('sidebar')
 var fs_tab = document.getElementById('fs_tab')
 var fs_menu = [document.getElementById('fs_menu_0'), document.getElementById('fs_menu_1')]
@@ -13,14 +9,6 @@ var sm_menu = [document.getElementById('sm_menu_0'), document.getElementById('sm
 
 var frozen = false
 var vis_mode = 0 // 0: full sample | 1: small multiples
-
-var pos_data
-var rot_data
-var for_data
-
-var con_data = []
-var max_force_mag = 0
-var max_force_comp = 0
 
 var viewports
 var viewport_count

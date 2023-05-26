@@ -20,9 +20,6 @@ class FnVectors {
         for (let t = 0; t < posBuffers.length; t++) {
             this.visData.push(new Uint8Array(numVertex))
         }
-        console.log(`pos: ${this.posData.length}x${this.posData[0].length}`)
-        console.log(`alp: ${this.alpData.length}x${this.alpData[0].length}`)
-        console.log(`vis: ${this.visData.length}x${this.visData[0].length}`)
     }
 
     async init_gl (gl) {
