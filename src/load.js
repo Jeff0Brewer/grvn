@@ -123,26 +123,32 @@ const loadRotationMagnitudes = async (dataDir, loadCallback) => {
     return rotationMagnitudes
 }
 
-const load_data = async () => {
+const loadData = async () => {
+    const DATA_DIR = 'data'
+    // file counts for demo dataset
     const NUM_FORCE_VERT_FILES = 76
     const NUM_GRAIN_POS_FILES = 4
     const NUM_GRAIN_ROT_FILES = 4
     const NUM_GRAIN_SURFACE_FILES = 4
-    const NUM_FILES = NUM_FORCE_VERT_FILES + NUM_GRAIN_POS_FILES + NUM_GRAIN_ROT_FILES + NUM_GRAIN_SURFACE_FILES
-    const DATA_DIR = 'data'
+    const NUM_MISC_FILES = 4
+    const NUM_FILES =
+        NUM_FORCE_VERT_FILES + NUM_GRAIN_POS_FILES +
+        NUM_GRAIN_ROT_FILES + NUM_GRAIN_SURFACE_FILES +
+        NUM_MISC_FILES
 
-    let filesLoaded = 0
+    // get dom elements / closure for updating load bar
+    const loadWrap = document.getElementById('load')
     const loadBar = document.getElementById('loadbar')
     const maxLoadWidth = document.getElementById('loadbg').clientWidth
+    let filesLoaded = 0
     const updateLoad = () => {
         filesLoaded++
         const loadProgress = filesLoaded / NUM_FILES
         loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
-    const loadWrap = document.getElementById('load')
 
+    // load all data async
     loadWrap.classList.remove('hidden')
-
     const [
         { numT, numG },
         { posBuffers, alpBuffers },
@@ -162,10 +168,10 @@ const load_data = async () => {
         loadForces(DATA_DIR, updateLoad),
         loadRotationMagnitudes(DATA_DIR, updateLoad)
     ])
-
     loadWrap.classList.add('hidden')
 
-    const dataSet = {
+    // call main with loaded data
+    main({
         numT,
         numG,
         forcePlot: {
@@ -181,10 +187,7 @@ const load_data = async () => {
         forces,
         maxForce,
         rotationMagnitudes
-    }
-
-    // run main when data load finished
-    main(dataSet)
+    })
 }
 
-load_data()
+loadData()
