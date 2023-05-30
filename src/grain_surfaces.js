@@ -24,8 +24,6 @@ class GrainSurfaces {
     async init_gl (gl) {
         const vert = await fetch('./shaders/grain-vert.glsl').then(res => res.text())
         const frag = await fetch('./shaders/grain-frag.glsl').then(res => res.text())
-
-        const oldProgram = gl.program
         this.program = initProgram(gl, vert, frag)
         bindProgram(gl, this.program)
 
@@ -43,12 +41,9 @@ class GrainSurfaces {
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
         this.u_GrainPos = gl.getUniformLocation(gl.program, 'u_GrainPos')
         this.u_Color = gl.getUniformLocation(gl.program, 'u_Color')
-
-        bindProgram(gl, oldProgram)
     }
 
     draw_inds (gl, modelMatrix, viewMatrix, projMatrix, inds, t, rx, rz, viewport) {
-        const oldProgram = gl.program
         bindProgram(gl, this.program)
 
         this.bindPos(gl)
@@ -91,12 +86,9 @@ class GrainSurfaces {
                 this.inds[inds[i]][2] - this.inds[inds[i]][1]
             )
         }
-
-        bindProgram(gl, oldProgram)
     }
 
     draw_sm (gl, viewMatrix, projMatrix, selectitem, t, viewport) {
-        const oldProgram = gl.program
         bindProgram(gl, this.program)
 
         this.buffer_changed = true
@@ -172,8 +164,6 @@ class GrainSurfaces {
                 this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1]
             )
         }
-
-        bindProgram(gl, oldProgram)
     }
 
     get_chain (t, vectors, delta, subsets) {

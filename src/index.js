@@ -48,7 +48,7 @@ var cmap_reader = new FileReader()
 var fs_camera = new FSCamera(0.5, 0.1)
 var scrolling
 
-modelMatrix = new Matrix4()
+var modelMatrix = new Matrix4()
 var viewMatrix = new Matrix4()
 var projMatrix = new Matrix4()
 
@@ -110,7 +110,6 @@ async function main (data) {
     viewport_count = 1
 
     projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
-    gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements)
 
     // init overlay interface elements
     compare_mouse = new CompareMouse(canvas.width, canvas.height, 'rgb(63,215,177,.9)', 40, 1.75)
@@ -158,7 +157,6 @@ function draw (elapsed) {
             fs_camera.focus.z,
             0, 0, 1
         )
-        gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements)
 
         if (!global_fields.dragging && !fs_camera.dragging) {
             timeline.tick(elapsed)
@@ -340,19 +338,6 @@ const setup_gl = async () => {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.clearColor(0, 0, 0, 1)
 
-    const VSHADER_SOURCE = await fetch('./shaders/vert.glsl').then(res => res.text())
-    const FSHADER_SOURCE = await fetch('./shaders/frag.glsl').then(res => res.text())
-
-    initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)
-    await init_buffers()
-
-    u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
-    u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
-    u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
-}
-
-// init visualization buffers
-const init_buffers = async () => {
     await fn_vectors.init_gl(gl)
     await context_axis.init_gl(gl)
     await grain_surfaces.init_gl(gl)
@@ -487,9 +472,6 @@ function switch_mode (mode) {
 
         if (mode == 0) { // full sample
             projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
-            if (gl) {
-                gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements)
-            }
             for (let i = 0; i < selections.length; i++) {
                 add_class(selections[i].elements.time_inputs.panel, ' hidden')
             }
@@ -511,9 +493,6 @@ function resize_all () {
     canvas.height = innerHeight
 
     projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
-    if (gl) {
-        gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements)
-    }
 
     if (viewports) {
         for (let i = 0; i < viewports.length; i++) {
@@ -764,7 +743,6 @@ document.getElementById('flow_toggle').onmouseup = function () {
     }
 
     projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
-    gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements)
 }
 
 document.getElementById('vector_toggle').onmouseup = function () {
@@ -798,7 +776,6 @@ document.getElementById('vector_toggle').onmouseup = function () {
     }
 
     projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
-    gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements)
 }
 
 document.getElementById('standard_layout').onmouseup = function () {

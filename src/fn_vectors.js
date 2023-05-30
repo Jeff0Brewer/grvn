@@ -19,11 +19,9 @@ class FnVectors {
     }
 
     async init_gl (gl) {
-        const vertSource = await fetch('./shaders/force-vert.glsl').then(res => res.text())
-        const fragSource = await fetch('./shaders/force-frag.glsl').then(res => res.text())
-
-        const oldProgram = gl.program
-        this.program = initProgram(gl, vertSource, fragSource)
+        const vert = await fetch('./shaders/force-vert.glsl').then(res => res.text())
+        const frag = await fetch('./shaders/force-frag.glsl').then(res => res.text())
+        this.program = initProgram(gl, vert, frag)
         bindProgram(gl, this.program)
 
         this.bindPos = initAttribBuffer(
@@ -54,8 +52,6 @@ class FnVectors {
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
-
-        bindProgram(gl, oldProgram)
     }
 
     draw (gl, modelMatrix, viewMatrix, projMatrix, timestep, rx, rz, viewport) {
@@ -63,7 +59,6 @@ class FnVectors {
         this.buffer_changed ||= timestep !== this.last_step
         this.last_step = timestep
 
-        const oldProgram = gl.program
         bindProgram(gl, this.program)
 
         this.bindPos(gl)
@@ -95,8 +90,6 @@ class FnVectors {
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.drawArrays(gl.LINES, 0, this.posData[timestep].length / this.p_fpv)
-
-        bindProgram(gl, oldProgram)
     }
 
     slice (planefilters) {
