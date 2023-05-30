@@ -64,6 +64,7 @@ const initAttribBuffer = (gl, name, fpv, data, glType, usage) => {
         )
     }
     bind(gl)
+    gl.enableVertexAttribArray(attrib)
 
     // return closure to bind buffer and set vertex pointer
     return bind
