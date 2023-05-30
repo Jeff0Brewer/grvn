@@ -120,7 +120,14 @@ class RibbonFlow {
         }
     }
 
-    init_buffers () {
+    async init_gl (gl) {
+        const vert = await fetch('./shaders/vert.glsl').then(res => res.text())
+        const frag = await fetch('./shaders/frag.glsl').then(res => res.text())
+
+        const oldProgram = gl.program
+        this.program = initProgram(gl, vert, frag)
+        bindProgram(gl, this.program)
+
         this.bindPos = initAttribBuffer(
             gl,
             'a_Position',
@@ -145,11 +152,20 @@ class RibbonFlow {
             gl.UNSIGNED_BYTE,
             gl.DYNAMIC_DRAW
         )
+
+        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
+        this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
+        this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
+
+        bindProgram(gl, oldProgram)
     }
 
-    draw (gl, u_ModelMatrix, timestep, rx, rz, viewport) {
+    draw (gl, modelMatrix, viewMatrix, projMatrix, timestep, rx, rz, viewport) {
         this.buffer_changed ||= timestep !== this.last_step
         this.last_step = timestep
+
+        const oldProgram = gl.program
+        bindProgram(gl, this.program)
 
         this.bindPos(gl)
         this.bindCol(gl)
@@ -168,10 +184,14 @@ class RibbonFlow {
         model.rotate(rz, 0, 0, 1)
         model.translate(0, 0, -800)
 
-        gl.uniformMatrix4fv(u_ModelMatrix, false, model.elements)
+        gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
+        gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.position_buffer.length / this.p_fpv)
+
+        bindProgram(gl, oldProgram)
     }
 
     slice (planefilters) {

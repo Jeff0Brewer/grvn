@@ -172,7 +172,9 @@ function draw (elapsed) {
             viewports[viewport_ind].clear()
             ribbon_flow.draw(
                 gl,
-                u_ModelMatrix,
+                modelMatrix,
+                viewMatrix,
+                projMatrix,
                 timeline.timestep,
                 fs_camera.rotation.x,
                 fs_camera.rotation.z,
@@ -353,8 +355,8 @@ const setup_gl = async () => {
 const init_buffers = async () => {
     await fn_vectors.init_gl(gl)
     await context_axis.init_gl(gl)
-    grain_surfaces.init_gl(gl)
-    ribbon_flow.init_buffers()
+    await grain_surfaces.init_gl(gl)
+    await ribbon_flow.init_gl(gl)
 }
 
 function slice (output) {
