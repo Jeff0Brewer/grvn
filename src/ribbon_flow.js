@@ -19,7 +19,7 @@ class RibbonFlow {
         const cmap = 1
 
         this.position_buffer = new Float32Array((num_t * num_g + num_g * 2) * 2 * this.p_fpv)
-        this.color_buffer = new Float32Array((num_t * num_g + num_g * 2) * 2 * this.c_fpv)
+        this.color_buffer = new Uint8Array((num_t * num_g + num_g * 2) * 2 * this.c_fpv)
         let pos_ind = 0
         let col_ind = 0
 
@@ -79,15 +79,23 @@ class RibbonFlow {
 
                 const ribbon_size = pow_map(forces[t][g], 0, max_force, lw, hw, wf)
 
-                for (let p = 0; p < this.p_fpv; p++, pos_ind++) { this.position_buffer[pos_ind] = positions[t][g][p] + ribbon_vec[p] * ribbon_size }
-                for (let p = 0; p < this.p_fpv; p++, pos_ind++) { this.position_buffer[pos_ind] = positions[t][g][p] - ribbon_vec[p] * ribbon_size }
+                for (let p = 0; p < this.p_fpv; p++, pos_ind++) {
+                    this.position_buffer[pos_ind] = positions[t][g][p] + ribbon_vec[p] * ribbon_size
+                }
+                for (let p = 0; p < this.p_fpv; p++, pos_ind++) {
+                    this.position_buffer[pos_ind] = positions[t][g][p] - ribbon_vec[p] * ribbon_size
+                }
 
-                const op = Math.pow((14 - magnitude(this_pll)) / 14, 10)
-                for (let c = 0; c < this.c_fpv - 1; c++, col_ind++) { this.color_buffer[col_ind] = col[c] }
+                const op = Math.pow((14 - magnitude(this_pll)) / 14, 10) * 255
+
+                for (let c = 0; c < this.c_fpv - 1; c++, col_ind++) {
+                    this.color_buffer[col_ind] = col[c] * 255
+                }
                 this.color_buffer[col_ind] = op
                 col_ind++
-
-                for (let c = 0; c < this.c_fpv - 1; c++, col_ind++) { this.color_buffer[col_ind] = col[c] }
+                for (let c = 0; c < this.c_fpv - 1; c++, col_ind++) {
+                    this.color_buffer[col_ind] = col[c] * 255
+                }
                 this.color_buffer[col_ind] = op
                 col_ind++
 
@@ -121,8 +129,8 @@ class RibbonFlow {
     }
 
     async init_gl (gl) {
-        const vert = await fetch('./shaders/vert.glsl').then(res => res.text())
-        const frag = await fetch('./shaders/frag.glsl').then(res => res.text())
+        const vert = await fetch('./shaders/flow-vert.glsl').then(res => res.text())
+        const frag = await fetch('./shaders/flow-frag.glsl').then(res => res.text())
         this.program = initProgram(gl, vert, frag)
         bindProgram(gl, this.program)
 
@@ -139,7 +147,7 @@ class RibbonFlow {
             'a_Color',
             this.c_fpv,
             this.color_buffer,
-            gl.FLOAT,
+            gl.UNSIGNED_BYTE,
             gl.STATIC_DRAW
         )
         this.bindVis = initAttribBuffer(

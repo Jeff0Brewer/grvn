@@ -10,7 +10,7 @@ varying vec4 v_Color;
 varying float v_Visibility;
 
 void main() {
-    v_Color = a_Color;
+    v_Color = a_Color / 255.0;
     v_Visibility = a_Visibility;
     gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
 }

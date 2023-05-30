@@ -125,7 +125,9 @@ async function main (data) {
         const elapsed = now - g_last
         g_last = now
 
-        if (slice_interface.new_planes) { slice(slice_interface.get_output()) } else {
+        if (slice_interface.new_planes) {
+            slice(slice_interface.get_output())
+        } else {
             for (let i = 0; i < slices.length; i++) {
                 if (slices[i].removed) {
                     unslice(slices[i].planefilters)
