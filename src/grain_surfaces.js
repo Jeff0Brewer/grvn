@@ -1,8 +1,6 @@
 class GrainSurfaces {
     constructor (surfaces, inds, positions, rotations, numT, numG) {
         this.p_fpv = 3
-        this.c_fpv = 4
-        this.v_fpv = 1
         this.num_t = numT
         this.num_g = numG
         this.buffer_changed = false
@@ -12,25 +10,20 @@ class GrainSurfaces {
         this.rotations = rotations
 
         this.position_buffer = new Float32Array(surfaces)
-
-        const numVertex = this.position_buffer.length / this.p_fpv
-        this.visibility_buffer = new Float32Array(numVertex * this.v_fpv)
-
-        // set default color for all color buffers
-        const colorBuffer = new Float32Array(numVertex * this.c_fpv)
-        const color = [1, 1, 1, 0.5]
-        for (let i = 0; i < colorBuffer.length; i++) {
-            colorBuffer[i] = color[i % this.c_fpv]
-        }
-        this.color_buffers = []
+        this.colors = []
+        const defaultColor = [1.0, 1.0, 1.0, 0.8]
         for (let t = 0; t < numT; t++) {
-            this.color_buffers.push(colorBuffer.slice())
+            const timestepColors = []
+            for (let g = 0; g < numG; g++) {
+                timestepColors.push(defaultColor.slice())
+            }
+            this.colors.push(timestepColors)
         }
     }
 
     async init_gl (gl) {
-        const vert = await fetch('./shaders/vert.glsl').then(res => res.text())
-        const frag = await fetch('./shaders/frag.glsl').then(res => res.text())
+        const vert = await fetch('./shaders/grain-vert.glsl').then(res => res.text())
+        const frag = await fetch('./shaders/grain-frag.glsl').then(res => res.text())
 
         const oldProgram = gl.program
         this.program = initProgram(gl, vert, frag)
@@ -44,26 +37,12 @@ class GrainSurfaces {
             gl.FLOAT,
             gl.STATIC_DRAW
         )
-        this.bindCol = initAttribBuffer(
-            gl,
-            'a_Color',
-            this.c_fpv,
-            this.color_buffers[0],
-            gl.FLOAT,
-            gl.STATIC_DRAW
-        )
-        this.bindVis = initAttribBuffer(
-            gl,
-            'a_Visibility',
-            this.v_fpv,
-            this.visibility_buffer,
-            gl.FLOAT,
-            gl.STATIC_DRAW
-        )
 
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
+        this.u_GrainPos = gl.getUniformLocation(gl.program, 'u_GrainPos')
+        this.u_Color = gl.getUniformLocation(gl.program, 'u_Color')
 
         bindProgram(gl, oldProgram)
     }
@@ -73,12 +52,6 @@ class GrainSurfaces {
         bindProgram(gl, this.program)
 
         this.bindPos(gl)
-        this.bindVis(gl)
-        this.bindCol(gl)
-        if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[t])
-            this.buffer_changed = false
-        }
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
@@ -92,9 +65,10 @@ class GrainSurfaces {
 
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
 
         for (let i = 0; i < inds.length; i++) {
-            const grainPos = new Matrix4(model)
+            const grainPos = new Matrix4()
             grainPos.translate(
                 this.positions[t][inds[i]][0],
                 this.positions[t][inds[i]][1],
@@ -109,7 +83,8 @@ class GrainSurfaces {
             )
             grainPos.multiply(quat)
 
-            gl.uniformMatrix4fv(this.u_ModelMatrix, false, grainPos.elements)
+            gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
+            gl.uniform4fv(this.u_Color, this.colors[t][inds[i]])
             gl.drawArrays(
                 gl.TRIANGLES,
                 this.inds[inds[i]][1],
@@ -154,9 +129,6 @@ class GrainSurfaces {
         selectitem.inds.sort(comp)
 
         this.bindPos(gl)
-        this.bindVis(gl)
-        this.bindCol(gl)
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[t])
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
@@ -169,13 +141,14 @@ class GrainSurfaces {
         modelMatrix.translate(-selectitem.offsets[t].x, -selectitem.offsets[t].y, -selectitem.offsets[t].z)
 
         viewMatrix.setLookAt(selectitem.camera.x, selectitem.camera.y, selectitem.camera.z, selectitem.offsets[t].x * 0.025, selectitem.offsets[t].y * 0.025, selectitem.offsets[t].z * 0.025, 0, 0, 1)
-        gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
-
         projMatrix.setPerspective(35, viewport.width / viewport.height, 1, 500)
+
+        gl.uniformMatrix4fv(this.u_ModelMatrix, false, modelMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
 
         for (let i = 0; i < selectitem.inds.length; i++) {
-            const grainPos = new Matrix4(modelMatrix)
+            const grainPos = new Matrix4()
 
             grainPos.translate(
                 this.positions[t][selectitem.inds[i]][0],
@@ -191,7 +164,8 @@ class GrainSurfaces {
             )
             grainPos.multiply(quat)
 
-            gl.uniformMatrix4fv(this.u_ModelMatrix, false, grainPos.elements)
+            gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
+            gl.uniform4fv(this.u_Color, this.colors[t][selectitem.inds[i]])
             gl.drawArrays(
                 gl.TRIANGLES,
                 this.inds[selectitem.inds[i]][1],
