@@ -29,6 +29,13 @@ class GrainSurfaces {
     }
 
     async init_gl (gl) {
+        const vert = await fetch('./shaders/vert.glsl').then(res => res.text())
+        const frag = await fetch('./shaders/frag.glsl').then(res => res.text())
+
+        const oldProgram = gl.program
+        this.program = initProgram(gl, vert, frag)
+        bindProgram(gl, this.program)
+
         this.fsize = this.position_buffer.BYTES_PER_ELEMENT
 
         // position buffer
@@ -57,9 +64,18 @@ class GrainSurfaces {
         this.a_Visibility = gl.getAttribLocation(gl.program, 'a_Visibility')
         gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
         gl.enableVertexAttribArray(this.a_Visibility)
+
+        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
+        this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
+        this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
+
+        bindProgram(gl, oldProgram)
     }
 
-    draw_inds (gl, u_ModelMatrix, inds, t, rx, rz, viewport) {
+    draw_inds (gl, modelMatrix, viewMatrix, projMatrix, inds, t, rx, rz, viewport) {
+        const oldProgram = gl.program
+        bindProgram(gl, this.program)
+
         // position buffer
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
         gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
@@ -79,17 +95,19 @@ class GrainSurfaces {
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
-        pushMatrix(modelMatrix)
-        modelMatrix.scale(0.025, 0.025, 0.025)
-        modelMatrix.translate(0, 0, 800)
-        modelMatrix.rotate(rx, 1, 0, 0)
-        modelMatrix.rotate(rz, 0, 0, 1)
-        modelMatrix.translate(0, 0, -800)
+        const model = new Matrix4(modelMatrix)
+        model.scale(0.025, 0.025, 0.025)
+        model.translate(0, 0, 800)
+        model.rotate(rx, 1, 0, 0)
+        model.rotate(rz, 0, 0, 1)
+        model.translate(0, 0, -800)
+
+        gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
 
         for (let i = 0; i < inds.length; i++) {
-            pushMatrix(modelMatrix)
-
-            modelMatrix.translate(
+            const grainPos = new Matrix4(model)
+            grainPos.translate(
                 this.positions[t][inds[i]][0],
                 this.positions[t][inds[i]][1],
                 this.positions[t][inds[i]][2]
@@ -101,25 +119,24 @@ class GrainSurfaces {
                 this.rotations[t][inds[i]][2],
                 this.rotations[t][inds[i]][3]
             )
-            modelMatrix.multiply(quat)
+            grainPos.multiply(quat)
 
-            gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
+            gl.uniformMatrix4fv(this.u_ModelMatrix, false, grainPos.elements)
             gl.drawArrays(
                 gl.TRIANGLES,
                 this.inds[inds[i]][1],
                 this.inds[inds[i]][2] - this.inds[inds[i]][1]
             )
-
-            modelMatrix = popMatrix()
         }
 
-        modelMatrix = popMatrix()
+        bindProgram(gl, oldProgram)
     }
 
-    draw_sm (gl, u_ModelMatrix, viewMatrix, u_ViewMatrix, projMatrix, u_ProjMatrix, selectitem, t, viewport, highlighted) {
-        this.buffer_changed = true
+    draw_sm (gl, viewMatrix, projMatrix, selectitem, t, viewport) {
+        const oldProgram = gl.program
+        bindProgram(gl, this.program)
 
-        if (!highlighted) { highlighted = -1 }
+        this.buffer_changed = true
 
         const rot = new Matrix4()
         rot.rotate(-selectitem.rotation.x, 1, 0, 0)
@@ -164,7 +181,7 @@ class GrainSurfaces {
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
-        pushMatrix(modelMatrix)
+        const modelMatrix = new Matrix4()
         modelMatrix.scale(0.025, 0.025, 0.025)
         modelMatrix.translate(selectitem.offsets[t].x, selectitem.offsets[t].y, selectitem.offsets[t].z)
         modelMatrix.rotate(selectitem.rotation.x, 1, 0, 0)
@@ -172,15 +189,15 @@ class GrainSurfaces {
         modelMatrix.translate(-selectitem.offsets[t].x, -selectitem.offsets[t].y, -selectitem.offsets[t].z)
 
         viewMatrix.setLookAt(selectitem.camera.x, selectitem.camera.y, selectitem.camera.z, selectitem.offsets[t].x * 0.025, selectitem.offsets[t].y * 0.025, selectitem.offsets[t].z * 0.025, 0, 0, 1)
-        gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
 
         projMatrix.setPerspective(35, viewport.width / viewport.height, 1, 500)
-        gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
 
         for (let i = 0; i < selectitem.inds.length; i++) {
-            pushMatrix(modelMatrix)
+            const grainPos = new Matrix4(modelMatrix)
 
-            modelMatrix.translate(
+            grainPos.translate(
                 this.positions[t][selectitem.inds[i]][0],
                 this.positions[t][selectitem.inds[i]][1],
                 this.positions[t][selectitem.inds[i]][2]
@@ -192,45 +209,17 @@ class GrainSurfaces {
                 this.rotations[t][selectitem.inds[i]][2],
                 this.rotations[t][selectitem.inds[i]][3]
             )
-            modelMatrix.multiply(quat)
+            grainPos.multiply(quat)
 
-            if (selectitem.inds[i] == highlighted) {
-                pushMatrix(modelMatrix)
-
-                modelMatrix.scale(1.1, 1.1, 1.1)
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
-                gl.bufferSubData(
-                    gl.ARRAY_BUFFER,
-                    this.inds[selectitem.inds[i]][1] * this.c_fpv * this.fsize,
-                    this.color_buffers[t].slice(
-                        this.inds[selectitem.inds[i]][1] * this.c_fpv,
-                        this.inds[selectitem.inds[i]][2] * this.c_fpv
-                    )
-                )
-                gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
-
-                gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
-                gl.drawArrays(
-                    gl.TRIANGLES,
-                    this.inds[selectitem.inds[i]][1],
-                    this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1]
-                )
-
-                modelMatrix = popMatrix()
-            }
-
-            gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements)
+            gl.uniformMatrix4fv(this.u_ModelMatrix, false, grainPos.elements)
             gl.drawArrays(
                 gl.TRIANGLES,
                 this.inds[selectitem.inds[i]][1],
                 this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1]
             )
-
-            modelMatrix = popMatrix()
         }
 
-        modelMatrix = popMatrix()
+        bindProgram(gl, oldProgram)
     }
 
     get_chain (t, vectors, delta, subsets) {
@@ -286,7 +275,9 @@ class GrainSurfaces {
             let hit = false
             for (let v = 0; v < vectors.length && !hit; v++) {
                 hit = hit | this.hit_test(this.positions[t][inside[i]], vectors[v], delta)
-                if (hit) { cross.push(inside[i]) }
+                if (hit) {
+                    cross.push(inside[i])
+                }
             }
         }
         return cross

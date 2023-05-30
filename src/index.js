@@ -208,7 +208,9 @@ function draw (elapsed) {
             if (drawing_inds.length > 0) {
                 grain_surfaces.draw_inds(
                     gl,
-                    u_ModelMatrix,
+                    modelMatrix,
+                    viewMatrix,
+                    projMatrix,
                     drawing_inds,
                     timeline.timestep,
                     fs_camera.rotation.x,
@@ -279,15 +281,11 @@ function draw (elapsed) {
         for (let i = 0; i < params.length; i++) {
             grain_surfaces.draw_sm(
                 gl,
-                u_ModelMatrix,
                 viewMatrix,
-                u_ViewMatrix,
                 projMatrix,
-                u_ProjMatrix,
                 params[i][0],
                 params[i][1],
-                params[i][2],
-                highlighted
+                params[i][2]
             )
         }
 
@@ -539,11 +537,8 @@ function resize_all () {
             for (let i = 0; i < params.length; i++) {
                 grain_surfaces.draw_sm(
                     gl,
-                    u_ModelMatrix,
                     viewMatrix,
-                    u_ViewMatrix,
                     projMatrix,
-                    u_ProjMatrix,
                     params[i][0],
                     params[i][1],
                     params[i][2]
