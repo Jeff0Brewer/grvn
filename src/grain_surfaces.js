@@ -28,7 +28,7 @@ class GrainSurfaces {
         }
     }
 
-    init_buffers () {
+    async init_gl (gl) {
         this.fsize = this.position_buffer.BYTES_PER_ELEMENT
 
         // position buffer
@@ -59,7 +59,7 @@ class GrainSurfaces {
         gl.enableVertexAttribArray(this.a_Visibility)
     }
 
-    draw_inds (inds, t, u_ModelMatrix, rx, rz, viewport) {
+    draw_inds (gl, u_ModelMatrix, inds, t, rx, rz, viewport) {
         // position buffer
         gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
         gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
@@ -116,7 +116,7 @@ class GrainSurfaces {
         modelMatrix = popMatrix()
     }
 
-    draw_sm (selectitem, t, u_ModelMatrix, viewMatrix, u_ViewMatrix, projMatrix, u_ProjMatrix, viewport, highlighted) {
+    draw_sm (gl, u_ModelMatrix, viewMatrix, u_ViewMatrix, projMatrix, u_ProjMatrix, selectitem, t, viewport, highlighted) {
         this.buffer_changed = true
 
         if (!highlighted) { highlighted = -1 }

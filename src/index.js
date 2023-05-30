@@ -207,9 +207,10 @@ function draw (elapsed) {
             }
             if (drawing_inds.length > 0) {
                 grain_surfaces.draw_inds(
+                    gl,
+                    u_ModelMatrix,
                     drawing_inds,
                     timeline.timestep,
-                    u_ModelMatrix,
                     fs_camera.rotation.x,
                     fs_camera.rotation.z,
                     viewports[viewport_ind]
@@ -277,13 +278,14 @@ function draw (elapsed) {
 
         for (let i = 0; i < params.length; i++) {
             grain_surfaces.draw_sm(
-                params[i][0],
-                params[i][1],
+                gl,
                 u_ModelMatrix,
                 viewMatrix,
                 u_ViewMatrix,
                 projMatrix,
                 u_ProjMatrix,
+                params[i][0],
+                params[i][1],
                 params[i][2],
                 highlighted
             )
@@ -353,8 +355,8 @@ const setup_gl = async () => {
 const init_buffers = async () => {
     await fn_vectors.init_gl(gl)
     await context_axis.init_gl(gl)
+    grain_surfaces.init_gl(gl)
     ribbon_flow.init_buffers()
-    grain_surfaces.init_buffers()
 }
 
 function slice (output) {
@@ -534,7 +536,19 @@ function resize_all () {
         let params = sm_viewer.resize(canvas.width, canvas.height, selections)
         if (params) { params = params[0] }
         if (vis_mode == 1 && params) {
-            for (let i = 0; i < params.length; i++) { grain_surfaces.draw_sm(params[i][0], params[i][1], u_ModelMatrix, viewMatrix, u_ViewMatrix, projMatrix, u_ProjMatrix, params[i][2]) }
+            for (let i = 0; i < params.length; i++) {
+                grain_surfaces.draw_sm(
+                    gl,
+                    u_ModelMatrix,
+                    viewMatrix,
+                    u_ViewMatrix,
+                    projMatrix,
+                    u_ProjMatrix,
+                    params[i][0],
+                    params[i][1],
+                    params[i][2]
+                )
+            }
         }
     }
 }
