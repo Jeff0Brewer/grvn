@@ -331,20 +331,7 @@ class GrainSurfaces {
         for (let t = 0; t < this.num_t; t++) {
             for (let g = 0; g < this.num_g; g++) {
                 const mapped = color_mapper.color_map(t, g)
-                if (mapped) {
-                    const col = [
-                        mapped.r,
-                        mapped.g,
-                        mapped.b,
-                        1
-                    ]
-                    let col_ind = this.inds[g][1] * this.c_fpv
-                    for (let i = this.inds[g][1]; i < this.inds[g][2]; i++) {
-                        for (let c = 0; c < col.length; c++, col_ind++) {
-                            this.color_buffers[t][col_ind] = col[c]
-                        }
-                    }
-                }
+                this.colors[t][g] = [mapped.r, mapped.g, mapped.b, 1]
             }
         }
     }

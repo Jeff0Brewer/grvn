@@ -25,14 +25,11 @@ class ColorMap {
 
         const percentage = (value - low) / (high - low)
         let i = 0
-        while (this.steps[i] < percentage) {
+        while (i + 1 < this.steps.length && this.steps[i + 1] < percentage) {
             i++
         }
-        if (i + 1 === this.steps.length) {
+        if (i >= this.steps.length - 1) {
             return this.colors[i]
-        }
-        if (this.steps[i] === this.steps[i + 1]) {
-            i++
         }
         const mid = (percentage - this.steps[i]) / (this.steps[i + 1] - this.steps[i])
         return {

@@ -32,15 +32,13 @@ class ColorMapSlider {
 
         this.map = new ColorMap(css_def)
 
-        css_def = 'linear-gradient(90deg,' + css_def + ')'
-
         const body_rect = this.elements.bar.getBoundingClientRect()
 
         this.elements.bars.low.style.width = '0px'
         this.elements.bars.gradient.style.width = body_rect.width.toString() + 'px'
         this.elements.bars.high.style.width = '0px'
 
-        this.elements.bars.gradient.style.background = css_def
+        this.elements.bars.gradient.style.background = 'linear-gradient(90deg,' + css_def + ')'
         this.elements.bars.low.style.background = 'rgb(' + (this.map.colors[0].r * 255).toString() + ',' + (this.map.colors[0].g * 255).toString() + ',' + (this.map.colors[0].b * 255).toString() + ')'
         this.elements.bars.high.style.background = 'rgb(' + (this.map.colors[this.map.colors.length - 1].r * 255).toString() + ',' + (this.map.colors[this.map.colors.length - 1].g * 255).toString() + ',' + (this.map.colors[this.map.colors.length - 1].b * 255).toString() + ')'
 
@@ -57,32 +55,31 @@ class ColorMapSlider {
         this.elements.labels.high.innerHTML = 1
 
         this.data = []
+        this.elements.handles.low.onmousedown = function () {
+            this.mousedown(true, false)
+        }
+
+        this.elements.handles.high.onmousedown = function () {
+            this.mousedown(false, true)
+        }
+
+        this.elements.bars.low.onmousedown = function () {
+            this.mousedown(true, false)
+        }
+
+        this.elements.bars.high.onmousedown = function () {
+            this.mousedown(false, true)
+        }
     }
 
-    change_data (str_data, num_g) {
-        const lines = str_data.split('\n')
-        lines.pop()
-        const num_t = lines.length / num_g
-        this.data = []
-        for (let t = 0; t < num_t; t++) {
-            this.data.push([])
-            for (let g = 0; g < num_g; g++) {
-                this.data[t].push(0)
-            }
-        }
-        let t = num_t - 1
-        let g = num_g - 1
+    change_data (data) {
+        this.data = data
         this.values.max = -10000000
         this.values.min = 10000000
-        while (lines.length > 0) {
-            const val = parseFloat(lines.pop())
-            this.values.max = max(this.values.max, val)
-            this.values.min = min(this.values.min, val)
-            this.data[t][g] = val
-            g--
-            if (g < 0) {
-                g = num_g - 1
-                t--
+        for (let t = 0; t < this.data.length; t++) {
+            for (let g = 0; g < this.data[t].length; g++) {
+                this.values.max = Math.max(this.values.max, this.data[t][g])
+                this.values.min = Math.min(this.values.min, this.data[t][g])
             }
         }
         this.values.low = this.values.min
@@ -183,26 +180,4 @@ class ColorMapSlider {
         }
         return this.map.map(this.data[t][g], this.values.low, this.values.high)
     }
-}
-
-function make_color_mapper (css_def) {
-    const mui = new ColorMapSlider(css_def)
-
-    mui.elements.handles.low.onmousedown = function () {
-        mui.mousedown(true, false)
-    }
-
-    mui.elements.handles.high.onmousedown = function () {
-        mui.mousedown(false, true)
-    }
-
-    mui.elements.bars.low.onmousedown = function () {
-        mui.mousedown(true, false)
-    }
-
-    mui.elements.bars.high.onmousedown = function () {
-        mui.mousedown(false, true)
-    }
-
-    return mui
 }
