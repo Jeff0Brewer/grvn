@@ -36,34 +36,30 @@ class GrainSurfaces {
         this.program = initProgram(gl, vert, frag)
         bindProgram(gl, this.program)
 
-        this.fsize = this.position_buffer.BYTES_PER_ELEMENT
-
-        // position buffer
-        this.gl_pos_buf = gl.createBuffer()
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.position_buffer, gl.STATIC_DRAW)
-
-        this.a_Position = gl.getAttribLocation(gl.program, 'a_Position')
-        gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
-        gl.enableVertexAttribArray(this.a_Position)
-
-        // color buffer
-        this.gl_col_buf = gl.createBuffer()
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.color_buffers[0], gl.STATIC_DRAW)
-
-        this.a_Color = gl.getAttribLocation(gl.program, 'a_Color')
-        gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
-        gl.enableVertexAttribArray(this.a_Color)
-
-        // visibility buffers
-        this.gl_vis_buf = gl.createBuffer()
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_vis_buf)
-        gl.bufferData(gl.ARRAY_BUFFER, this.visibility_buffer, gl.STATIC_DRAW)
-
-        this.a_Visibility = gl.getAttribLocation(gl.program, 'a_Visibility')
-        gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
-        gl.enableVertexAttribArray(this.a_Visibility)
+        this.bindPos = initAttribBuffer(
+            gl,
+            'a_Position',
+            this.p_fpv,
+            this.position_buffer,
+            gl.FLOAT,
+            gl.STATIC_DRAW
+        )
+        this.bindCol = initAttribBuffer(
+            gl,
+            'a_Color',
+            this.c_fpv,
+            this.color_buffers[0],
+            gl.FLOAT,
+            gl.STATIC_DRAW
+        )
+        this.bindVis = initAttribBuffer(
+            gl,
+            'a_Visibility',
+            this.v_fpv,
+            this.visibility_buffer,
+            gl.FLOAT,
+            gl.STATIC_DRAW
+        )
 
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
@@ -76,21 +72,13 @@ class GrainSurfaces {
         const oldProgram = gl.program
         bindProgram(gl, this.program)
 
-        // position buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
-        gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
-
-        // color buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
+        this.bindPos(gl)
+        this.bindVis(gl)
+        this.bindCol(gl)
         if (this.buffer_changed) {
             gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[t])
             this.buffer_changed = false
         }
-        gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
-
-        // visibility buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_vis_buf)
-        gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
@@ -165,18 +153,10 @@ class GrainSurfaces {
 
         selectitem.inds.sort(comp)
 
-        // position buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_pos_buf)
-        gl.vertexAttribPointer(this.a_Position, 3, gl.FLOAT, false, this.fsize * this.p_fpv, 0)
-
-        // color buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_col_buf)
+        this.bindPos(gl)
+        this.bindVis(gl)
+        this.bindCol(gl)
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.color_buffers[t])
-        gl.vertexAttribPointer(this.a_Color, 4, gl.FLOAT, false, this.fsize * this.c_fpv, 0)
-
-        // visibility buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.gl_vis_buf)
-        gl.vertexAttribPointer(this.a_Visibility, 1, gl.FLOAT, false, this.fsize * this.v_fpv, 0)
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
@@ -396,7 +376,9 @@ class GrainSurfaces {
                     ]
                     let col_ind = this.inds[g][1] * this.c_fpv
                     for (let i = this.inds[g][1]; i < this.inds[g][2]; i++) {
-                        for (let c = 0; c < col.length; c++, col_ind++) { this.color_buffers[t][col_ind] = col[c] }
+                        for (let c = 0; c < col.length; c++, col_ind++) {
+                            this.color_buffers[t][col_ind] = col[c]
+                        }
                     }
                 }
             }
