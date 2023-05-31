@@ -27,14 +27,24 @@ class ContextImage {
         this.slice_sides = []
         this.slice_tops = []
 
-        const borderWorker = new Worker('./_lib/context-img-init.js')
-        borderWorker.onmessage = ({ data }) => {
-            const { sideBorders, topBorders } = data
-            this.border_sides = sideBorders
-            this.border_tops = topBorders
-            borderWorker.terminate()
+        this.worker = new Worker('./_lib/context-img-hull.js')
+
+        this.worker.onmessage = ({ data }) => {
+            const { sideBorders, topBorders, id } = data
+            if (id === 'border') {
+                this.border_sides = sideBorders
+                this.border_tops = topBorders
+            } else {
+                this.slice_sides = sideBorders
+                this.slice_tops = topBorders
+            }
         }
-        borderWorker.postMessage({ positions, scaling: this.scaling })
+        this.worker.postMessage({
+            positions,
+            scaling: this.scaling,
+            delta: 20,
+            id: 'border'
+        })
     }
 
     draw (t, subset) {
@@ -104,18 +114,11 @@ class ContextImage {
     }
 
     update_slices (sliced) {
-        this.slice_sides = []
-        this.slice_tops = []
-        const delta = 10
-        for (let t = 0; t < sliced.length; t++) {
-            const points_side = []
-            const points_top = []
-            for (let i = 0; i < sliced[t].length; i++) {
-                points_side.push([sliced[t][i][0] * this.scaling, sliced[t][i][2] * this.scaling])
-                points_top.push([sliced[t][i][0] * this.scaling, sliced[t][i][1] * this.scaling])
-            }
-            this.slice_sides.push(hull(points_side, delta))
-            this.slice_tops.push(hull(points_top, delta))
-        }
+        this.worker.postMessage({
+            positions: sliced,
+            scaling: this.scaling,
+            delta: 10,
+            id: 'slices'
+        })
     }
 }

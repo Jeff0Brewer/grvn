@@ -1,8 +1,7 @@
 importScripts('../_lib/concave_hull.js')
 
 onmessage = ({ data }) => {
-    const { positions, scaling } = data
-    const delta = 20
+    const { positions, scaling, delta, id } = data
     const sideBorders = []
     const topBorders = []
     for (let t = 0; t < positions.length; t++) {
@@ -16,5 +15,5 @@ onmessage = ({ data }) => {
         sideBorders.push(hull(sidePoints, delta))
         topBorders.push(hull(topPoints, delta))
     }
-    postMessage({ sideBorders, topBorders })
+    postMessage({ sideBorders, topBorders, id })
 }
