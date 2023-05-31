@@ -25,11 +25,6 @@ class ColorMapSlider {
             button: document.getElementById('edit_color_map')
         }
 
-        this.dragging = {
-            left: false,
-            right: false
-        }
-
         this.map = new ColorMap(css_def)
 
         const body_rect = this.elements.bar.getBoundingClientRect()
@@ -55,21 +50,13 @@ class ColorMapSlider {
         this.elements.labels.high.innerHTML = 1
 
         this.data = []
-        this.elements.handles.low.onmousedown = function () {
-            this.mousedown(true, false)
-        }
 
-        this.elements.handles.high.onmousedown = function () {
-            this.mousedown(false, true)
-        }
+        this.dragging = { left: false, right: false }
 
-        this.elements.bars.low.onmousedown = function () {
-            this.mousedown(true, false)
-        }
-
-        this.elements.bars.high.onmousedown = function () {
-            this.mousedown(false, true)
-        }
+        this.elements.handles.low.onmousedown = () => { this.dragging.left = true }
+        this.elements.handles.high.onmousedown = () => { this.dragging.right = true }
+        this.elements.bars.low.onmousedown = () => { this.dragging.left = true }
+        this.elements.bars.high.onmousedown = () => { this.dragging.right = true }
     }
 
     change_data (data) {
@@ -160,15 +147,6 @@ class ColorMapSlider {
             this.elements.labels.high.style.marginRight = label_right.toString() + 'px'
             const label_left = min(max(left_rect.width - low_label_rect.width / 2, 0), low_label_rect.right - body_rect.left + (high_label_rect.left - low_label_rect.right) / 2 - low_label_rect.width - 2.5)
             this.elements.labels.low.style.marginLeft = label_left.toString() + 'px'
-        }
-    }
-
-    mousedown (l, r) {
-        if (l) {
-            this.dragging.left = true
-        }
-        if (r) {
-            this.dragging.right = true
         }
     }
 
