@@ -11,7 +11,7 @@ class GrainSurfaces {
 
         this.position_buffer = new Float32Array(surfaces)
         this.colors = []
-        const defaultColor = [1.0, 1.0, 1.0, 0.8]
+        const defaultColor = [1.0, 1.0, 1.0]
         for (let t = 0; t < numT; t++) {
             const timestepColors = []
             for (let g = 0; g < numG; g++) {
@@ -79,7 +79,7 @@ class GrainSurfaces {
             grainPos.multiply(quat)
 
             gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
-            gl.uniform4fv(this.u_Color, this.colors[t][inds[i]])
+            gl.uniform3fv(this.u_Color, this.colors[t][inds[i]])
             gl.drawArrays(
                 gl.TRIANGLES,
                 this.inds[inds[i]][1],
@@ -157,7 +157,7 @@ class GrainSurfaces {
             grainPos.multiply(quat)
 
             gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
-            gl.uniform4fv(this.u_Color, this.colors[t][selectitem.inds[i]])
+            gl.uniform3fv(this.u_Color, this.colors[t][selectitem.inds[i]])
             gl.drawArrays(
                 gl.TRIANGLES,
                 this.inds[selectitem.inds[i]][1],
@@ -331,7 +331,7 @@ class GrainSurfaces {
         for (let t = 0; t < this.num_t; t++) {
             for (let g = 0; g < this.num_g; g++) {
                 const mapped = color_mapper.color_map(t, g)
-                this.colors[t][g] = [mapped.r, mapped.g, mapped.b, 1]
+                this.colors[t][g] = [mapped.r, mapped.g, mapped.b]
             }
         }
     }
