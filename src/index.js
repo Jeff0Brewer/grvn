@@ -56,17 +56,23 @@ var projMatrix = new Matrix4()
 var g_last = Date.now()
 
 async function main (data) {
+    console.time('post load')
     num_t = data.numT
     num_g = data.numG
 
     // construct vis classes
+    console.time('force plot')
     fn_vectors = new FnVectors(
         data.forcePlot.posBuffers,
-        data.forcePlot.alpBuffers
+        data.forcePlot.alpBuffers,
+        data.forcePlot.visBuffers
     )
+    console.timeEnd('force plot')
     // lose force plot reference for gc
     // largest memory footprint so use and discard first
     data.forcePlot = {}
+
+    console.time('flow plot')
     ribbon_flow = new RibbonFlow(
         data.grains.positions,
         data.rotationMagnitudes,
@@ -75,6 +81,9 @@ async function main (data) {
         data.numT,
         data.numG
     )
+    console.timeEnd('flow plot')
+
+    console.time('grain surfaces')
     grain_surfaces = new GrainSurfaces(
         data.grains.surfaces,
         data.grains.inds,
@@ -83,7 +92,9 @@ async function main (data) {
         data.numT,
         data.numG
     )
+    console.timeEnd('grain surfaces')
 
+    console.time('post vis component')
     color_mapper.change_data(data.forces)
     grain_surfaces.color_map(color_mapper)
     global_fields.add_field(data.global)
@@ -116,16 +127,22 @@ async function main (data) {
     viewport_count = 1
 
     projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
+    console.timeEnd('post vis component')
 
+    console.time('overlay elements')
     // init overlay interface elements
     compare_mouse = new CompareMouse(canvas.width, canvas.height, 'rgb(63,215,177,.9)', 40, 1.75)
     slice_interface = make_slice_interface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)', 15)
     select_interface = make_select_interface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)')
+    console.timeEnd('overlay elements')
 
     sm_viewer = make_sm_viewer(canvas.width, canvas.height)
 
+    console.time('context img')
     context_image = new ContextImage('rgb(35,35,35)', 'rgb(108,108,108)', grain_surfaces.positions)
+    console.timeEnd('context img')
 
+    console.timeEnd('post load')
     var tick = function () {
         const now = Date.now()
         const elapsed = now - g_last

@@ -48,14 +48,18 @@ const loadMetadata = async (dataDir, loadCallback) => {
 const loadForceVerts = async (dataDir, numFiles, loadCallback) => {
     const posBuffers = []
     const alpBuffers = []
+    const visBuffers = []
     for (let i = 0; i < numFiles; i++) {
         const filePath = `${dataDir}/fn${i}.msgpack`
         const data = await readMsgpack(filePath)
-        posBuffers.push(data[0])
-        alpBuffers.push(data[1])
+        posBuffers.push(new Float32Array(data[0]))
+        alpBuffers.push(new Uint8Array(data[1]))
+        // 1 alpha value per vertex, length of alpha buffer is num vertex
+        const numVertex = data[1].length
+        visBuffers.push(new Uint8Array(numVertex))
         loadCallback()
     }
-    return { posBuffers, alpBuffers }
+    return { posBuffers, alpBuffers, visBuffers }
 }
 
 const loadGrainPositions = async (dataDir, numFiles, loadCallback) => {
@@ -159,7 +163,7 @@ const loadData = async () => {
     // load all data sequentially to
     // prevent multiple large blobs / file readers in memory
     const { numT, numG } = await loadMetadata(DATA_DIR, updateLoad)
-    const { posBuffers, alpBuffers } = await loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad)
+    const forcePlot = await loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad)
     const positions = await loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad)
     const rotations = await loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad)
     const surfaces = await loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad)
@@ -174,10 +178,7 @@ const loadData = async () => {
     main({
         numT,
         numG,
-        forcePlot: {
-            posBuffers,
-            alpBuffers
-        },
+        forcePlot,
         grains: {
             positions,
             rotations,
