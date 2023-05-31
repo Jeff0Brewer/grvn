@@ -892,27 +892,24 @@ document.getElementById('select_button').onmouseup = function () {
 
 // color mapping
 document.getElementById('add_cmap').onchange = function () {
-    cmap_reader.readAsText(this.files[0])
+    cmap_reader.readAsBinaryString(this.files[0])
+}
+
+cmap_reader.onloadend = function () {
+    const data = msgpack.unpack(this.result)
+    color_mapper.change_data(data)
+    grain_surfaces.color_map(color_mapper)
+    for (let i = 0; i < selections.length; i++) {
+        selections[i].refresh_sm()
+    }
 }
 
 document.getElementById('edit_color_map').onmouseup = function () {
     grain_surfaces.color_map(color_mapper)
-
     for (let i = 0; i < selections.length; i++) {
         selections[i].refresh_sm()
     }
-
     add_class(this, ' hidden')
-}
-
-cmap_reader.onloadend = function () {
-    color_mapper.change_data(this.result, num_g)
-
-    grain_surfaces.color_map(color_mapper)
-
-    for (let i = 0; i < selections.length; i++) {
-        selections[i].refresh_sm()
-    }
 }
 
 // global fields
