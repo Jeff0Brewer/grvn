@@ -1,5 +1,18 @@
 class ColorMapSlider {
     constructor (css_def) {
+        this.map = new ColorMap(css_def)
+
+        this.data = []
+
+        this.values = {
+            low: 0,
+            high: 1,
+            min: 0,
+            max: 1
+        }
+
+        this.dragging = { left: false, right: false }
+
         this.elements = {
             bar: document.getElementById('cm_bar'),
             bars: {
@@ -25,33 +38,19 @@ class ColorMapSlider {
             button: document.getElementById('edit_color_map')
         }
 
-        this.map = new ColorMap(css_def)
-
         const body_rect = this.elements.bar.getBoundingClientRect()
-
-        this.elements.bars.low.style.width = '0px'
         this.elements.bars.gradient.style.width = body_rect.width.toString() + 'px'
+        this.elements.bars.low.style.width = '0px'
         this.elements.bars.high.style.width = '0px'
 
         this.elements.bars.gradient.style.background = 'linear-gradient(90deg,' + css_def + ')'
         this.elements.bars.low.style.background = 'rgb(' + (this.map.colors[0].r * 255).toString() + ',' + (this.map.colors[0].g * 255).toString() + ',' + (this.map.colors[0].b * 255).toString() + ')'
         this.elements.bars.high.style.background = 'rgb(' + (this.map.colors[this.map.colors.length - 1].r * 255).toString() + ',' + (this.map.colors[this.map.colors.length - 1].g * 255).toString() + ',' + (this.map.colors[this.map.colors.length - 1].b * 255).toString() + ')'
 
-        this.values = {
-            low: 0,
-            high: 1,
-            min: 0,
-            max: 1
-        }
-
-        this.elements.labels.min.innerHTML = 0
-        this.elements.labels.max.innerHTML = 1
-        this.elements.labels.low.innerHTML = 0
-        this.elements.labels.high.innerHTML = 1
-
-        this.data = []
-
-        this.dragging = { left: false, right: false }
+        this.elements.labels.min.innerHTML = this.values.min
+        this.elements.labels.max.innerHTML = this.values.max
+        this.elements.labels.low.innerHTML = this.values.low
+        this.elements.labels.high.innerHTML = this.values.high
 
         this.elements.handles.low.onmousedown = () => { this.dragging.left = true }
         this.elements.handles.high.onmousedown = () => { this.dragging.right = true }
