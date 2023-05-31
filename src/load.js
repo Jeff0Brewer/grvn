@@ -172,7 +172,7 @@ const loadData = async () => {
         loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
 
-    loadWrap.classList.remove('hidden')
+    document.getElementById('loadtext').innerHTML = 'Loading Data...'
 
     // load all data sequentially to
     // prevent multiple large blobs / file readers in memory
