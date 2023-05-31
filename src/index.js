@@ -56,21 +56,14 @@ var projMatrix = new Matrix4()
 var g_last = Date.now()
 
 async function main (data) {
-    console.time('post load')
     num_t = data.numT
     num_g = data.numG
 
-    // construct vis classes
     fn_vectors = new FnVectors(
         data.forcePlot.posBuffers,
         data.forcePlot.alpBuffers,
         data.forcePlot.visBuffers
     )
-    // lose force plot reference for gc
-    // largest memory footprint so use and discard first
-    data.forcePlot = {}
-
-    console.time('flow plot')
     ribbon_flow = new RibbonFlow(
         data.grains.positions,
         data.rotationMagnitudes,
@@ -79,9 +72,6 @@ async function main (data) {
         data.numT,
         data.numG
     )
-    console.timeEnd('flow plot')
-
-    console.time('grain surfaces')
     grain_surfaces = new GrainSurfaces(
         data.grains.surfaces,
         data.grains.inds,
@@ -90,11 +80,7 @@ async function main (data) {
         data.numT,
         data.numG
     )
-    console.timeEnd('grain surfaces')
-
-    console.time('context img')
     context_image = new ContextImage('rgb(35,35,35)', 'rgb(108,108,108)', data.grains.positions)
-    console.timeEnd('context img')
 
     color_mapper.change_data(data.forces)
     grain_surfaces.color_map(color_mapper)
@@ -139,7 +125,6 @@ async function main (data) {
 
     sm_viewer = make_sm_viewer(canvas.width, canvas.height)
 
-    console.timeEnd('post load')
     var tick = function () {
         const now = Date.now()
         const elapsed = now - g_last
