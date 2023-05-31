@@ -44,6 +44,7 @@ class GrainSurfaces {
     }
 
     draw_inds (gl, modelMatrix, viewMatrix, projMatrix, inds, t, rx, rz, viewport) {
+        gl.enable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
 
         this.bindPos(gl)
@@ -112,16 +113,9 @@ class GrainSurfaces {
 
         const pos = this.positions
 
-        function comp (a, b) {
-            const da = dist(pos[t][a], cam)
-            const db = dist(pos[t][b], cam)
-            return db - da
-        }
-
-        selectitem.inds.sort(comp)
-
         this.bindPos(gl)
 
+        gl.enable(gl.DEPTH_TEST)
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 

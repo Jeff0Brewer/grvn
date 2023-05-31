@@ -59,6 +59,7 @@ class FnVectors {
         this.buffer_changed ||= timestep !== this.last_step
         this.last_step = timestep
 
+        gl.disable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
 
         this.bindPos(gl)

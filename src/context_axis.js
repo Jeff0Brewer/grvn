@@ -69,7 +69,9 @@ class Axis {
     }
 
     draw (gl, modelMatrix, viewMatrix, projMatrix, x, y, z, rx, rz, viewport, scale) {
+        gl.enable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
+
         this.bindPos(gl)
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
