@@ -18,7 +18,7 @@ var ribbon_flow
 var fn_vectors
 var grain_surfaces
 
-var flow_visible = false
+var flow_visible = true
 var vector_visible = true
 
 var timeline
@@ -124,8 +124,11 @@ async function main (data) {
     await setup_gl()
 
     // init viewports
-    viewports = [new ViewPort(0, 0, canvas.width, canvas.height, canvas.width, canvas.height)]
-    viewport_count = 1
+    viewports = [
+        new ViewPort(0, 0, canvas.width / 2, canvas.height, canvas.width, canvas.height),
+        new ViewPort(canvas.width / 2, 0, canvas.width / 2, canvas.height, canvas.width, canvas.height)
+    ]
+    viewport_count = 2
 
     projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
 
