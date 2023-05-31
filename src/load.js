@@ -20,9 +20,7 @@ const readFileAsync = file => {
 }
 
 // read / unpack .msgpack file, return contents
-const readMsgpack = async (file) => {
-    const res = await fetch(file)
-    const blob = await res.blob()
+const readMsgpack = async (blob) => {
     const data = await readFileAsync(blob)
     return msgpack.unpack(data)
 }
@@ -37,21 +35,21 @@ const scale3DArray = (arr, scale) => {
     }
 }
 
-const loadMetadata = async (dataDir, loadCallback) => {
-    const filePath = `${dataDir}/head.msgpack`
-    const data = await readMsgpack(filePath)
+const loadMetadata = async (dataSet, loadCallback) => {
+    const file = 'head.msgpack'
+    const data = await readMsgpack(dataSet[file])
     const [numT, numG] = data
     loadCallback()
     return { numT, numG }
 }
 
-const loadForceVerts = async (dataDir, numFiles, loadCallback) => {
+const loadForceVerts = async (dataSet, numFiles, loadCallback) => {
     const posBuffers = []
     const alpBuffers = []
     const visBuffers = []
     for (let i = 0; i < numFiles; i++) {
-        const filePath = `${dataDir}/fn${i}.msgpack`
-        const data = await readMsgpack(filePath)
+        const file = `fn${i}.msgpack`
+        const data = await readMsgpack(dataSet[file])
         posBuffers.push(new Float32Array(data[0]))
         alpBuffers.push(new Uint8Array(data[1]))
         // 1 alpha value per vertex, length of alpha buffer is num vertex
@@ -62,11 +60,11 @@ const loadForceVerts = async (dataDir, numFiles, loadCallback) => {
     return { posBuffers, alpBuffers, visBuffers }
 }
 
-const loadGrainPositions = async (dataDir, numFiles, loadCallback) => {
+const loadGrainPositions = async (dataSet, numFiles, loadCallback) => {
     const positions = []
     for (let i = 0; i < numFiles; i++) {
-        const filePath = `${dataDir}/pos${i}.msgpack`
-        const data = await readMsgpack(filePath)
+        const file = `pos${i}.msgpack`
+        const data = await readMsgpack(dataSet[file])
         const scale = 1 / data[0]
         const pos = data[1]
         scale3DArray(pos, scale)
@@ -76,11 +74,11 @@ const loadGrainPositions = async (dataDir, numFiles, loadCallback) => {
     return [].concat(...positions)
 }
 
-const loadGrainRotations = async (dataDir, numFiles, loadCallback) => {
+const loadGrainRotations = async (dataSet, numFiles, loadCallback) => {
     const rotations = []
     for (let i = 0; i < numFiles; i++) {
-        const filePath = `${dataDir}/rot${i}.msgpack`
-        const data = await readMsgpack(filePath)
+        const file = `rot${i}.msgpack`
+        const data = await readMsgpack(dataSet[file])
         const scale = 1 / data[0]
         const rot = data[1]
         scale3DArray(rot, scale)
@@ -90,11 +88,11 @@ const loadGrainRotations = async (dataDir, numFiles, loadCallback) => {
     return [].concat(...rotations)
 }
 
-const loadGrainSurfaces = async (dataDir, numFiles, loadCallback) => {
+const loadGrainSurfaces = async (dataSet, numFiles, loadCallback) => {
     const surfaces = []
     for (let i = 0; i < numFiles; i++) {
-        const filePath = `${dataDir}/grains${i}.msgpack`
-        const data = await readMsgpack(filePath)
+        const file = `grains${i}.msgpack`
+        const data = await readMsgpack(dataSet[file])
         const scale = 1 / data[0]
         const surf = data[1]
         for (let i = 0; i < surf.length; i++) {
@@ -106,46 +104,62 @@ const loadGrainSurfaces = async (dataDir, numFiles, loadCallback) => {
     return new Float32Array([].concat(...surfaces))
 }
 
-const loadGrainInds = async (dataDir, loadCallback) => {
-    const filePath = `${dataDir}/inds.msgpack`
-    const inds = await readMsgpack(filePath)
+const loadGrainInds = async (dataSet, loadCallback) => {
+    const file = 'inds.msgpack'
+    const inds = await readMsgpack(dataSet[file])
     loadCallback()
     return inds
 }
 
-const loadForces = async (dataDir, loadCallback) => {
-    const filePath = `${dataDir}/for.msgpack`
-    const [maxForce, forces] = await readMsgpack(filePath)
+const loadForces = async (dataSet, loadCallback) => {
+    const file = 'for.msgpack'
+    const [maxForce, forces] = await readMsgpack(dataSet[file])
     loadCallback()
     return { maxForce, forces }
 }
 
-const loadRotationMagnitudes = async (dataDir, loadCallback) => {
-    const filePath = `${dataDir}/rmag.msgpack`
-    const rotationMagnitudes = await readMsgpack(filePath)
+const loadRotationMagnitudes = async (dataSet, loadCallback) => {
+    const file = 'rmag.msgpack'
+    const rotationMagnitudes = await readMsgpack(dataSet[file])
     loadCallback()
     return rotationMagnitudes
 }
 
-const loadGlobalField = async (dataDir, loadCallback) => {
-    const filePath = `${dataDir}/global.msgpack`
-    const global = await readMsgpack(filePath)
+const loadGlobalField = async (dataSet, loadCallback) => {
+    const file = 'global.msgpack'
+    const global = await readMsgpack(dataSet[file])
     loadCallback()
     return global
 }
 
+const loadZipData = async () => {
+    const res = await fetch('./data.zip')
+    const blob = await res.blob()
+    const { BlobReader, BlobWriter, ZipReader } = zip
+    const zipReader = new ZipReader(new BlobReader(blob))
+    const entries = await zipReader.getEntries()
+    const files = entries
+        .filter(entry => entry.filename.match(/^data\/.*msgpack$/))
+        .map(async entry => {
+            const writer = new BlobWriter()
+            return {
+                filename: entry.filename.replace(/data\//, ''),
+                blob: await entry.getData(writer)
+            }
+        })
+    const data = await Promise.all(files)
+    const dataMap = {}
+    data.forEach(({ filename, blob }) => { dataMap[filename] = blob })
+    return dataMap
+}
+
 const loadData = async () => {
-    const DATA_DIR = 'data'
-    // file counts for demo dataset
-    const NUM_FORCE_VERT_FILES = 76
-    const NUM_GRAIN_POS_FILES = 4
-    const NUM_GRAIN_ROT_FILES = 4
-    const NUM_GRAIN_SURFACE_FILES = 4
-    const NUM_MISC_FILES = 5
-    const NUM_FILES =
-        NUM_FORCE_VERT_FILES + NUM_GRAIN_POS_FILES +
-        NUM_GRAIN_ROT_FILES + NUM_GRAIN_SURFACE_FILES +
-        NUM_MISC_FILES
+    const data = await loadZipData()
+
+    // get num files and helper to count file types
+    const files = Object.keys(data)
+    const countFiles = regex => files.reduce((total, curr) => total + (curr.match(regex) ? 1 : 0), 0)
+    const NUM_FILES = files.length
 
     // get dom elements / closure for updating load bar
     const loadWrap = document.getElementById('load')
@@ -162,15 +176,15 @@ const loadData = async () => {
 
     // load all data sequentially to
     // prevent multiple large blobs / file readers in memory
-    const { numT, numG } = await loadMetadata(DATA_DIR, updateLoad)
-    const forcePlot = await loadForceVerts(DATA_DIR, NUM_FORCE_VERT_FILES, updateLoad)
-    const positions = await loadGrainPositions(DATA_DIR, NUM_GRAIN_POS_FILES, updateLoad)
-    const rotations = await loadGrainRotations(DATA_DIR, NUM_GRAIN_ROT_FILES, updateLoad)
-    const surfaces = await loadGrainSurfaces(DATA_DIR, NUM_GRAIN_SURFACE_FILES, updateLoad)
-    const inds = await loadGrainInds(DATA_DIR, updateLoad)
-    const { maxForce, forces } = await loadForces(DATA_DIR, updateLoad)
-    const rotationMagnitudes = await loadRotationMagnitudes(DATA_DIR, updateLoad)
-    const global = await loadGlobalField(DATA_DIR, updateLoad)
+    const { numT, numG } = await loadMetadata(data, updateLoad)
+    const forcePlot = await loadForceVerts(data, countFiles(/^fn/), updateLoad)
+    const positions = await loadGrainPositions(data, countFiles(/^pos/), updateLoad)
+    const rotations = await loadGrainRotations(data, countFiles(/^rot/), updateLoad)
+    const surfaces = await loadGrainSurfaces(data, countFiles(/^grains/), updateLoad)
+    const inds = await loadGrainInds(data, updateLoad)
+    const { maxForce, forces } = await loadForces(data, updateLoad)
+    const rotationMagnitudes = await loadRotationMagnitudes(data, updateLoad)
+    const global = await loadGlobalField(data, updateLoad)
 
     loadWrap.classList.add('hidden')
 
