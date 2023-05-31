@@ -123,6 +123,13 @@ const loadRotationMagnitudes = async (dataDir, loadCallback) => {
     return rotationMagnitudes
 }
 
+const loadGlobalField = async (dataDir, loadCallback) => {
+    const filePath = `${dataDir}/global.msgpack`
+    const global = await readMsgpack(filePath)
+    loadCallback()
+    return global
+}
+
 const loadData = async () => {
     const DATA_DIR = 'data'
     // file counts for demo dataset
@@ -130,7 +137,7 @@ const loadData = async () => {
     const NUM_GRAIN_POS_FILES = 4
     const NUM_GRAIN_ROT_FILES = 4
     const NUM_GRAIN_SURFACE_FILES = 4
-    const NUM_MISC_FILES = 4
+    const NUM_MISC_FILES = 5
     const NUM_FILES =
         NUM_FORCE_VERT_FILES + NUM_GRAIN_POS_FILES +
         NUM_GRAIN_ROT_FILES + NUM_GRAIN_SURFACE_FILES +
@@ -159,6 +166,7 @@ const loadData = async () => {
     const inds = await loadGrainInds(DATA_DIR, updateLoad)
     const { maxForce, forces } = await loadForces(DATA_DIR, updateLoad)
     const rotationMagnitudes = await loadRotationMagnitudes(DATA_DIR, updateLoad)
+    const global = await loadGlobalField(DATA_DIR, updateLoad)
 
     loadWrap.classList.add('hidden')
 
@@ -178,7 +186,8 @@ const loadData = async () => {
         },
         forces,
         maxForce,
-        rotationMagnitudes
+        rotationMagnitudes,
+        global
     })
 }
 

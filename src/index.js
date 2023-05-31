@@ -83,8 +83,11 @@ async function main (data) {
         data.numT,
         data.numG
     )
+
     color_mapper.change_data(data.forces)
     grain_surfaces.color_map(color_mapper)
+    global_fields.add_field(data.global)
+
     // lose reference to dataset for gc
     data = {}
 
