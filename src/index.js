@@ -338,7 +338,7 @@ function draw (elapsed) {
 }
 
 const setup_gl = async () => {
-    gl = getWebGLContext(canvas)
+    gl = canvas.getContext('webgl', { preserveDrawingBuffer: false })
     gl.enableVertexAttribArray(0)
     gl.enable(gl.BLEND)
     gl.enable(gl.SCISSOR_TEST)
