@@ -103,7 +103,7 @@ const loadGrainSurfaces = async (dataDir, numFiles, loadCallback) => {
         surfaces.push(surf)
         loadCallback()
     }
-    return [].concat(...surfaces)
+    return new Float32Array([].concat(...surfaces))
 }
 
 const loadGrainInds = async (dataDir, loadCallback) => {

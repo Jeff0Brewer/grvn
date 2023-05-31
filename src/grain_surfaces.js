@@ -9,16 +9,16 @@ class GrainSurfaces {
         this.positions = positions
         this.rotations = rotations
 
-        this.position_buffer = new Float32Array(surfaces)
-        this.colors = []
         const defaultColor = [1.0, 1.0, 1.0]
-        for (let t = 0; t < numT; t++) {
-            const timestepColors = []
-            for (let g = 0; g < numG; g++) {
-                timestepColors.push(defaultColor.slice())
-            }
-            this.colors.push(timestepColors)
+        const timestepColors = []
+        for (let g = 0; g < numG; g++) {
+            timestepColors.push(defaultColor.slice())
         }
+        this.colors = []
+        for (let t = 0; t < numT; t++) {
+            this.colors.push(timestepColors.slice())
+        }
+        this.position_buffer = surfaces
     }
 
     async init_gl (gl) {
