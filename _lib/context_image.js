@@ -6,7 +6,7 @@ class ContextImage {
         this.ctx = this.canvas.getContext('2d')
 
         // print loading message while borders being calculated
-        this.ctx.font = '15px sans-serif'
+        this.ctx.font = '12px sans-serif'
         this.ctx.fillStyle = '#fff'
         this.ctx.textAlign = 'center'
         this.ctx.fillText('loading...', this.canvas.width / 2, this.canvas.height / 2)
