@@ -55,6 +55,30 @@ var projMatrix = new Matrix4()
 
 var g_last = Date.now()
 
+var cameraPathSpeed = 0.0001
+var cameraPathPercentage = 0
+var cameraPath = null
+var cameraPathInput = document.getElementById('cameraInput')
+window.addEventListener('keydown', e => {
+    // show camera path input on ctrl+m
+    if (e.ctrlKey && e.key === 'm') {
+        cameraPathInput.style.display = 'block'
+    }
+    // log camera positions on ctrl+n
+    if (e.ctrlKey && e.key === 'n') {
+        const { x, y, z } = fs_camera.camera
+        console.log(`CAMERA POSITION: [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]`)
+    }
+})
+cameraPathInput.addEventListener('change', e => {
+    const reader = new FileReader()
+    reader.onload = e => {
+        cameraPath = parseCameraPath(e.target.result)
+    }
+    const file = e.target.files[0]
+    reader.readAsText(file)
+})
+
 async function main (data) {
     num_t = data.numT
     num_g = data.numG
@@ -150,11 +174,16 @@ async function main (data) {
     tick()
 }
 
-function draw (elapsed) {
-    // draw visualizations
-    let viewport_ind = -1
-
-    if (vis_mode == 0) { // full sample
+const updateFullSampleCamera = (elapsed) => {
+    if (cameraPath !== null) {
+        cameraPathPercentage = (cameraPathPercentage + elapsed * cameraPathSpeed) % 1
+        const { position, focus } = cameraPath.get(cameraPathPercentage)
+        viewMatrix.setLookAt(
+            ...position,
+            ...focus,
+            0, 0, 1
+        )
+    } else {
         viewMatrix.setLookAt(
             fs_camera.camera.x,
             fs_camera.camera.y,
@@ -164,6 +193,15 @@ function draw (elapsed) {
             fs_camera.focus.z,
             0, 0, 1
         )
+    }
+}
+
+function draw (elapsed) {
+    // draw visualizations
+    let viewport_ind = -1
+
+    if (vis_mode == 0) { // full sample
+        updateFullSampleCamera(elapsed)
 
         if (!global_fields.dragging && !fs_camera.dragging) {
             timeline.tick(elapsed)
