@@ -1,47 +1,34 @@
-class FSCamera {
-    constructor (rot_speed, zoom_speed) {
+const ROTATE_SPEED = 0.5
+const ZOOM_SPEED = 0.1
+const UP_VEC = [0, 0, 1]
+
+class FullSampleCamera {
+    constructor () {
         this.dragging = false
-        this.mouse = {
-            x: 0,
-            y: 0
-        }
-        this.rotation = {
-            x: 0,
-            y: 0,
-            z: 0
-        }
-        this.camera = {
-            x: 0,
-            y: 100,
-            z: 50,
-            speed: {
-                rotation: rot_speed,
-                zoom: zoom_speed
-            }
-        }
-        this.focus = {
-            x: 0,
-            y: 0,
-            z: 20
-        }
+        this.zRotation = 0
+        this.position = [0, 100, 50]
+        this.focus = [0, 0, 20]
     }
 
     mousedown (e) {
         this.dragging = true
-        this.mouse.x = e.clientX
-        this.mouse.y = e.clientY
     }
 
     mousemove (e) {
         if (this.dragging) {
-            const dx = this.camera.speed.rotation * (e.clientX - this.mouse.x)
-            const dy = this.camera.speed.rotation * (e.clientY - this.mouse.y)
+            const camvec = sub(this.position, this.focus)
+            const axis = norm(cross(camvec, UP_VEC))
 
-            this.rotation.x = this.rotation.x - dy
-            this.rotation.z = this.rotation.z + dx
+            const rotationZ = -e.movementX * ROTATE_SPEED
+            const rotationX = e.movementY * ROTATE_SPEED
+            const rotation = new Matrix4()
+            rotation.rotate(rotationX, ...axis)
+            rotation.rotate(rotationZ, ...UP_VEC)
 
-            this.mouse.x = e.clientX
-            this.mouse.y = e.clientY
+            const newCamvec = rotation.multiplyVector3(new Vector3(camvec))
+            this.position = add(this.focus, newCamvec.elements)
+
+            this.zRotation += rotationZ
         }
     }
 
@@ -50,12 +37,15 @@ class FSCamera {
     }
 
     wheel (e) {
-        const camvec = [this.camera.x - this.focus.x, this.camera.y - this.focus.y, this.camera.z - this.focus.z]
-        const resized = resize(camvec, e.deltaY * this.camera.speed.zoom)
-        if (Math.sign(resized[0]) == Math.sign(camvec[0]) && Math.sign(resized[1]) == Math.sign(camvec[1]) && Math.sign(resized[2]) == Math.sign(camvec[2])) {
-            this.camera.x = this.focus.x + resized[0]
-            this.camera.y = this.focus.y + resized[1]
-            this.camera.z = this.focus.z + resized[2]
+        const camvec = sub(this.position, this.focus)
+        const resized = resize(camvec, e.deltaY * ZOOM_SPEED)
+        // check if resized camera vec is in same direction as original
+        const hasInverted =
+            Math.sign(resized[0]) !== Math.sign(camvec[0]) ||
+            Math.sign(resized[1]) !== Math.sign(camvec[1]) ||
+            Math.sign(resized[2]) !== Math.sign(camvec[2])
+        if (!hasInverted) {
+            this.position = add(this.focus, resized)
         }
     }
 }

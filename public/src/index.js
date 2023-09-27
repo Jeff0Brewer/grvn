@@ -46,7 +46,7 @@ const colorMapColors = '#810126 0%, #d00c21 18.7%, #cf0f21 18.7%, #dd171e 23.2%,
 var color_mapper = new ColorMapSlider(colorMapColors)
 var cmap_reader = new FileReader()
 
-var fs_camera = new FSCamera(0.5, 0.1)
+var fs_camera = new FullSampleCamera()
 var scrolling
 
 var viewMatrix = new Matrix4()
@@ -65,7 +65,7 @@ window.addEventListener('keydown', e => {
     }
     // log camera positions on ctrl+n
     if (e.ctrlKey && e.key === 'n') {
-        const { x, y, z } = fs_camera.camera
+        const [x, y, z] = fs_camera.position
         console.log(`CAMERA POSITION: [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]`)
     }
 })
@@ -174,25 +174,12 @@ async function main (data) {
 }
 
 const updateFullSampleCamera = (elapsed) => {
-    if (cameraPath !== null) {
-        cameraPathPercentage = (cameraPathPercentage + elapsed * cameraPathSpeed) % 1
-        const { position, focus } = cameraPath.get(cameraPathPercentage)
-        viewMatrix.setLookAt(
-            ...position,
-            ...focus,
-            0, 0, 1
-        )
-    } else {
-        viewMatrix.setLookAt(
-            fs_camera.camera.x,
-            fs_camera.camera.y,
-            fs_camera.camera.z,
-            fs_camera.focus.x,
-            fs_camera.focus.y,
-            fs_camera.focus.z,
-            0, 0, 1
-        )
-    }
+    const { position, focus } = fs_camera
+    viewMatrix.setLookAt(
+        ...position,
+        ...focus,
+        0, 0, 1
+    )
 }
 
 function draw (elapsed) {
@@ -217,8 +204,6 @@ function draw (elapsed) {
                 viewMatrix,
                 projMatrix,
                 timeline.timestep,
-                fs_camera.rotation.x,
-                fs_camera.rotation.z,
                 viewports[viewport_ind]
             )
         }
@@ -231,8 +216,6 @@ function draw (elapsed) {
                 viewMatrix,
                 projMatrix,
                 timeline.timestep,
-                fs_camera.rotation.x,
-                fs_camera.rotation.z,
                 viewports[viewport_ind]
             )
         }
@@ -254,8 +237,6 @@ function draw (elapsed) {
                     projMatrix,
                     drawing_inds,
                     timeline.timestep,
-                    fs_camera.rotation.x,
-                    fs_camera.rotation.z,
                     viewports[viewport_ind]
                 )
             }
@@ -270,8 +251,8 @@ function draw (elapsed) {
                     0,
                     0,
                     800,
-                    fs_camera.rotation.x,
-                    fs_camera.rotation.z,
+                    0,
+                    fs_camera.zRotation,
                     viewports[i],
                     800
                 )
@@ -296,24 +277,6 @@ function draw (elapsed) {
         const params = out[0]
         for (let i = 0; i < params.length; i++) {
             params[i][2].clear()
-        }
-
-        if (rotated[0]) {
-            const off = selections[sm_viewer.rotating[0]].offsets[rotated[1]]
-            if (off) {
-                context_axis.draw(
-                    gl,
-                    viewMatrix,
-                    projMatrix,
-                    off.x,
-                    off.y,
-                    off.z,
-                    selections[sm_viewer.rotating[0]].rotation.x,
-                    selections[sm_viewer.rotating[0]].rotation.z,
-                    sm_viewer.rotating_vp,
-                    selections[sm_viewer.rotating[0]].max_disp
-                )
-            }
         }
 
         for (let i = 0; i < params.length; i++) {
@@ -344,6 +307,7 @@ function draw (elapsed) {
                 )
             }
         }
+
         let one_visible = false
         for (let i = 0; i < selections.length && !one_visible; i++) {
             one_visible = one_visible | selections[i].selected
@@ -386,16 +350,8 @@ function slice (output) {
     const out_vp = output[1]
     const rot = new Matrix4()
     if (out_vp.equals(viewports[0])) {
-        rot.translate(0, 0, 800)
-        rot.rotate(-fs_camera.rotation.z, 0, 0, 1)
-        rot.rotate(-fs_camera.rotation.x, 1, 0, 0)
-        rot.translate(0, 0, -800)
         rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
     } else if (out_vp.equals(viewports[1])) {
-        rot.translate(0, 0, 800)
-        rot.rotate(-fs_camera.rotation.z, 0, 0, 1)
-        rot.rotate(-fs_camera.rotation.x, 1, 0, 0)
-        rot.translate(0, 0, -800)
         rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
     }
 
@@ -438,16 +394,8 @@ function brush_vecs (out) {
     const vp = out[1]
     const rot = new Matrix4()
     if (vp.equals(viewports[0])) {
-        rot.translate(0, 0, 800)
-        rot.rotate(-fs_camera.rotation.z, 0, 0, 1)
-        rot.rotate(-fs_camera.rotation.x, 1, 0, 0)
-        rot.translate(0, 0, -800)
         rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
     } else if (vp.equals(viewports[1])) {
-        rot.translate(0, 0, 800)
-        rot.rotate(-fs_camera.rotation.z, 0, 0, 1)
-        rot.rotate(-fs_camera.rotation.x, 1, 0, 0)
-        rot.translate(0, 0, -800)
         rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
     }
 

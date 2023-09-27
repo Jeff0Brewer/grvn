@@ -48,7 +48,7 @@ class FnVectors {
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
     }
 
-    draw (gl, viewMatrix, projMatrix, timestep, rx, rz, viewport) {
+    draw (gl, viewMatrix, projMatrix, timestep, viewport) {
         // buffer data if timestep changed
         this.buffer_changed ||= timestep !== this.last_step
         this.last_step = timestep
@@ -73,10 +73,6 @@ class FnVectors {
 
         const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)
-        model.translate(0, 0, 800)
-        model.rotate(rx, 1, 0, 0)
-        model.rotate(rz, 0, 0, 1)
-        model.translate(0, 0, -800)
 
         gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)

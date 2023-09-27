@@ -43,7 +43,7 @@ class GrainSurfaces {
         this.u_Color = gl.getUniformLocation(gl.program, 'u_Color')
     }
 
-    draw_inds (gl, viewMatrix, projMatrix, inds, t, rx, rz, viewport) {
+    draw_inds (gl, viewMatrix, projMatrix, inds, t, viewport) {
         gl.enable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
 
@@ -54,10 +54,6 @@ class GrainSurfaces {
 
         const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)
-        model.translate(0, 0, 800)
-        model.rotate(rx, 1, 0, 0)
-        model.rotate(rz, 0, 0, 1)
-        model.translate(0, 0, -800)
 
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
