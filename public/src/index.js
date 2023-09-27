@@ -196,6 +196,17 @@ const updateCameraAxisRender = () => {
     menu.axisChanged = false
 }
 
+const autoRotateSmallMultiples = (elapsed) => {
+    if (autoRotate) {
+        for (const selection of selections) {
+            selection.rotation.z += elapsed * autoRotateSpeed
+            if (sm_viewer.mode === 1) {
+                selection.refresh_sm()
+            }
+        }
+    }
+}
+
 function draw (elapsed) {
     // draw visualizations
     let viewport_ind = -1
@@ -282,6 +293,7 @@ function draw (elapsed) {
 
         context_image.draw(timeline.timestep)
     } else { // small multiples
+        autoRotateSmallMultiples(elapsed)
         let rotated = [false, -1]
         if (sm_viewer.rotating.length > 0) {
             const ind = sm_viewer.mode == 0
