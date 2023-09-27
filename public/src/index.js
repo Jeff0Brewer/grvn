@@ -57,6 +57,8 @@ var g_last = Date.now()
 // setup camera paths
 menu.getCameraPosition = () => { return fs_camera.position }
 menu.getCameraFocus = () => { return fs_camera.focus }
+const cameraTrace = new CameraTrace()
+const cameraAxis = new CameraAxis()
 
 async function main (data) {
     num_t = data.numT
@@ -110,8 +112,6 @@ async function main (data) {
         setup_gl()
     }, false)
 
-    await setup_gl()
-
     // init viewports
     viewports = [
         new ViewPort(0, 0, canvas.width / 2, canvas.height, canvas.width, canvas.height),
@@ -120,6 +120,8 @@ async function main (data) {
     viewport_count = 2
 
     projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
+
+    await setup_gl()
 
     // init overlay interface elements
     compare_mouse = new CompareMouse(canvas.width, canvas.height, 'rgb(63,215,177,.9)', 40, 1.75)
@@ -164,12 +166,26 @@ const updateFullSampleCamera = (elapsed) => {
     )
 }
 
+const updateCameraTraceRender = () => {
+    if (!menu.traceChanged) { return }
+    cameraTrace.setPath(gl, menu.tracePath)
+    menu.traceChanged = false
+}
+
+const updateCameraAxisRender = () => {
+    if (!menu.axisChanged) { return }
+    cameraAxis.setPosition(gl, menu.axisPosition)
+    menu.axisChanged = false
+}
+
 function draw (elapsed) {
     // draw visualizations
     let viewport_ind = -1
 
     if (vis_mode == 0) { // full sample
         updateFullSampleCamera(elapsed)
+        updateCameraTraceRender()
+        updateCameraAxisRender()
 
         if (!global_fields.dragging && !fs_camera.dragging) {
             timeline.tick(elapsed)
@@ -239,6 +255,11 @@ function draw (elapsed) {
                     800
                 )
             }
+        }
+
+        if (menu.drawPath) {
+            cameraTrace.draw(gl, viewMatrix)
+            cameraAxis.draw(gl, viewMatrix)
         }
 
         context_image.draw(timeline.timestep)
@@ -325,6 +346,10 @@ const setup_gl = async () => {
     await context_axis.init_gl(gl)
     await grain_surfaces.init_gl(gl)
     await ribbon_flow.init_gl(gl)
+
+    const cameraModelMatrix = new Matrix4()
+    await cameraTrace.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
+    await cameraAxis.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
 }
 
 function slice (output) {
@@ -478,6 +503,10 @@ function resize_all () {
     if (timeline) {
         timeline.resize()
     }
+    bindProgram(gl, cameraTrace.program)
+    cameraTrace.setProjMatrix(projMatrix)
+    bindProgram(gl, cameraAxis.program)
+    cameraAxis.setProjMatrix(projMatrix)
     if (sm_viewer) {
         let params = sm_viewer.resize(canvas.width, canvas.height, selections)
         if (params) { params = params[0] }
@@ -709,7 +738,7 @@ document.getElementById('flow_toggle').onmouseup = function () {
         remove_class(document.getElementById('add_selection'), ' hidden')
     }
 
-    projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
+    resize_all()
 }
 
 document.getElementById('vector_toggle').onmouseup = function () {
@@ -742,7 +771,7 @@ document.getElementById('vector_toggle').onmouseup = function () {
         remove_class(document.getElementById('add_selection'), ' hidden')
     }
 
-    projMatrix.setPerspective(35, canvas.width / canvas.height / viewport_count, 1, 500)
+    resize_all()
 }
 
 document.getElementById('standard_layout').onmouseup = function () {

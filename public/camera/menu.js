@@ -81,6 +81,7 @@ const deleteStep = (i) => {
     }
     menu.steps.splice(i, 1)
     menu.axisPosition = null
+    menu.axisChanged = true
     updateTracePath()
     renderSteps()
 }

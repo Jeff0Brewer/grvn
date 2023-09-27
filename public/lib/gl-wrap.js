@@ -75,3 +75,42 @@ const bindProgram = (gl, program) => {
     gl.useProgram(program)
     gl.program = program
 }
+
+const initBuffer = (gl) => {
+    const buffer = gl.createBuffer()
+    if (!buffer) {
+        throw new Error('Buffer creation failed')
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer)
+    return buffer
+}
+
+const initAttribute = (gl, program, name, size, stride, offset, type) => {
+    const location = gl.getAttribLocation(program, name)
+    if (location === -1) {
+        throw new Error(`Attribute ${name} not found in program`)
+    }
+
+    let byteSize = 0
+    if (type === gl.FLOAT) {
+        byteSize = Float32Array.BYTES_PER_ELEMENT
+    } else if (type === gl.UNSIGNED_BYTE) {
+        byteSize = Uint8Array.BYTES_PER_ELEMENT
+    }
+
+    // store vertex attrib pointer call in closure for future binding
+    const bindAttrib = () => {
+        gl.vertexAttribPointer(
+            location,
+            size,
+            type,
+            false,
+            stride * byteSize,
+            offset * byteSize
+        )
+    }
+    bindAttrib()
+
+    gl.enableVertexAttribArray(location)
+    return bindAttrib
+}
