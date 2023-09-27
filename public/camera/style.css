@@ -1,0 +1,192 @@
+.menu {
+    --color0: #111;
+    --color1: #222;
+    --color2: #666;
+    --gap: 5px;
+    --border: 1px solid #555;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 100;
+    background-color: var(--color0);
+    min-width: 230px;
+    font-size: 12px;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.menu * {
+    padding: 0;
+    margin: 0;
+    text-transform: none;
+}
+
+.menu button {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+    font: inherit;
+    color: inherit;
+}
+
+.menu input {
+    width: 45px;
+    padding: 0 5px;
+    height: 16px;
+    background-color: var(--color2);
+    font: inherit;
+    color: inherit;
+    border: none;
+}
+
+.menu button:hover, .menu label:hover {
+    opacity: 0.5;
+}
+
+.menu button, .menu label {
+    cursor: pointer;
+}
+
+.menu .addStep {
+    background-color: var(--color1);
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    display: grid;
+    place-items: center;
+}
+
+.menu .startButton {
+    background-color: var(--color1);
+    padding: 0 5px;
+    height: 15px;
+    line-height: 15px;
+}
+
+.middleRow, .bottomRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+}
+
+.bottomRow {
+    position: relative;
+    font-size: 20px;
+}
+
+.playControls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+}
+
+.playControls button {
+    width: 16px;
+    height: 16px;
+}
+
+.playControls .skipIcon {
+    font-size: 12px;
+    width: 14px;
+    height: 14px;
+}
+
+.bottomRow button, .bottomRow label {
+    display: grid;
+    place-items: center;
+}
+
+.pathControls {
+    display: flex;
+    gap: 5px;
+    font-size: 18px;
+}
+
+.fileControls {
+    display: flex;
+    gap: 2px;
+    font-size: 16px;
+}
+
+.stepCount {
+    position: absolute;
+    font-size: 12px;
+    left: 0;
+    right: 0;
+    bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.steps {
+    border-bottom: var(--border);
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
+.step {
+    padding: 15px 5px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    border-bottom: var(--border);
+}
+
+.stepWrap {
+    position: relative;
+}
+
+.stepWrap:last-of-type .step {
+    border: none;
+}
+
+.stepRow {
+    display: flex;
+    gap: var(--gap);
+}
+
+.pointInput {
+    display: flex;
+    gap: var(--gap);
+}
+
+.step button {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    background-color: var(--color1);
+    display: grid;
+    place-items: center;
+}
+
+.duration {
+    position: absolute;
+    z-index: 200;
+    bottom: -8px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--gap);
+    padding: 0 var(--gap);
+    background-color: var(--color0);
+}
+
+.duration input {
+    position: relative;
+    text-align: right;
+}
+
+.stepHighlight .xInput {
+    color: #faa;
+}
+
+.stepHighlight .yInput {
+    color: #afa;
+}
+
+.stepHighlight .zInput {
+    color: #aaf;
+}

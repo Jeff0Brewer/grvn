@@ -1,11 +1,3 @@
-function max (a, b) {
-    return a > b ? a : b
-}
-
-function min (a, b) {
-    return a < b ? a : b
-}
-
 function dist_point_line (point, line) {
     return (point[0] - line[0][0]) * (line[1][1] - line[0][1]) - (point[1] - line[0][1]) * (line[1][0] - line[0][0])
 }

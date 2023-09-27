@@ -54,29 +54,9 @@ var projMatrix = new Matrix4()
 
 var g_last = Date.now()
 
-var cameraPathSpeed = 0.0001
-var cameraPathPercentage = 0
-var cameraPath = null
-var cameraPathInput = document.getElementById('cameraInput')
-window.addEventListener('keydown', e => {
-    // show camera path input on ctrl+m
-    if (e.ctrlKey && e.key === 'm') {
-        cameraPathInput.style.display = 'block'
-    }
-    // log camera positions on ctrl+n
-    if (e.ctrlKey && e.key === 'n') {
-        const [x, y, z] = fs_camera.position
-        console.log(`CAMERA POSITION: [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]`)
-    }
-})
-cameraPathInput.addEventListener('change', e => {
-    const reader = new FileReader()
-    reader.onload = e => {
-        cameraPath = parseCameraPath(e.target.result)
-    }
-    const file = e.target.files[0]
-    reader.readAsText(file)
-})
+// setup camera paths
+menu.getCameraPosition = () => { return fs_camera.position }
+menu.getCameraFocus = () => { return fs_camera.focus }
 
 async function main (data) {
     num_t = data.numT
@@ -174,7 +154,9 @@ async function main (data) {
 }
 
 const updateFullSampleCamera = (elapsed) => {
-    const { position, focus } = fs_camera
+    const { position, focus } = menu.cameraPath !== null
+        ? menu.cameraPath.get(elapsed)
+        : fs_camera
     viewMatrix.setLookAt(
         ...position,
         ...focus,
