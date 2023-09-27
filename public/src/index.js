@@ -252,7 +252,7 @@ function draw (elapsed) {
                     0,
                     800,
                     0,
-                    fs_camera.zRotation,
+                    fs_camera.zRotation * 0.5,
                     viewports[i],
                     800
                 )

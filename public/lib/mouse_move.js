@@ -28,7 +28,7 @@ class FullSampleCamera {
             const newCamvec = rotation.multiplyVector3(new Vector3(camvec))
             this.position = add(this.focus, newCamvec.elements)
 
-            this.zRotation += rotationZ
+            this.zRotation -= rotationZ
         }
     }
 

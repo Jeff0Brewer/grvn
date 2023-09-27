@@ -82,7 +82,7 @@ class Axis {
         model.translate(x, y, z)
         model.scale(scale, scale, scale)
         model.rotate(rx, 1, 0, 0)
-        model.rotate(-rz, 0, 0, 1)
+        model.rotate(2 * rz, 0, 0, 1)
 
         gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
