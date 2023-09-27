@@ -123,10 +123,11 @@ class RibbonFlow {
         for (let i = 0; i < this.position_buffer.length; i += 2 * this.p_fpv) {
             const ribbonLeft = this.position_buffer.slice(i, i + this.p_fpv)
             const ribbonRight = this.position_buffer.slice(i + this.p_fpv, i + 2 * this.p_fpv)
-            const ribbonVec = sub(ribbonLeft, ribbonRight)
-            const resizedRibbonVec = mult(ribbonVec, scale)
-            const newLeft = add(resizedRibbonVec, ribbonRight)
-            const newRight = sub(ribbonLeft, resizedRibbonVec)
+            const center = midpoint(ribbonLeft, ribbonRight)
+
+            const newLeft = add(mult(sub(ribbonLeft, center), scale), center)
+            const newRight = add(mult(sub(ribbonRight, center), scale), center)
+
             for (let j = 0; j < this.p_fpv; j++) {
                 this.position_buffer[i + j] = newLeft[j]
             }

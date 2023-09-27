@@ -76,12 +76,20 @@ window.addEventListener('keydown', (e) => {
 })
 
 // setup flow resize
+const flowSizeMenu = document.getElementById('flowSizeMenu')
 window.addEventListener('keydown', (e) => {
-    if (!e.ctrlKey || !ribbon_flow) { return }
-    if (e.key === '-') {
-        ribbon_flow.resize_ribbons(gl, 0.7)
-    } else if (e.key === '=') {
-        ribbon_flow.resize_ribbons(gl, 1.3)
+    if (e.ctrlKey && e.key === 'f') {
+        flowSizeMenu.style.display = flowSizeMenu.style.display === 'none'
+            ? 'flex'
+            : 'none'
+    }
+})
+const flowSizeInput = document.getElementById('flowSizeInput')
+const flowSizeButton = document.getElementById('flowSizeButton')
+flowSizeButton.addEventListener('mousedown', () => {
+    const value = parseFloat(flowSizeInput.value)
+    if (!Number.isNaN(value) && ribbon_flow) {
+        ribbon_flow.resize_ribbons(gl, value)
     }
 })
 
