@@ -119,6 +119,25 @@ class RibbonFlow {
         }
     }
 
+    resize_ribbons (gl, scale) {
+        for (let i = 0; i < this.position_buffer.length; i += 2 * this.p_fpv) {
+            const ribbonLeft = this.position_buffer.slice(i, i + this.p_fpv)
+            const ribbonRight = this.position_buffer.slice(i + this.p_fpv, i + 2 * this.p_fpv)
+            const ribbonVec = sub(ribbonLeft, ribbonRight)
+            const resizedRibbonVec = mult(ribbonVec, scale)
+            const newLeft = add(resizedRibbonVec, ribbonRight)
+            const newRight = sub(ribbonLeft, resizedRibbonVec)
+            for (let j = 0; j < this.p_fpv; j++) {
+                this.position_buffer[i + j] = newLeft[j]
+            }
+            for (let j = 0; j < this.p_fpv; j++) {
+                this.position_buffer[i + j + this.p_fpv] = newRight[j]
+            }
+        }
+        this.bindPos(gl)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.position_buffer)
+    }
+
     async init_gl (gl) {
         const vert = await fetch('./shaders/flow-vert.glsl').then(res => res.text())
         const frag = await fetch('./shaders/flow-frag.glsl').then(res => res.text())

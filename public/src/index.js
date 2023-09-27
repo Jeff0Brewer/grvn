@@ -75,6 +75,25 @@ window.addEventListener('keydown', (e) => {
     }
 })
 
+// setup flow resize
+window.addEventListener('keydown', (e) => {
+    if (!e.ctrlKey || !ribbon_flow) { return }
+    if (e.key === '-') {
+        ribbon_flow.resize_ribbons(gl, 0.7)
+    } else if (e.key === '=') {
+        ribbon_flow.resize_ribbons(gl, 1.3)
+    }
+})
+
+// setup force plot resize
+window.addEventListener('keydown', (e) => {
+    if (!e.ctrlKey || !fn_vectors) { return }
+    const numberKey = parseInt(e.key)
+    if (!Number.isNaN(numberKey)) {
+        fn_vectors.lineWidth = numberKey + 1
+    }
+})
+
 async function main (data) {
     num_t = data.numT
     num_g = data.numG

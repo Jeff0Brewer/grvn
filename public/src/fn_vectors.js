@@ -10,6 +10,8 @@ class FnVectors {
         this.posData = posBuffers
         this.alpData = alpBuffers
         this.visData = visBuffers
+
+        this.lineWidth = 1
     }
 
     async init_gl (gl) {
@@ -80,7 +82,10 @@ class FnVectors {
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+
+        gl.lineWidth(this.lineWidth)
         gl.drawArrays(gl.LINES, 0, this.posData[timestep].length / this.p_fpv)
+        gl.lineWidth(1)
     }
 
     slice (planefilters) {
