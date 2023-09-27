@@ -43,7 +43,7 @@ class GrainSurfaces {
         this.u_Color = gl.getUniformLocation(gl.program, 'u_Color')
     }
 
-    draw_inds (gl, modelMatrix, viewMatrix, projMatrix, inds, t, rx, rz, viewport) {
+    draw_inds (gl, viewMatrix, projMatrix, inds, t, rx, rz, viewport) {
         gl.enable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
 
@@ -52,7 +52,7 @@ class GrainSurfaces {
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
-        const model = new Matrix4(modelMatrix)
+        const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)
         model.translate(0, 0, 800)
         model.rotate(rx, 1, 0, 0)

@@ -150,13 +150,12 @@ class RibbonFlow {
             gl.STATIC_DRAW
         )
 
-        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
         this.u_TimeStep = gl.getUniformLocation(gl.program, 'u_TimeStep')
     }
 
-    draw (gl, modelMatrix, viewMatrix, projMatrix, timestep, rx, rz, viewport) {
+    draw (gl, viewMatrix, projMatrix, timestep, rx, rz, viewport) {
         this.buffer_changed ||= timestep !== this.last_step
         this.last_step = timestep
 
@@ -173,7 +172,7 @@ class RibbonFlow {
         this.buffer_changed = false
 
         // drawing
-        const model = new Matrix4(modelMatrix)
+        const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)
         model.translate(0, 0, 800)
         model.rotate(rx, 1, 0, 0)

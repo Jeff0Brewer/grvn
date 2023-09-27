@@ -49,7 +49,6 @@ var cmap_reader = new FileReader()
 var fs_camera = new FSCamera(0.5, 0.1)
 var scrolling
 
-var modelMatrix = new Matrix4()
 var viewMatrix = new Matrix4()
 var projMatrix = new Matrix4()
 
@@ -215,7 +214,6 @@ function draw (elapsed) {
             viewports[viewport_ind].clear()
             ribbon_flow.draw(
                 gl,
-                modelMatrix,
                 viewMatrix,
                 projMatrix,
                 timeline.timestep,
@@ -230,7 +228,6 @@ function draw (elapsed) {
             viewports[viewport_ind].clear()
             fn_vectors.draw(
                 gl,
-                modelMatrix,
                 viewMatrix,
                 projMatrix,
                 timeline.timestep,
@@ -253,7 +250,6 @@ function draw (elapsed) {
             if (drawing_inds.length > 0) {
                 grain_surfaces.draw_inds(
                     gl,
-                    modelMatrix,
                     viewMatrix,
                     projMatrix,
                     drawing_inds,
@@ -269,7 +265,6 @@ function draw (elapsed) {
             for (let i = 0; i < viewports.length; i++) {
                 context_axis.draw(
                     gl,
-                    modelMatrix,
                     viewMatrix,
                     projMatrix,
                     0,
@@ -309,7 +304,6 @@ function draw (elapsed) {
             if (off) {
                 context_axis.draw(
                     gl,
-                    modelMatrix,
                     viewMatrix,
                     projMatrix,
                     off.x,
@@ -339,7 +333,6 @@ function draw (elapsed) {
             if (off) {
                 context_axis.draw(
                     gl,
-                    modelMatrix,
                     viewMatrix,
                     projMatrix,
                     off.x,
@@ -416,9 +409,9 @@ function slice (output) {
         const mid = midpoint(out_mouse_def[i][0], out_mouse_def[i][1])
 
         const trio = []
-        trio.push(unprojectmouse(out_mouse_def[i][0][0], out_mouse_def[i][0][1], modelMatrix, viewMatrix, projMatrix, out_vp, 0, rot))
-        trio.push(unprojectmouse(out_mouse_def[i][1][0], out_mouse_def[i][1][1], modelMatrix, viewMatrix, projMatrix, out_vp, 0, rot))
-        trio.push(unprojectmouse(mid[0], mid[1], modelMatrix, viewMatrix, projMatrix, out_vp, 1, rot))
+        trio.push(unprojectmouse(out_mouse_def[i][0][0], out_mouse_def[i][0][1], viewMatrix, projMatrix, out_vp, 0, rot))
+        trio.push(unprojectmouse(out_mouse_def[i][1][0], out_mouse_def[i][1][1], viewMatrix, projMatrix, out_vp, 0, rot))
+        trio.push(unprojectmouse(mid[0], mid[1], viewMatrix, projMatrix, out_vp, 1, rot))
 
         const plane = planefrompoints(trio[0], trio[1], trio[2])
 
@@ -442,7 +435,7 @@ function unslice (planes) {
 }
 
 function brush_vecs (out) {
-    const brush = new Brush(out[0], getprojectedlength(2.5, modelMatrix, viewMatrix, projMatrix))
+    const brush = new Brush(out[0], getprojectedlength(2.5, viewMatrix, projMatrix))
     const vp = out[1]
     const rot = new Matrix4()
     if (vp.equals(viewports[0])) {
@@ -462,7 +455,7 @@ function brush_vecs (out) {
     const vectors = []
     for (let i = 0; i < brush.points.length; i++) {
         brush.points[i][1] = vp.height - (brush.points[i][1] - vp.y)
-        vectors.push(unprojectvector(brush.points[i][0], brush.points[i][1], modelMatrix, viewMatrix, projMatrix, vp, rot))
+        vectors.push(unprojectvector(brush.points[i][0], brush.points[i][1], viewMatrix, projMatrix, vp, rot))
     }
     select_vectors.push(vectors)
 }
@@ -487,7 +480,7 @@ function get_hovered_sm (e) {
     proj.setPerspective(35, vp.width / vp.height, 1, 500)
     const view = new Matrix4()
     view.setLookAt(item.camera.x, item.camera.y, item.camera.y, off.x * 0.025, off.y * 0.025, off.z * 0.025, 0, 0, 1)
-    const vec = unprojectvector(e.clientX, canvas.height - e.clientY, modelMatrix, view, proj, vp, rot)
+    const vec = unprojectvector(e.clientX, canvas.height - e.clientY, view, proj, vp, rot)
 
     const ind = grain_surfaces.get_hovering(sm_viewer.hovering[1], selections[sm_viewer.hovering[0]].inds, off, vec, [color[0] / 255.0, color[1] / 255.0, color[2] / 255.0])
     update_hovered_sm(ind, sm_viewer.hovering[1])

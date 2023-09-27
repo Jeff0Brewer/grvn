@@ -68,7 +68,7 @@ class Axis {
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
     }
 
-    draw (gl, modelMatrix, viewMatrix, projMatrix, x, y, z, rx, rz, viewport, scale) {
+    draw (gl, viewMatrix, projMatrix, x, y, z, rx, rz, viewport, scale) {
         gl.enable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
 
@@ -77,7 +77,7 @@ class Axis {
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
-        const model = new Matrix4(modelMatrix)
+        const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)
         model.translate(x, y, z)
         model.scale(scale, scale, scale)
