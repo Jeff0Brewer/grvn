@@ -60,6 +60,21 @@ menu.getCameraFocus = () => { return fs_camera.focus }
 const cameraTrace = new CameraTrace()
 const cameraAxis = new CameraAxis()
 
+// setup auto rotate
+var autoRotate = false
+var autoRotateSpeed = 0.05
+var autoRotateSpeedInc = 0.02
+window.addEventListener('keydown', (e) => {
+    if (!e.ctrlKey) { return }
+    if (e.key === 'r') {
+        autoRotate = !autoRotate
+    } else if (e.key === ',') {
+        autoRotateSpeed -= autoRotateSpeedInc
+    } else if (e.key === '.') {
+        autoRotateSpeed += autoRotateSpeedInc
+    }
+})
+
 async function main (data) {
     num_t = data.numT
     num_g = data.numG
@@ -156,6 +171,9 @@ async function main (data) {
 }
 
 const updateFullSampleCamera = (elapsed) => {
+    if (autoRotate) {
+        fs_camera.autoRotate(elapsed, autoRotateSpeed)
+    }
     const { position, focus } = menu.cameraPath !== null
         ? menu.cameraPath.get(elapsed)
         : fs_camera

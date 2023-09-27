@@ -48,4 +48,12 @@ class FullSampleCamera {
             this.position = add(this.focus, resized)
         }
     }
+
+    autoRotate (elapsed, speed) {
+        const camvec = sub(this.position, this.focus)
+        const rotation = new Matrix4()
+        rotation.rotate(elapsed * speed, ...UP_VEC)
+        const newCamvec = rotation.multiplyVector3(new Vector3(camvec))
+        this.position = add(this.focus, newCamvec.elements)
+    }
 }
