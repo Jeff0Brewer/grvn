@@ -294,7 +294,6 @@ function draw (elapsed) {
         }
         const out = sm_viewer.update(selections, elapsed)
         const params = out[0]
-        const highlighted = out[1]
         for (let i = 0; i < params.length; i++) {
             params[i][2].clear()
         }
