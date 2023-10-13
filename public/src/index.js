@@ -711,6 +711,33 @@ sidebar.onmousedown = function () {
     frozen = false
 }
 
+const collapseArrow = document.getElementById('collapse_arrow')
+const collapseSidebar = () => {
+    if (sidebar.clientWidth === 0) {
+        return
+    }
+    if (slice_interface) {
+        slice_interface.cancel()
+    }
+    if (select_interface) {
+        select_interface.cancel()
+    }
+    frozen = false
+    sidebar.style.width = '0px'
+    collapseArrow.setAttribute('transform', 'rotate(180)')
+    resize_all()
+}
+
+const toggleSidebar = () => {
+    if (sidebar.clientWidth !== 0) {
+        collapseSideBar()
+        return
+    }
+    sidebar.style.width = '225px'
+    collapseArrow.setAttribute('transform', 'rotate(0)')
+    resize_all()
+}
+
 document.getElementById('fold_sidebar').onmouseup = function (e) {
     if (sidebar.clientWidth == 0) {
         sidebar.style.width = '225px'
@@ -968,3 +995,15 @@ document.getElementById('add_global').onchange = function () {
 global_reader.onloadend = function () {
     global_fields.add_field(this.result)
 }
+
+const ui = document.getElementById('ui')
+window.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'h') {
+        if (ui.style.display === 'none') {
+            ui.style.display = 'block'
+        } else {
+            collapseSidebar()
+            ui.style.display = 'none'
+        }
+    }
+})
