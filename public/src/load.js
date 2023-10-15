@@ -19,6 +19,23 @@ const readFileAsync = file => {
     })
 }
 
+// wrap image events in promise for async loading
+const loadImageAsync = async (source, callback) => {
+    return new Promise((resolve, reject) => {
+        const image = new Image()
+        image.src = source
+        image.addEventListener('load', () => {
+            if (callback !== undefined) {
+                callback()
+            }
+            resolve(image)
+        })
+        image.addEventListener('error', () => {
+            reject(new Error(`failed to load image ${source}`))
+        })
+    })
+}
+
 // read / unpack .msgpack file, return contents
 const readMsgpack = async (blob) => {
     const data = await readFileAsync(blob)
@@ -139,7 +156,7 @@ const loadZipData = async () => {
     const zipReader = new ZipReader(new BlobReader(blob))
     const entries = await zipReader.getEntries()
     const files = entries
-        .filter(entry => entry.filename.match(/^data\/.*msgpack$/))
+        .filter(entry => entry.filename.match(/^data\/.*(msgpack|json|png)$/))
         .map(async entry => {
             const writer = new BlobWriter()
             return {
@@ -153,22 +170,39 @@ const loadZipData = async () => {
     return dataMap
 }
 
+const loadForcePlot = async (dataSet, numTimestep, loadCallback) => {
+    const offsetsFile = 'force_plot/offsets.json'
+    const offsetsText = await dataSet[offsetsFile].text()
+    const offsets = JSON.parse(offsetsText)
+    const texturePromises = []
+    for (let i = 0; i < numTimestep; i++) {
+        const file = `force_plot/textures/fn${i}.png`
+        const url = URL.createObjectURL(dataSet[file])
+        texturePromises.push(loadImageAsync(url, loadCallback))
+    }
+    const textures = await Promise.all(texturePromises)
+
+    document.body.appendChild(textures[0])
+
+    return { offsets, textures }
+}
+
 const loadData = async () => {
     const data = await loadZipData()
 
     // get num files and helper to count file types
     const files = Object.keys(data)
     const countFiles = regex => files.reduce((total, curr) => total + (curr.match(regex) ? 1 : 0), 0)
-    const NUM_FILES = files.length
 
     // get dom elements / closure for updating load bar
     const loadWrap = document.getElementById('load')
     const loadBar = document.getElementById('loadbar')
     const maxLoadWidth = document.getElementById('loadbg').clientWidth
+    const numFiles = files.length
     let filesLoaded = 0
     const updateLoad = () => {
         filesLoaded++
-        const loadProgress = filesLoaded / NUM_FILES
+        const loadProgress = filesLoaded / numFiles
         loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
 
@@ -177,7 +211,7 @@ const loadData = async () => {
     // load all data sequentially to
     // prevent multiple large blobs / file readers in memory
     const { numT, numG } = await loadMetadata(data, updateLoad)
-    const forcePlot = await loadForceVerts(data, countFiles(/^fn/), updateLoad)
+    const forcePlot = await loadForcePlot(data, numT, updateLoad)
     const positions = await loadGrainPositions(data, countFiles(/^pos/), updateLoad)
     const rotations = await loadGrainRotations(data, countFiles(/^rot/), updateLoad)
     const surfaces = await loadGrainSurfaces(data, countFiles(/^grains/), updateLoad)
