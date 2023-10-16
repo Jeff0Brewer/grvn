@@ -36,6 +36,10 @@ vec2 indexToCorner (float index) {
     );
 }
 
+float magnitudeToAlpha (float magnitude) {
+    return min(pow(magnitude, 1.25) * 2.5, 1.0);
+}
+
 void main() {
     // get data from texture for center xyz, line direction, and line length
     float lineIndex = floor(a_Index / 6.0);
@@ -64,10 +68,10 @@ void main() {
 
     vec2 corner = indexToCorner(a_Index);
 
-    float length = magnitude * 100.0;
+    float length = magnitude * 60.0;
     float width = 1.0;
     vec3 position = center + direction * corner[0] * length + perpDirection * corner[1] * width;
 
     gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * vec4(position, 1.0);
-    v_Alpha = magnitude;
+    v_Alpha = magnitudeToAlpha(magnitude);
 }
