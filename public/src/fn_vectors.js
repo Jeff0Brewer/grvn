@@ -1,15 +1,36 @@
+const filterToFunction = (filter) => {
+    return `bool outsideSlices (vec3 p) { return ${filter}; }\n`
+}
+
+const EMPTY_FILTER = filterToFunction('false')
+const TEXTURE_SIZE = [2048, 1024]
+
 class FnVectors {
     constructor (offsets, images) {
         this.offsets = offsets
         this.images = images
         this.numVertex = 0
+
+        this.vertSource = ''
+        this.fragSource = ''
+    }
+
+    updateUniformLocations (gl) {
+        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
+        this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
+        this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
+        this.u_CameraPosition = gl.getUniformLocation(gl.program, 'u_CameraPosition')
+        this.u_DirectionOffset = gl.getUniformLocation(gl.program, 'u_DirectionOffset')
+        this.u_TextureDimensions = gl.getUniformLocation(gl.program, 'u_TextureDimensions')
     }
 
     async init_gl (gl) {
         const vert = await fetch('./shaders/force-vert.glsl').then(res => res.text())
         const frag = await fetch('./shaders/force-frag.glsl').then(res => res.text())
-        this.program = initProgram(gl, vert, frag)
+        this.program = initProgram(gl, EMPTY_FILTER + vert, frag)
         bindProgram(gl, this.program)
+        this.vertSource = vert
+        this.fragSource = frag
 
         this.textures = []
         this.images.forEach(img => {
@@ -42,15 +63,8 @@ class FnVectors {
             gl.STATIC_DRAW
         )
 
-        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
-        this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
-        this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
-        this.u_CameraPosition = gl.getUniformLocation(gl.program, 'u_CameraPosition')
-        this.u_DirectionOffset = gl.getUniformLocation(gl.program, 'u_DirectionOffset')
-        this.u_TextureDimensions = gl.getUniformLocation(gl.program, 'u_TextureDimensions')
-
-        // TODO: get texture size from images
-        gl.uniform2fv(this.u_TextureDimensions, [2048, 1024])
+        this.updateUniformLocations(gl)
+        gl.uniform2fv(this.u_TextureDimensions, TEXTURE_SIZE)
     }
 
     draw (gl, viewMatrix, projMatrix, cameraPosition, timestep, viewport) {
@@ -76,51 +90,22 @@ class FnVectors {
         gl.drawArrays(gl.TRIANGLES, 0, this.numVertex)
     }
 
-    slice (planefilters) {
-        // for (let t = 0; t < this.visData.length; t++) {
-        //    for (let v = 0; v < this.visData[t].length; v++) {
-        //        const pos_ind = v / this.v_fpv * this.p_fpv
-        //        const pos = [
-        //            this.posData[t][pos_ind],
-        //            this.posData[t][pos_ind + 1],
-        //            this.posData[t][pos_ind + 2]
-        //        ]
+    updateSlices (gl, planefilters) {
+        // generate glsl filter
+        const glslFilter = planefilters.length > 0
+            ? filterToFunction(planefilters.map(f => f.glslCheck).join('||'))
+            : EMPTY_FILTER
 
-        //        let outside = false
-        //        for (let f = 0; !outside && f < planefilters.length; f++) {
-        //            outside = planefilters[f].check(pos)
-        //        }
-        //        if (outside) { this.visData[t][v] += 1 }
-        //    }
-        // }
-        // this.buffer_changed = true
-    }
+        // recompile program with new filter
+        const newProgram = initProgram(gl, glslFilter + this.vertSource, this.fragSource)
 
-    unslice (planefilters) {
-        // for (let t = 0; t < this.visData.length; t++) {
-        //    for (let v = 0; v < this.visData[t].length; v++) {
-        //        const pos_ind = v / this.v_fpv * this.p_fpv
-        //        const pos = [
-        //            this.posData[t][pos_ind],
-        //            this.posData[t][pos_ind + 1],
-        //            this.posData[t][pos_ind + 2]
-        //        ]
+        // switch to new program, set uniforms
+        bindProgram(gl, newProgram)
+        this.updateUniformLocations(gl)
+        gl.uniform2fv(this.u_TextureDimensions, TEXTURE_SIZE)
 
-        //        let outside = false
-        //        for (let f = 0; !outside && f < planefilters.length; f++) {
-        //            outside = planefilters[f].check(pos)
-        //        }
-        //        if (outside) { this.visData[t][v] -= 1 }
-        //    }
-        // }
-        // this.buffer_changed = true
-    }
-
-    reset_slices () {
-        // for (let t = 0; t < this.visData.length; t++) {
-        //     for (let v = 0; v < this.visData[t].length; v++) {
-        //         this.visData[t][v] = 0
-        //     }
-        // }
+        // delete old program
+        gl.deleteProgram(this.program)
+        this.program = newProgram
     }
 }

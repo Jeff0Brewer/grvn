@@ -55,6 +55,12 @@ void main() {
         floatFromRgba(zData)
     );
 
+    if (outsideSlices(center)) {
+        gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
+        v_Alpha = 0.0;
+        return;
+    }
+
     vec3 direction = normalize(vec3(
         dirData.r - 0.5,
         dirData.g - 0.5,

@@ -172,8 +172,9 @@ async function main (data) {
         } else {
             for (let i = 0; i < slices.length; i++) {
                 if (slices[i].removed) {
-                    unslice(slices[i].planefilters)
+                    const removedSlices = [...slices[i].planefilters]
                     slices.splice(i, 1)
+                    unslice(removedSlices)
                     context_image.update_slices(grain_surfaces.get_sliced(slices))
                     i--
                 }
@@ -400,6 +401,10 @@ const setup_gl = async () => {
     await cameraAxis.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
 }
 
+const getCurrentPlaneFilters = () => {
+    return slices.map(slice => slice.planefilters).flat()
+}
+
 function slice (output) {
     const out_mouse_def = output[0]
     const out_vp = output[1]
@@ -428,11 +433,11 @@ function slice (output) {
         planes.push(new PlaneFilter(plane, out_mouse_def[i][2]))
     }
 
-    fn_vectors.slice(planes)
-    ribbon_flow.slice(planes)
-
     slices.push(make_slice_item(slice_ind, planes, output))
     slice_ind++
+
+    fn_vectors.updateSlices(gl, getCurrentPlaneFilters())
+    ribbon_flow.slice(planes)
 
     context_image.update_slices(grain_surfaces.get_sliced(slices))
 
@@ -440,8 +445,8 @@ function slice (output) {
 }
 
 function unslice (planes) {
-    fn_vectors.unslice(planes)
     ribbon_flow.unslice(planes)
+    fn_vectors.updateSlices(gl, getCurrentPlaneFilters())
 }
 
 function brush_vecs (out) {
