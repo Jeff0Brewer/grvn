@@ -75,41 +75,53 @@ window.addEventListener('keydown', (e) => {
     }
 })
 
-// setup flow resize
-const flowSizeMenu = document.getElementById('flowSizeMenu')
+// setup width control menu
+const widthMenu = document.getElementById('widthMenu')
 window.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'f') {
-        flowSizeMenu.style.display = flowSizeMenu.style.display === 'none'
+        widthMenu.style.display = widthMenu.style.display === 'none'
             ? 'flex'
             : 'none'
     }
 })
-const flowSizeInput = document.getElementById('flowSizeInput')
-const flowSizeButton = document.getElementById('flowSizeButton')
-flowSizeButton.addEventListener('mousedown', () => {
-    const value = parseFloat(flowSizeInput.value)
+const flowWidthInput = document.getElementById('flowWidthInput')
+const flowWidthButton = document.getElementById('flowWidthButton')
+flowWidthButton.addEventListener('mousedown', () => {
+    const value = parseFloat(flowWidthInput.value)
     if (!Number.isNaN(value) && ribbon_flow) {
         ribbon_flow.resize_ribbons(gl, value)
     }
 })
-
-// setup force plot resize
-window.addEventListener('keydown', (e) => {
-    if (!e.ctrlKey || !fn_vectors) { return }
-    const numberKey = parseInt(e.key)
-    if (!Number.isNaN(numberKey)) {
-        fn_vectors.lineWidth = numberKey + 1
-    }
+const forceWidthInput = document.getElementById('forceWidthInput')
+forceWidthInput.addEventListener('input', e => {
+    fn_vectors.setLineWidth(gl, e.target.value)
 })
+
+const setup_gl = async () => {
+    gl = canvas.getContext('webgl', { preserveDrawingBuffer: true })
+    gl.enableVertexAttribArray(0)
+    gl.enable(gl.BLEND)
+    gl.enable(gl.SCISSOR_TEST)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.clearColor(0, 0, 0, 1)
+
+    await fn_vectors.init_gl(gl)
+    await context_axis.init_gl(gl)
+    await grain_surfaces.init_gl(gl)
+    await ribbon_flow.init_gl(gl)
+
+    const cameraModelMatrix = new Matrix4()
+    await cameraTrace.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
+    await cameraAxis.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
+}
 
 async function main (data) {
     num_t = data.numT
     num_g = data.numG
 
     fn_vectors = new FnVectors(
-        data.forcePlot.posBuffers,
-        data.forcePlot.alpBuffers,
-        data.forcePlot.visBuffers
+        data.forcePlot.metadata,
+        data.forcePlot.textures
     )
     ribbon_flow = new RibbonFlow(
         data.grains.positions,
@@ -172,6 +184,8 @@ async function main (data) {
 
     sm_viewer = make_sm_viewer(canvas.width, canvas.height)
 
+    hideLoadbar()
+
     var tick = function () {
         const now = Date.now()
         const elapsed = now - g_last
@@ -182,8 +196,9 @@ async function main (data) {
         } else {
             for (let i = 0; i < slices.length; i++) {
                 if (slices[i].removed) {
-                    unslice(slices[i].planefilters)
+                    const removedSlices = [...slices[i].planefilters]
                     slices.splice(i, 1)
+                    unslice(removedSlices)
                     context_image.update_slices(grain_surfaces.get_sliced(slices))
                     i--
                 }
@@ -269,6 +284,7 @@ function draw (elapsed) {
                 gl,
                 viewMatrix,
                 projMatrix,
+                fs_camera.position,
                 timeline.timestep,
                 viewports[viewport_ind]
             )
@@ -391,22 +407,8 @@ function draw (elapsed) {
     }
 }
 
-const setup_gl = async () => {
-    gl = canvas.getContext('webgl', { preserveDrawingBuffer: true })
-    gl.enableVertexAttribArray(0)
-    gl.enable(gl.BLEND)
-    gl.enable(gl.SCISSOR_TEST)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-    gl.clearColor(0, 0, 0, 1)
-
-    await fn_vectors.init_gl(gl)
-    await context_axis.init_gl(gl)
-    await grain_surfaces.init_gl(gl)
-    await ribbon_flow.init_gl(gl)
-
-    const cameraModelMatrix = new Matrix4()
-    await cameraTrace.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
-    await cameraAxis.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
+const getCurrentPlaneFilters = () => {
+    return slices.map(slice => slice.planefilters).flat()
 }
 
 function slice (output) {
@@ -437,11 +439,11 @@ function slice (output) {
         planes.push(new PlaneFilter(plane, out_mouse_def[i][2]))
     }
 
-    fn_vectors.slice(planes)
-    ribbon_flow.slice(planes)
-
     slices.push(make_slice_item(slice_ind, planes, output))
     slice_ind++
+
+    fn_vectors.updateSlices(gl, getCurrentPlaneFilters())
+    ribbon_flow.slice(planes)
 
     context_image.update_slices(grain_surfaces.get_sliced(slices))
 
@@ -449,8 +451,8 @@ function slice (output) {
 }
 
 function unslice (planes) {
-    fn_vectors.unslice(planes)
     ribbon_flow.unslice(planes)
+    fn_vectors.updateSlices(gl, getCurrentPlaneFilters())
 }
 
 function brush_vecs (out) {
