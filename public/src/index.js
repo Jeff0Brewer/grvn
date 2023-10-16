@@ -75,23 +75,45 @@ window.addEventListener('keydown', (e) => {
     }
 })
 
-// setup flow resize
-const flowSizeMenu = document.getElementById('flowSizeMenu')
+// setup width control menu
+const widthMenu = document.getElementById('widthMenu')
 window.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'f') {
-        flowSizeMenu.style.display = flowSizeMenu.style.display === 'none'
+        widthMenu.style.display = widthMenu.style.display === 'none'
             ? 'flex'
             : 'none'
     }
 })
-const flowSizeInput = document.getElementById('flowSizeInput')
-const flowSizeButton = document.getElementById('flowSizeButton')
-flowSizeButton.addEventListener('mousedown', () => {
-    const value = parseFloat(flowSizeInput.value)
+const flowWidthInput = document.getElementById('flowWidthInput')
+const flowWidthButton = document.getElementById('flowWidthButton')
+flowWidthButton.addEventListener('mousedown', () => {
+    const value = parseFloat(flowWidthInput.value)
     if (!Number.isNaN(value) && ribbon_flow) {
         ribbon_flow.resize_ribbons(gl, value)
     }
 })
+const forceWidthInput = document.getElementById('forceWidthInput')
+forceWidthInput.addEventListener('input', e => {
+    fn_vectors.setLineWidth(gl, e.target.value)
+})
+
+const setup_gl = async () => {
+    gl = canvas.getContext('webgl', { preserveDrawingBuffer: true })
+    gl.enableVertexAttribArray(0)
+    gl.enable(gl.BLEND)
+    gl.enable(gl.SCISSOR_TEST)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.clearColor(0, 0, 0, 1)
+
+    await fn_vectors.init_gl(gl)
+    await context_axis.init_gl(gl)
+    await grain_surfaces.init_gl(gl)
+    await ribbon_flow.init_gl(gl)
+
+    const cameraModelMatrix = new Matrix4()
+    await cameraTrace.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
+    await cameraAxis.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
+}
 
 async function main (data) {
     num_t = data.numT
@@ -383,24 +405,6 @@ function draw (elapsed) {
             global_fields.set_time(0, num_t)
         }
     }
-}
-
-const setup_gl = async () => {
-    gl = canvas.getContext('webgl', { preserveDrawingBuffer: true })
-    gl.enableVertexAttribArray(0)
-    gl.enable(gl.BLEND)
-    gl.enable(gl.SCISSOR_TEST)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-    gl.clearColor(0, 0, 0, 1)
-
-    await fn_vectors.init_gl(gl)
-    await context_axis.init_gl(gl)
-    await grain_surfaces.init_gl(gl)
-    await ribbon_flow.init_gl(gl)
-
-    const cameraModelMatrix = new Matrix4()
-    await cameraTrace.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
-    await cameraAxis.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
 }
 
 const getCurrentPlaneFilters = () => {

@@ -1104,39 +1104,24 @@ textarea:focus, input:focus{
     outline: none;
 }
 
-input[type=range] {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type=range]:focus {
-  outline: none;
-}
-input[type=range]::-webkit-slider-runnable-track {
-  margin: 0;
-  width: 100%;
-  height: 10px;
-  cursor: pointer;
-  background: rgb(20,20,20);
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 6px;
-  width: 40px;
-  border-radius: 3px;
-  background: rgb(255,255,255);
-  cursor: pointer;
-  margin-top: 2px;
-}
-
-#flowSizeMenu {
+#widthMenu {
     position: absolute;
     bottom: 0;
     right: 0;
-    z-index: 100;
+    z-index: 999;
     display: none;
-    gap: 5px;
+    flex-direction: column;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    font-size: 14px;
+    padding: 10px;
+    color: #fff;
+    background-color: #000;
 }
 
-#flowSizeMenu input {
-    width: 40px;
+#widthMenu input[type="text"] {
+    width: 100px;
+}
+
+#widthMenu input[type="range"] {
+    width: 100%;
 }

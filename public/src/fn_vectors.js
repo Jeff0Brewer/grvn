@@ -11,6 +11,7 @@ class FnVectors {
 
         this.images = images
         this.numVertex = 0
+        this.lineWidth = 1.5
 
         this.vertSource = ''
         this.fragSource = ''
@@ -21,6 +22,7 @@ class FnVectors {
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
         this.u_CameraPosition = gl.getUniformLocation(gl.program, 'u_CameraPosition')
+        this.u_LineWidth = gl.getUniformLocation(gl.program, 'u_LineWidth')
     }
 
     updateStaticUniforms (gl) {
@@ -32,6 +34,7 @@ class FnVectors {
         gl.uniform1f(u_InvScl, 1 / this.metadata.float_scale)
         gl.uniform1f(u_MinPos, this.metadata.min_pos)
         gl.uniform1f(u_MaxPos, this.metadata.max_pos)
+        gl.uniform1f(this.u_LineWidth, this.lineWidth)
     }
 
     async init_gl (gl) {
@@ -111,5 +114,10 @@ class FnVectors {
         // delete old program
         gl.deleteProgram(this.program)
         this.program = newProgram
+    }
+
+    setLineWidth (gl, width) {
+        this.lineWidth = width
+        gl.uniform1f(this.u_LineWidth, this.lineWidth)
     }
 }

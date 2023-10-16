@@ -9,6 +9,7 @@ uniform vec2 u_TextureDimensions;
 uniform float u_InvFloatScale;
 uniform float u_MinPosition;
 uniform float u_MaxPosition;
+uniform float u_LineWidth;
 uniform sampler2D u_Texture;
 
 varying float v_Alpha;
@@ -76,8 +77,7 @@ void main() {
     vec2 corner = indexToCorner(a_Index);
 
     float length = magnitude * 60.0;
-    float width = 1.0;
-    vec3 position = center + direction * corner[0] * length + perpDirection * corner[1] * width;
+    vec3 position = center + direction * corner[0] * length + perpDirection * corner[1] * u_LineWidth;
 
     gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * vec4(position, 1.0);
     v_Alpha = magnitudeToAlpha(magnitude);
