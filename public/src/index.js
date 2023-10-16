@@ -162,6 +162,8 @@ async function main (data) {
 
     sm_viewer = make_sm_viewer(canvas.width, canvas.height)
 
+    hideLoadbar()
+
     var tick = function () {
         const now = Date.now()
         const elapsed = now - g_last

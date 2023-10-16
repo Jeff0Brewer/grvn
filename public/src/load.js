@@ -169,6 +169,10 @@ const loadZipData = async () => {
     return dataMap
 }
 
+const hideLoadbar = () => {
+    document.getElementById('load').classList.add('hidden')
+}
+
 const loadData = async () => {
     const data = await loadZipData()
 
@@ -177,8 +181,8 @@ const loadData = async () => {
     const countFiles = regex => files.reduce((total, curr) => total + (curr.match(regex) ? 1 : 0), 0)
 
     // get dom elements / closure for updating load bar
-    const loadWrap = document.getElementById('load')
     const loadBar = document.getElementById('loadbar')
+    const loadText = document.getElementById('loadtext')
     const maxLoadWidth = document.getElementById('loadbg').clientWidth
     const numFiles = files.length
     let filesLoaded = 0
@@ -188,7 +192,7 @@ const loadData = async () => {
         loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
 
-    document.getElementById('loadtext').innerHTML = 'Loading Data...'
+    loadText.innerHTML = 'Loading Data...'
 
     // load all data sequentially to
     // prevent multiple large blobs / file readers in memory
@@ -202,7 +206,7 @@ const loadData = async () => {
     const rotationMagnitudes = await loadRotationMagnitudes(data, updateLoad)
     const global = await loadGlobalField(data, updateLoad)
 
-    loadWrap.classList.add('hidden')
+    loadText.innerHTML = 'Initializing Visualization...'
 
     // call main with loaded data
     main({
