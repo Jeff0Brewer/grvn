@@ -98,7 +98,7 @@ async function main (data) {
     num_g = data.numG
 
     fn_vectors = new FnVectors(
-        data.forcePlot.offsets,
+        data.forcePlot.metadata,
         data.forcePlot.textures
     )
     ribbon_flow = new RibbonFlow(

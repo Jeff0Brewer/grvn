@@ -60,21 +60,20 @@ const loadMetadata = async (dataSet, loadCallback) => {
     return { numT, numG }
 }
 
-const loadForceVerts = async (dataSet, numFiles, loadCallback) => {
-    const posBuffers = []
-    const alpBuffers = []
-    const visBuffers = []
-    for (let i = 0; i < numFiles; i++) {
-        const file = `fn${i}.msgpack`
-        const data = await readMsgpack(dataSet[file])
-        posBuffers.push(new Float32Array(data[0]))
-        alpBuffers.push(new Uint8Array(data[1]))
-        // 1 alpha value per vertex, length of alpha buffer is num vertex
-        const numVertex = data[1].length
-        visBuffers.push(new Uint8Array(numVertex))
-        loadCallback()
+const loadForcePlot = async (dataSet, numTimestep, loadCallback) => {
+    const metaFile = 'force_plot/meta.json'
+    const metaText = await dataSet[metaFile].text()
+    const metadata = JSON.parse(metaText)
+
+    const texturePromises = []
+    for (let i = 0; i < numTimestep; i++) {
+        const file = `force_plot/textures/fn${i}.png`
+        const url = URL.createObjectURL(dataSet[file])
+        texturePromises.push(loadImageAsync(url, loadCallback))
     }
-    return { posBuffers, alpBuffers, visBuffers }
+    const textures = await Promise.all(texturePromises)
+
+    return { metadata, textures }
 }
 
 const loadGrainPositions = async (dataSet, numFiles, loadCallback) => {
@@ -168,23 +167,6 @@ const loadZipData = async () => {
     const dataMap = {}
     data.forEach(({ filename, blob }) => { dataMap[filename] = blob })
     return dataMap
-}
-
-const loadForcePlot = async (dataSet, numTimestep, loadCallback) => {
-    const offsetsFile = 'force_plot/offsets.json'
-    const offsetsText = await dataSet[offsetsFile].text()
-    const offsets = JSON.parse(offsetsText)
-    const texturePromises = []
-    for (let i = 0; i < numTimestep; i++) {
-        const file = `force_plot/textures/fn${i}.png`
-        const url = URL.createObjectURL(dataSet[file])
-        texturePromises.push(loadImageAsync(url, loadCallback))
-    }
-    const textures = await Promise.all(texturePromises)
-
-    document.body.appendChild(textures[0])
-
-    return { offsets, textures }
 }
 
 const loadData = async () => {

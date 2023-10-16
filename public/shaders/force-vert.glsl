@@ -5,17 +5,18 @@ uniform mat4 u_ViewMatrix;
 uniform mat4 u_ProjMatrix;
 
 uniform vec3 u_CameraPosition;
-uniform float u_DirectionOffset;
 uniform vec2 u_TextureDimensions;
+uniform float u_InvFloatScale;
+uniform float u_MinPosition;
+uniform float u_MaxPosition;
 uniform sampler2D u_Texture;
 
 varying float v_Alpha;
 
-const float invScale = 1.0 / 100000.0;
 float floatFromRgba (vec4 rgba) {
     vec4 bytes = rgba * 255.0;
     float decoded = bytes.a * 1.0 + bytes.b * 255.0 + bytes.g * 65025.0 + bytes.r * 16581375.0;
-    return decoded * invScale * 2500.0 - 500.0;
+    return decoded * u_InvFloatScale * (u_MaxPosition - u_MinPosition) + u_MinPosition;
 }
 
 vec2 indexToCoord (float index) {
@@ -43,10 +44,10 @@ float magnitudeToAlpha (float magnitude) {
 void main() {
     // get data from texture for center xyz, line direction, and line length
     float lineIndex = floor(a_Index / 6.0);
-    vec4 xData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0));
-    vec4 yData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0 + 1.0));
-    vec4 zData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0 + 2.0));
-    vec4 dirData = texture2D(u_Texture, indexToCoord(lineIndex + u_DirectionOffset));
+    vec4 xData = texture2D(u_Texture, indexToCoord(lineIndex * 4.0));
+    vec4 yData = texture2D(u_Texture, indexToCoord(lineIndex * 4.0 + 1.0));
+    vec4 zData = texture2D(u_Texture, indexToCoord(lineIndex * 4.0 + 2.0));
+    vec4 dirData = texture2D(u_Texture, indexToCoord(lineIndex * 4.0 + 3.0));
 
     // parse byte data into float values
     vec3 center = vec3(

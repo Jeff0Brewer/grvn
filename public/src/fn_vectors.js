@@ -1,13 +1,14 @@
 const filterToFunction = (filter) => {
     return `bool outsideSlices (vec3 p) { return ${filter}; }\n`
 }
-
 const EMPTY_FILTER = filterToFunction('false')
-const TEXTURE_SIZE = [2048, 1024]
 
 class FnVectors {
-    constructor (offsets, images) {
-        this.offsets = offsets
+    constructor (metadata, images) {
+        this.metadata = metadata
+        this.metadata.tex_width = images[0].width
+        this.metadata.tex_height = images[0].height
+
         this.images = images
         this.numVertex = 0
 
@@ -20,8 +21,17 @@ class FnVectors {
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
         this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
         this.u_CameraPosition = gl.getUniformLocation(gl.program, 'u_CameraPosition')
-        this.u_DirectionOffset = gl.getUniformLocation(gl.program, 'u_DirectionOffset')
-        this.u_TextureDimensions = gl.getUniformLocation(gl.program, 'u_TextureDimensions')
+    }
+
+    updateStaticUniforms (gl) {
+        const u_TexDim = gl.getUniformLocation(gl.program, 'u_TextureDimensions')
+        const u_InvScl = gl.getUniformLocation(gl.program, 'u_InvFloatScale')
+        const u_MinPos = gl.getUniformLocation(gl.program, 'u_MinPosition')
+        const u_MaxPos = gl.getUniformLocation(gl.program, 'u_MaxPosition')
+        gl.uniform2f(u_TexDim, this.metadata.tex_width, this.metadata.tex_height)
+        gl.uniform1f(u_InvScl, 1 / this.metadata.float_scale)
+        gl.uniform1f(u_MinPos, this.metadata.min_pos)
+        gl.uniform1f(u_MaxPos, this.metadata.max_pos)
     }
 
     async init_gl (gl) {
@@ -41,14 +51,9 @@ class FnVectors {
         })
         this.images = []
 
-        // get max line count from offsets
-        // offsets represent length of all xyz position data
-        // number of lines is length of xyz data / 3 since xyz has 3 components
-        const maxLineCount = Math.max(...this.offsets) / 3
-
         // get buffer of vertex indices for
         // texture attribute lookup in shader
-        const buffer = new Float32Array(maxLineCount * 6) // 6 vertices per meshline
+        const buffer = new Float32Array(this.metadata.max_lines * 6) // 6 vertices per meshline
         for (let i = 0; i < buffer.length; i++) {
             buffer[i] = i
         }
@@ -64,7 +69,7 @@ class FnVectors {
         )
 
         this.updateUniformLocations(gl)
-        gl.uniform2fv(this.u_TextureDimensions, TEXTURE_SIZE)
+        this.updateStaticUniforms(gl)
     }
 
     draw (gl, viewMatrix, projMatrix, cameraPosition, timestep, viewport) {
@@ -81,7 +86,6 @@ class FnVectors {
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
         gl.uniform3fv(this.u_CameraPosition, mult(cameraPosition, 1 / scale))
-        gl.uniform1f(this.u_DirectionOffset, this.offsets[timestep])
         gl.bindTexture(gl.TEXTURE_2D, this.textures[timestep])
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
@@ -102,7 +106,7 @@ class FnVectors {
         // switch to new program, set uniforms
         bindProgram(gl, newProgram)
         this.updateUniformLocations(gl)
-        gl.uniform2fv(this.u_TextureDimensions, TEXTURE_SIZE)
+        this.updateStaticUniforms(gl)
 
         // delete old program
         gl.deleteProgram(this.program)
