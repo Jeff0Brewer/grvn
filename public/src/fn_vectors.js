@@ -15,6 +15,7 @@ class FnVectors {
         this.images.forEach(img => {
             const texture = initTexture(gl)
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
+            gl.generateMipmap(gl.TEXTURE_2D)
             this.textures.push(texture)
         })
         this.images = []
@@ -58,13 +59,14 @@ class FnVectors {
 
         this.bindIndex(gl)
 
+        const scale = 0.025
         const model = new Matrix4()
-        model.scale(0.025, 0.025, 0.025)
+        model.scale(scale, scale, scale)
 
         gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
-        gl.uniform3fv(this.u_CameraPosition, cameraPosition)
+        gl.uniform3fv(this.u_CameraPosition, mult(cameraPosition, 1 / scale))
         gl.uniform1f(this.u_DirectionOffset, this.offsets[timestep])
         gl.bindTexture(gl.TEXTURE_2D, this.textures[timestep])
 

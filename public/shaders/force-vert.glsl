@@ -24,22 +24,21 @@ vec2 indexToCoord (float index) {
     // add 0.5 to center on pixel
     return vec2(
         (col + 0.5) / u_TextureDimensions[0],
-        1.0 - (row + 0.5) / u_TextureDimensions[1]
+        (row + 0.5) / u_TextureDimensions[1]
     );
 }
 
 vec2 indexToCorner (float index) {
-    float ind = mod(index, 6.0);
+    float ind = floor(mod(index, 6.0) + 0.5);
     return vec2(
-        ind == 0.0 || ind >= 4.0 ? 1.0 : -1.0,
-        ind <= 1.0 || ind == 5.0 ? 1.0 : -1.0
+        ind < 1.0 || ind > 3.0 ? 1.0 : -1.0,
+        ind < 2.0 || ind > 4.0 ? 1.0 : -1.0
     );
 }
 
 void main() {
     // get data from texture for center xyz, line direction, and line length
-    float vertIndex = floor(a_Index + 0.5);
-    float lineIndex = floor(vertIndex / 6.0);
+    float lineIndex = floor(a_Index / 6.0);
     vec4 xData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0));
     vec4 yData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0 + 1.0));
     vec4 zData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0 + 2.0));
@@ -52,16 +51,21 @@ void main() {
         floatFromRgba(zData)
     );
 
-    vec3 direction = vec3(dirData.r - 0.5, dirData.g - 0.5, dirData.b - 0.5);
+    vec3 direction = normalize(vec3(
+        dirData.r - 0.5,
+        dirData.g - 0.5,
+        dirData.b - 0.5
+    ));
+
     float magnitude = dirData.a;
 
     vec3 cameraVec = normalize(center - u_CameraPosition);
     vec3 perpDirection = cross(cameraVec, direction);
 
-    vec2 corner = indexToCorner(vertIndex);
+    vec2 corner = indexToCorner(a_Index);
 
-    float length = magnitude * 50.0;
-    float width = 2.0;
+    float length = magnitude * 100.0;
+    float width = 1.0;
     vec3 position = center + direction * corner[0] * length + perpDirection * corner[1] * width;
 
     gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * vec4(position, 1.0);
