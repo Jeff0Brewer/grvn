@@ -93,23 +93,13 @@ flowSizeButton.addEventListener('mousedown', () => {
     }
 })
 
-// setup force plot resize
-window.addEventListener('keydown', (e) => {
-    if (!e.ctrlKey || !fn_vectors) { return }
-    const numberKey = parseInt(e.key)
-    if (!Number.isNaN(numberKey)) {
-        fn_vectors.lineWidth = numberKey + 1
-    }
-})
-
 async function main (data) {
     num_t = data.numT
     num_g = data.numG
 
     fn_vectors = new FnVectors(
-        data.forcePlot.posBuffers,
-        data.forcePlot.alpBuffers,
-        data.forcePlot.visBuffers
+        data.forcePlot.offsets,
+        data.forcePlot.textures
     )
     ribbon_flow = new RibbonFlow(
         data.grains.positions,
@@ -269,6 +259,7 @@ function draw (elapsed) {
                 gl,
                 viewMatrix,
                 projMatrix,
+                fs_camera.position,
                 timeline.timestep,
                 viewports[viewport_ind]
             )
