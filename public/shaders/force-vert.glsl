@@ -38,7 +38,8 @@ vec2 indexToCorner (float index) {
 
 void main() {
     // get data from texture for center xyz, line direction, and line length
-    float lineIndex = floor(a_Index / 6.0);
+    float vertIndex = floor(a_Index + 0.5);
+    float lineIndex = floor(vertIndex / 6.0);
     vec4 xData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0));
     vec4 yData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0 + 1.0));
     vec4 zData = texture2D(u_Texture, indexToCoord(lineIndex * 3.0 + 2.0));
@@ -57,7 +58,7 @@ void main() {
     vec3 cameraVec = normalize(center - u_CameraPosition);
     vec3 perpDirection = cross(cameraVec, direction);
 
-    vec2 corner = indexToCorner(a_Index);
+    vec2 corner = indexToCorner(vertIndex);
 
     float length = magnitude * 50.0;
     float width = 2.0;
