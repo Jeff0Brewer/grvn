@@ -2,46 +2,30 @@ const filterToFunction = (filter) => {
     return `bool outsideSlices (vec3 p) { return ${filter}; }\n`
 }
 const EMPTY_FILTER = filterToFunction('false')
+const DEFAULT_LINE_WIDTH = 1.5
 
-class FnVectors {
+class ForcePlot {
     constructor (metadata, images) {
+        this.images = images
         this.metadata = metadata
         this.metadata.tex_width = images[0].width
         this.metadata.tex_height = images[0].height
 
-        this.images = images
-        this.numVertex = 0
-        this.lineWidth = 1.5
+        // 6 vertices per meshline segment
+        this.numVertex = metadata.max_lines * 6
 
+        this.lineWidth = DEFAULT_LINE_WIDTH
         this.vertSource = ''
         this.fragSource = ''
     }
 
-    updateUniformLocations (gl) {
-        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
-        this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
-        this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
-        this.u_CameraPosition = gl.getUniformLocation(gl.program, 'u_CameraPosition')
-        this.u_LineWidth = gl.getUniformLocation(gl.program, 'u_LineWidth')
-    }
-
-    updateStaticUniforms (gl) {
-        const u_TexDim = gl.getUniformLocation(gl.program, 'u_TextureDimensions')
-        const u_InvScl = gl.getUniformLocation(gl.program, 'u_InvFloatScale')
-        const u_MinPos = gl.getUniformLocation(gl.program, 'u_MinPosition')
-        const u_MaxPos = gl.getUniformLocation(gl.program, 'u_MaxPosition')
-        gl.uniform2f(u_TexDim, this.metadata.tex_width, this.metadata.tex_height)
-        gl.uniform1f(u_InvScl, 1 / this.metadata.float_scale)
-        gl.uniform1f(u_MinPos, this.metadata.min_pos)
-        gl.uniform1f(u_MaxPos, this.metadata.max_pos)
-        gl.uniform1f(this.u_LineWidth, this.lineWidth)
-    }
-
-    async init_gl (gl) {
+    async initGl (gl) {
         const vert = await fetch('./shaders/force-vert.glsl').then(res => res.text())
         const frag = await fetch('./shaders/force-frag.glsl').then(res => res.text())
         this.program = initProgram(gl, EMPTY_FILTER + vert, frag)
         bindProgram(gl, this.program)
+
+        // store shader sources for recompiling on slice
         this.vertSource = vert
         this.fragSource = frag
 
@@ -52,15 +36,15 @@ class FnVectors {
             gl.generateMipmap(gl.TEXTURE_2D)
             this.textures.push(texture)
         })
+
+        // lose images reference for gc
         this.images = []
 
-        // get buffer of vertex indices for texture attribute lookup in shader
-        const buffer = new Float32Array(this.metadata.max_lines * 6) // 6 vertices per meshline
+        // fill buffer with vertex indices for attribute lookup from texture in shader
+        const buffer = new Float32Array(this.numVertex)
         for (let i = 0; i < buffer.length; i++) {
             buffer[i] = i
         }
-        this.numVertex = buffer.length
-
         this.bindIndex = initAttribBuffer(gl, 'a_Index', 1, buffer, gl.FLOAT, gl.STATIC_DRAW)
 
         this.updateUniformLocations(gl)
@@ -89,6 +73,26 @@ class FnVectors {
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
         gl.drawArrays(gl.TRIANGLES, 0, this.numVertex)
+    }
+
+    updateUniformLocations (gl) {
+        this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
+        this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
+        this.u_ProjMatrix = gl.getUniformLocation(gl.program, 'u_ProjMatrix')
+        this.u_CameraPosition = gl.getUniformLocation(gl.program, 'u_CameraPosition')
+        this.u_LineWidth = gl.getUniformLocation(gl.program, 'u_LineWidth')
+    }
+
+    updateStaticUniforms (gl) {
+        const u_TexDim = gl.getUniformLocation(gl.program, 'u_TextureDimensions')
+        const u_InvScl = gl.getUniformLocation(gl.program, 'u_InvFloatScale')
+        const u_MinPos = gl.getUniformLocation(gl.program, 'u_MinPosition')
+        const u_MaxPos = gl.getUniformLocation(gl.program, 'u_MaxPosition')
+        gl.uniform2f(u_TexDim, this.metadata.tex_width, this.metadata.tex_height)
+        gl.uniform1f(u_InvScl, 1 / this.metadata.float_scale)
+        gl.uniform1f(u_MinPos, this.metadata.min_pos)
+        gl.uniform1f(u_MaxPos, this.metadata.max_pos)
+        gl.uniform1f(this.u_LineWidth, this.lineWidth)
     }
 
     updateSlices (gl, planefilters) {

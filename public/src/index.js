@@ -14,7 +14,7 @@ var viewport_count
 
 var context_axis
 var ribbon_flow
-var fn_vectors
+var forcePlot
 var grain_surfaces
 
 var flow_visible = true
@@ -93,7 +93,7 @@ flowWidthButton.addEventListener('mousedown', () => {
 })
 const forceWidthInput = document.getElementById('forceWidthInput')
 forceWidthInput.addEventListener('input', e => {
-    fn_vectors.setLineWidth(gl, e.target.value)
+    forcePlot.setLineWidth(gl, e.target.value)
 })
 
 const setup_gl = async () => {
@@ -104,8 +104,8 @@ const setup_gl = async () => {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.clearColor(0, 0, 0, 1)
 
+    await forcePlot.initGl(gl)
     await context_axis.initGl(gl)
-    await fn_vectors.init_gl(gl)
     await grain_surfaces.init_gl(gl)
     await ribbon_flow.init_gl(gl)
 
@@ -117,7 +117,7 @@ const setup_gl = async () => {
 async function main (data) {
     numT = data.numT
 
-    fn_vectors = new FnVectors(
+    forcePlot = new ForcePlot(
         data.forcePlot.metadata,
         data.forcePlot.textures
     )
@@ -278,7 +278,7 @@ function draw (elapsed) {
         if (vector_visible) {
             viewport_ind++
             viewports[viewport_ind].clear()
-            fn_vectors.draw(
+            forcePlot.draw(
                 gl,
                 viewMatrix,
                 projMatrix,
@@ -440,7 +440,7 @@ function slice (output) {
     slices.push(make_slice_item(slice_ind, planes, output))
     slice_ind++
 
-    fn_vectors.updateSlices(gl, getCurrentPlaneFilters())
+    forcePlot.updateSlices(gl, getCurrentPlaneFilters())
     ribbon_flow.slice(planes)
 
     context_image.update_slices(grain_surfaces.get_sliced(slices))
@@ -450,7 +450,7 @@ function slice (output) {
 
 function unslice (planes) {
     ribbon_flow.unslice(planes)
-    fn_vectors.updateSlices(gl, getCurrentPlaneFilters())
+    forcePlot.updateSlices(gl, getCurrentPlaneFilters())
 }
 
 function brush_vecs (out) {
