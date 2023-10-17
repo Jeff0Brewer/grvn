@@ -61,7 +61,7 @@ class GrainSurfaces {
             gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
             gl.uniform3fv(this.u_Color, this.colors[t][i])
 
-            const [_, startInd, endInd] = this.inds[i]
+            const [startInd, endInd] = this.inds[i]
             gl.drawArrays(gl.TRIANGLES, startInd, endInd - startInd)
         }
     }
@@ -131,8 +131,8 @@ class GrainSurfaces {
             gl.uniform3fv(this.u_Color, this.colors[t][selectitem.inds[i]])
             gl.drawArrays(
                 gl.TRIANGLES,
-                this.inds[selectitem.inds[i]][1],
-                this.inds[selectitem.inds[i]][2] - this.inds[selectitem.inds[i]][1]
+                this.inds[selectitem.inds[i]][0],
+                this.inds[selectitem.inds[i]][1] - this.inds[selectitem.inds[i]][0]
             )
         }
     }
@@ -235,7 +235,7 @@ class GrainSurfaces {
             }
             const triangles = []
             for (let i = 0; i < canidates.length; i++) {
-                for (let tri = this.inds[canidates[i]][1]; tri < this.inds[canidates[i]][2]; tri += 3) {
+                for (let tri = this.inds[canidates[i]][0]; tri < this.inds[canidates[i]][1]; tri += 3) {
                     const ind = triangles.length
                     triangles.push([])
                     let dist_from_cam = 0
