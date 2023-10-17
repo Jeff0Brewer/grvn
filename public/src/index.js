@@ -1,5 +1,4 @@
-var num_t = -1
-var num_g = -1
+var numT = -1
 
 var sidebar = document.getElementById('sidebar')
 var fs_tab = document.getElementById('fs_tab')
@@ -116,8 +115,7 @@ const setup_gl = async () => {
 }
 
 async function main (data) {
-    num_t = data.numT
-    num_g = data.numG
+    numT = data.numT
 
     fn_vectors = new FnVectors(
         data.forcePlot.metadata,
@@ -149,7 +147,7 @@ async function main (data) {
     data = {}
 
     context_axis = new Axis(100, 100)
-    timeline = make_timeline(num_t)
+    timeline = make_timeline(numT)
 
     window.addEventListener('keyup', keyup, false)
 
@@ -262,7 +260,7 @@ function draw (elapsed) {
             timeline.tick(elapsed)
         }
         if (global_fields.tabs.length >= 0) {
-            global_fields.set_time(timeline.timestep, num_t)
+            global_fields.set_time(timeline.timestep, numT)
         }
 
         if (flow_visible) {
@@ -399,10 +397,10 @@ function draw (elapsed) {
                 : sm_viewer.hovering[1]
             const subset = grain_surfaces.get_positions(selections[sm_viewer.hovering[0]].inds, t)
             context_image.draw(t, subset)
-            global_fields.set_time(t, num_t)
+            global_fields.set_time(t, numT)
         } else {
             context_image.draw(timeline.timestep, [])
-            global_fields.set_time(0, num_t)
+            global_fields.set_time(0, numT)
         }
     }
 }
@@ -616,14 +614,14 @@ document.body.onmousemove = function (e) {
     if (timeline) {
         const workspace = timeline.mousemove(e)
         if (workspace && global_fields) {
-            global_fields.change_workspace(workspace[0], workspace[1], workspace[2], num_t)
+            global_fields.change_workspace(workspace[0], workspace[1], workspace[2], numT)
         }
     }
     if (color_mapper) {
         color_mapper.mousemove(e)
     }
     if (global_fields.dragging && timeline) {
-        timeline.set_time(global_fields.get_time(e, num_t, timeline.workspace.low, timeline.workspace.high))
+        timeline.set_time(global_fields.get_time(e, numT, timeline.workspace.low, timeline.workspace.high))
     }
     if (select_interface && select_interface.click_ind == 1) {
         select_interface.hover_rotate(e.clientX, e.clientY)
@@ -933,7 +931,7 @@ document.getElementById('select_button').onmouseup = function () {
             brush_vecs(select_interface.finish_step())
             if (select_interface.mode == 1) {
                 const inds = grain_surfaces.get_cross(timeline.timestep, select_vectors[0], 15, slices)
-                selections.push(make_selection_item(inds, grain_surfaces.get_positions_t(inds), num_t, select_ind))
+                selections.push(make_selection_item(inds, grain_surfaces.get_positions_t(inds), numT, select_ind))
                 select_ind++
                 select_vectors = []
                 select_interface.finish_all()
@@ -958,7 +956,7 @@ document.getElementById('select_button').onmouseup = function () {
         case 2:
             brush_vecs(select_interface.finish_all())
             const inds = grain_surfaces.get_chain(timeline.timestep, select_vectors, 15, slices)
-            selections.push(make_selection_item(inds, grain_surfaces.get_positions_t(inds), num_t, select_ind))
+            selections.push(make_selection_item(inds, grain_surfaces.get_positions_t(inds), numT, select_ind))
             select_ind++
             select_vectors = []
             frozen = false
