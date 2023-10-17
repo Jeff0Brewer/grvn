@@ -52,20 +52,12 @@ const scale3DArray = (arr, scale) => {
     }
 }
 
-const loadMetadata = async () => {
-    const metadataFile = './data/meta.json'
-    const metadata = await fetch(metadataFile).then(res => res.json())
-    return metadata
-}
-
-const loadForcePlot = async (metadata, loadCallback) => {
+const loadForcePlot = async (metadata, data, loadCallback) => {
     const texturePromises = []
     for (let i = 0; i < metadata.num_t; i++) {
-        const promise = fetch(`./data/force_plot/textures/fn${i}.png`)
-            .then(res => res.blob())
-            .then(blob => URL.createObjectURL(blob))
-            .then(url => loadImageAsync(url, loadCallback))
-        texturePromises.push(promise)
+        const file = `textures/fn${i}.png`
+        const url = URL.createObjectURL(data[file])
+        texturePromises.push(loadImageAsync(url, loadCallback))
     }
     const textures = await Promise.all(texturePromises)
 
@@ -75,7 +67,7 @@ const loadForcePlot = async (metadata, loadCallback) => {
 const loadGrainPositions = async (dataSet, numFiles, loadCallback) => {
     const positions = []
     for (let i = 0; i < numFiles; i++) {
-        const file = `pos${i}.msgpack`
+        const file = `msgpack/pos${i}.msgpack`
         const data = await readMsgpack(dataSet[file])
         const scale = 1 / data[0]
         const pos = data[1]
@@ -89,7 +81,7 @@ const loadGrainPositions = async (dataSet, numFiles, loadCallback) => {
 const loadGrainRotations = async (dataSet, numFiles, loadCallback) => {
     const rotations = []
     for (let i = 0; i < numFiles; i++) {
-        const file = `rot${i}.msgpack`
+        const file = `msgpack/rot${i}.msgpack`
         const data = await readMsgpack(dataSet[file])
         const scale = 1 / data[0]
         const rot = data[1]
@@ -103,7 +95,7 @@ const loadGrainRotations = async (dataSet, numFiles, loadCallback) => {
 const loadGrainSurfaces = async (dataSet, numFiles, loadCallback) => {
     const surfaces = []
     for (let i = 0; i < numFiles; i++) {
-        const file = `grains${i}.msgpack`
+        const file = `msgpack/grains${i}.msgpack`
         const data = await readMsgpack(dataSet[file])
         const scale = 1 / data[0]
         const surf = data[1]
@@ -117,28 +109,28 @@ const loadGrainSurfaces = async (dataSet, numFiles, loadCallback) => {
 }
 
 const loadGrainInds = async (dataSet, loadCallback) => {
-    const file = 'inds.msgpack'
+    const file = 'msgpack/inds.msgpack'
     const inds = await readMsgpack(dataSet[file])
     loadCallback()
     return inds
 }
 
 const loadForces = async (dataSet, loadCallback) => {
-    const file = 'for.msgpack'
+    const file = 'msgpack/for.msgpack'
     const [maxForce, forces] = await readMsgpack(dataSet[file])
     loadCallback()
     return { maxForce, forces }
 }
 
 const loadRotationMagnitudes = async (dataSet, loadCallback) => {
-    const file = 'rmag.msgpack'
+    const file = 'msgpack/rmag.msgpack'
     const rotationMagnitudes = await readMsgpack(dataSet[file])
     loadCallback()
     return rotationMagnitudes
 }
 
 const loadGlobalField = async (dataSet, loadCallback) => {
-    const file = 'global.msgpack'
+    const file = 'msgpack/global.msgpack'
     const global = await readMsgpack(dataSet[file])
     loadCallback()
     return global
@@ -165,51 +157,71 @@ const loadZipData = async () => {
     return dataMap
 }
 
+const unzipData = async (blob) => {
+    const { BlobReader, BlobWriter, ZipReader } = zip
+    const zipReader = new ZipReader(new BlobReader(blob))
+    const entries = await zipReader.getEntries()
+    const files = entries
+        .filter(entry => entry.filename.match(/^data\/.*(msgpack|png|json)$/))
+        .map(async entry => {
+            const writer = new BlobWriter()
+            return {
+                filename: entry.filename.replace(/data\//, ''),
+                blob: await entry.getData(writer)
+            }
+        })
+    const data = await Promise.all(files)
+    const dataMap = {}
+    data.forEach(({ filename, blob }) => { dataMap[filename] = blob })
+    return dataMap
+}
+
+const getMetadata = async (data) => {
+    const text = await data['meta.json'].text()
+    return JSON.parse(text)
+}
+
 const hideLoadbar = () => {
     document.getElementById('load').classList.add('hidden')
 }
 
 const loadData = async () => {
-    const metadata = await loadMetadata()
-    const { num_t: numT, num_g: numG, num_files: numFiles } = metadata
-
-    // get dom elements / closure for updating load bar
     const loadBar = document.getElementById('loadbar')
     const loadText = document.getElementById('loadtext')
     const maxLoadWidth = document.getElementById('loadbg').clientWidth
 
-    // numT number of force textures, not included in files from msgpack data
-    const fileCount = numFiles + numT
+    loadText.innerHTML = 'Fetching Data...'
+    const dataBlob = await fetch('./data.zip').then(res => res.blob())
+
+    loadText.innerHTML = 'Decompressing Data...'
+    const data = await unzipData(dataBlob)
+
+    loadText.innerHTML = 'Loading Data...'
+    const metadata = await getMetadata(data)
+    const { num_t: numT, num_g: numG, num_files: numFiles } = metadata
+
+    // get callback for updating load bar
     let filesLoaded = 0
     const updateLoad = () => {
         filesLoaded++
-        const loadProgress = filesLoaded / fileCount
+        const loadProgress = filesLoaded / numFiles
         loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
 
-    loadText.innerHTML = 'Loading Data...'
-
     // load force textures async during message pack parsing
-    const forcePlotPromise = loadForcePlot(metadata, updateLoad)
-
-    // load all msgpack data sequentially to
-    // prevent multiple large blobs / file readers in memory
-    const msgpackData = await loadZipData()
+    const forcePlot = await loadForcePlot(metadata, data, updateLoad)
 
     // get num files and helper to count file types
-    const files = Object.keys(msgpackData)
+    const files = Object.keys(data)
     const countFiles = regex => files.reduce((total, curr) => total + (curr.match(regex) ? 1 : 0), 0)
 
-    const positions = await loadGrainPositions(msgpackData, countFiles(/^pos/), updateLoad)
-    const rotations = await loadGrainRotations(msgpackData, countFiles(/^rot/), updateLoad)
-    const surfaces = await loadGrainSurfaces(msgpackData, countFiles(/^grains/), updateLoad)
-    const inds = await loadGrainInds(msgpackData, updateLoad)
-    const { maxForce, forces } = await loadForces(msgpackData, updateLoad)
-    const rotationMagnitudes = await loadRotationMagnitudes(msgpackData, updateLoad)
-    const global = await loadGlobalField(msgpackData, updateLoad)
-
-    // wait for texture load to finish
-    const forcePlot = await forcePlotPromise
+    const positions = await loadGrainPositions(data, countFiles(/^msgpack\/pos/), updateLoad)
+    const rotations = await loadGrainRotations(data, countFiles(/^msgpack\/rot/), updateLoad)
+    const surfaces = await loadGrainSurfaces(data, countFiles(/^msgpack\/grains/), updateLoad)
+    const inds = await loadGrainInds(data, updateLoad)
+    const { maxForce, forces } = await loadForces(data, updateLoad)
+    const rotationMagnitudes = await loadRotationMagnitudes(data, updateLoad)
+    const global = await loadGlobalField(data, updateLoad)
 
     loadText.innerHTML = 'Initializing Visualization...'
 
