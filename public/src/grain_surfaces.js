@@ -37,19 +37,18 @@ class GrainSurfaces {
 
     drawInds (gl, viewMatrix, projMatrix, grainInds, t, viewport) {
         gl.enable(gl.DEPTH_TEST)
+
         bindProgram(gl, this.program)
-
         this.bindPos(gl)
-
-        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
         const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)
-
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
         gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
+
+        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
+        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
         for (const i of grainInds) {
             const grainRotation = new Matrix4()
