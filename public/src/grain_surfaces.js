@@ -35,7 +35,7 @@ class GrainSurfaces {
         this.u_Color = gl.getUniformLocation(gl.program, 'u_Color')
     }
 
-    drawInds (gl, viewMatrix, projMatrix, inds, t, viewport) {
+    drawInds (gl, viewMatrix, projMatrix, grainInds, t, viewport) {
         gl.enable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
 
@@ -51,29 +51,19 @@ class GrainSurfaces {
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
         gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
 
-        for (let i = 0; i < inds.length; i++) {
+        for (const i of grainInds) {
+            const grainRotation = new Matrix4()
+            grainRotation.setFromQuat(...this.rotations[t][i])
+
             const grainPos = new Matrix4()
-            grainPos.translate(
-                this.positions[t][inds[i]][0],
-                this.positions[t][inds[i]][1],
-                this.positions[t][inds[i]][2]
-            )
-            const quat = new Matrix4()
-            quat.setFromQuat(
-                this.rotations[t][inds[i]][0],
-                this.rotations[t][inds[i]][1],
-                this.rotations[t][inds[i]][2],
-                this.rotations[t][inds[i]][3]
-            )
-            grainPos.multiply(quat)
+            grainPos.translate(...this.positions[t][i])
+            grainPos.multiply(grainRotation)
 
             gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
-            gl.uniform3fv(this.u_Color, this.colors[t][inds[i]])
-            gl.drawArrays(
-                gl.TRIANGLES,
-                this.inds[inds[i]][1],
-                this.inds[inds[i]][2] - this.inds[inds[i]][1]
-            )
+            gl.uniform3fv(this.u_Color, this.colors[t][i])
+
+            const [_, startInd, endInd] = this.inds[i]
+            gl.drawArrays(gl.TRIANGLES, startInd, endInd - startInd)
         }
     }
 
