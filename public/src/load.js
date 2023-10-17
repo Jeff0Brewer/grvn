@@ -52,18 +52,15 @@ const scale3DArray = (arr, scale) => {
     }
 }
 
-const loadMetadata = async (dataSet) => {
-    const file = 'head.msgpack'
-    const data = await readMsgpack(dataSet[file])
-    const [numT, numG] = data
-    return { numT, numG }
+const loadMetadata = async () => {
+    const metadataFile = './data/meta.json'
+    const metadata = await fetch(metadataFile).then(res => res.json())
+    return metadata
 }
 
-const loadForcePlot = async (numTimestep, loadCallback) => {
-    const metadataPromise = fetch('./data/force_plot/meta.json').then(res => res.json())
-
+const loadForcePlot = async (metadata, loadCallback) => {
     const texturePromises = []
-    for (let i = 0; i < numTimestep; i++) {
+    for (let i = 0; i < metadata.num_t; i++) {
         const promise = fetch(`./data/force_plot/textures/fn${i}.png`)
             .then(res => res.blob())
             .then(blob => URL.createObjectURL(blob))
@@ -71,7 +68,6 @@ const loadForcePlot = async (numTimestep, loadCallback) => {
         texturePromises.push(promise)
     }
     const textures = await Promise.all(texturePromises)
-    const metadata = await metadataPromise
 
     return { metadata, textures }
 }
@@ -174,13 +170,8 @@ const hideLoadbar = () => {
 }
 
 const loadData = async () => {
-    const msgpackData = await loadZipData()
-
-    // get num files and helper to count file types
-    const files = Object.keys(msgpackData)
-    const countFiles = regex => files.reduce((total, curr) => total + (curr.match(regex) ? 1 : 0), 0)
-
-    const { numT, numG } = await loadMetadata(msgpackData)
+    const metadata = await loadMetadata()
+    const { num_t: numT, num_g: numG, num_files: numFiles } = metadata
 
     // get dom elements / closure for updating load bar
     const loadBar = document.getElementById('loadbar')
@@ -188,21 +179,27 @@ const loadData = async () => {
     const maxLoadWidth = document.getElementById('loadbg').clientWidth
 
     // numT number of force textures, not included in files from msgpack data
-    const numFiles = files.length + numT
+    const fileCount = numFiles + numT
     let filesLoaded = 0
     const updateLoad = () => {
         filesLoaded++
-        const loadProgress = filesLoaded / numFiles
+        const loadProgress = filesLoaded / fileCount
         loadBar.style.width = `${(1.0 - loadProgress) * maxLoadWidth}px`
     }
 
     loadText.innerHTML = 'Loading Data...'
 
     // load force textures async during message pack parsing
-    const forcePlotPromise = loadForcePlot(numT, updateLoad)
+    const forcePlotPromise = loadForcePlot(metadata, updateLoad)
 
     // load all msgpack data sequentially to
     // prevent multiple large blobs / file readers in memory
+    const msgpackData = await loadZipData()
+
+    // get num files and helper to count file types
+    const files = Object.keys(msgpackData)
+    const countFiles = regex => files.reduce((total, curr) => total + (curr.match(regex) ? 1 : 0), 0)
+
     const positions = await loadGrainPositions(msgpackData, countFiles(/^pos/), updateLoad)
     const rotations = await loadGrainRotations(msgpackData, countFiles(/^rot/), updateLoad)
     const surfaces = await loadGrainSurfaces(msgpackData, countFiles(/^grains/), updateLoad)
