@@ -1,67 +1,64 @@
+const TICK_LENGTHS = [
+    { inner: 0.98, outer: 1.05 },
+    { inner: 1, outer: 1.02 }
+]
+
+const TOP_LINE_BOUNDS = {
+    bottom: 1.05,
+    top: 1.25
+}
+
 class Axis {
     constructor (numTicks, detail) {
-        this.p_fpv = 3
-        this.numVertex = (detail + 1) * 2 + (numTicks + 1) * 2 + 2
-        this.posData = new Float32Array(this.numVertex * this.p_fpv)
         numTicks += numTicks % 2 // ensure even number of ticks
 
+        this.numVertex = (detail + numTicks + 1) * 2
+        this.posData = new Float32Array(this.numVertex * 3)
+        const setPoint = (offset, x, y, z) => {
+            this.posData[offset] = x
+            this.posData[offset + 1] = y
+            this.posData[offset + 2] = z
+        }
+
         // add ticks
-        const ticks = [{ inner: 0.98, outer: 1.05 }, { inner: 1, outer: 1.02 }]
-        const tickStep = Math.PI * 2 / numTicks
-        let angle = 0
+        const tickStep = Math.PI * 2 / (numTicks - 1)
         let currTick = 0
         let posInd = 0
-        while (angle < Math.PI * 2) {
+        for (let angle = 0; angle < Math.PI * 2; angle += tickStep, posInd += 6) {
             const x = Math.cos(angle)
             const y = Math.sin(angle)
-            this.posData[posInd + 0] = x * ticks[currTick].inner
-            this.posData[posInd + 1] = y * ticks[currTick].inner
-            this.posData[posInd + 2] = 0
-            this.posData[posInd + 3] = x * ticks[currTick].outer
-            this.posData[posInd + 4] = y * ticks[currTick].outer
-            this.posData[posInd + 5] = 0
-            angle += tickStep
-            currTick = (currTick + 1) % 2 // alternate tick sizes
-            posInd += 6
+            const { inner, outer } = TICK_LENGTHS[currTick]
+
+            setPoint(posInd, x * inner, y * inner, 0)
+            setPoint(posInd + 3, x * outer, y * outer, 0)
+
+            // alternate tick sizes
+            currTick = (currTick + 1) % 2
         }
 
         // add circle
-        const circleStep = Math.PI * 2 / detail
-        angle = 0
+        const circleStep = Math.PI * 2 / (detail - 1)
+        let angle = 0
         while (angle < Math.PI * 2) {
-            this.posData[posInd] = Math.cos(angle)
-            this.posData[posInd + 1] = Math.sin(angle)
-            this.posData[posInd + 2] = 0
+            setPoint(posInd, Math.cos(angle), Math.sin(angle), 0)
             angle += circleStep
-            this.posData[posInd + 3] = Math.cos(angle)
-            this.posData[posInd + 4] = Math.sin(angle)
-            this.posData[posInd + 5] = 0
-            posInd += 6
+            posInd += 3
+            setPoint(posInd, Math.cos(angle), Math.sin(angle), 0)
+            posInd += 3
         }
 
         // add line on +z
-        this.posData[posInd] = 0
-        this.posData[posInd + 1] = 0
-        this.posData[posInd + 2] = 1.05
-        this.posData[posInd + 3] = 0
-        this.posData[posInd + 4] = 0
-        this.posData[posInd + 5] = 1.25
+        setPoint(posInd, 0, 0, TOP_LINE_BOUNDS.bottom)
+        setPoint(posInd + 3, 0, 0, TOP_LINE_BOUNDS.top)
     }
 
-    async init_gl (gl) {
+    async initGl (gl) {
         const vert = await fetch('./shaders/axis-vert.glsl').then(res => res.text())
         const frag = await fetch('./shaders/axis-frag.glsl').then(res => res.text())
         this.program = initProgram(gl, vert, frag)
         bindProgram(gl, this.program)
 
-        this.bindPos = initAttribBuffer(
-            gl,
-            'a_Position',
-            this.p_fpv,
-            this.posData,
-            gl.FLOAT,
-            gl.STATIC_DRAW
-        )
+        this.bindPos = initAttribBuffer(gl, 'a_Position', 3, this.posData, gl.FLOAT, gl.STATIC_DRAW)
 
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')

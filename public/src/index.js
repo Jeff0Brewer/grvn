@@ -104,8 +104,8 @@ const setup_gl = async () => {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     gl.clearColor(0, 0, 0, 1)
 
+    await context_axis.initGl(gl)
     await fn_vectors.init_gl(gl)
-    await context_axis.init_gl(gl)
     await grain_surfaces.init_gl(gl)
     await ribbon_flow.init_gl(gl)
 
