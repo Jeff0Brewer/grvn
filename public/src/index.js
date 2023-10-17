@@ -15,7 +15,7 @@ var viewport_count
 var context_axis
 var ribbon_flow
 var forcePlot
-var grain_surfaces
+var grainSurfaces
 
 var flow_visible = true
 var vector_visible = true
@@ -106,7 +106,7 @@ const setup_gl = async () => {
 
     await forcePlot.initGl(gl)
     await context_axis.initGl(gl)
-    await grain_surfaces.init_gl(gl)
+    await grainSurfaces.initGl(gl)
     await ribbon_flow.init_gl(gl)
 
     const cameraModelMatrix = new Matrix4()
@@ -129,7 +129,7 @@ async function main (data) {
         data.numT,
         data.numG
     )
-    grain_surfaces = new GrainSurfaces(
+    grainSurfaces = new GrainSurfaces(
         data.grains.surfaces,
         data.grains.inds,
         data.grains.positions,
@@ -140,7 +140,7 @@ async function main (data) {
     context_image = new ContextImage('rgb(35,35,35)', 'rgb(108,108,108)', data.grains.positions)
 
     color_mapper.change_data(data.forces)
-    grain_surfaces.color_map(color_mapper)
+    grainSurfaces.colorMap(color_mapper)
     global_fields.add_field(data.global)
 
     // lose reference to dataset for gc
@@ -197,7 +197,7 @@ async function main (data) {
                     const removedSlices = [...slices[i].planefilters]
                     slices.splice(i, 1)
                     unslice(removedSlices)
-                    context_image.update_slices(grain_surfaces.get_sliced(slices))
+                    context_image.update_slices(grainSurfaces.getSliced(slices))
                     i--
                 }
             }
@@ -299,7 +299,7 @@ function draw (elapsed) {
                 }
             }
             if (drawing_inds.length > 0) {
-                grain_surfaces.draw_inds(
+                grainSurfaces.drawInds(
                     gl,
                     viewMatrix,
                     projMatrix,
@@ -354,7 +354,7 @@ function draw (elapsed) {
         }
 
         for (let i = 0; i < params.length; i++) {
-            grain_surfaces.draw_sm(
+            grainSurfaces.drawSmallMultiples(
                 gl,
                 viewMatrix,
                 projMatrix,
@@ -395,7 +395,7 @@ function draw (elapsed) {
             const t = sm_viewer.hovering[1] < 0
                 ? sm_viewer.am_timesteps[sm_viewer.hovering[2]]
                 : sm_viewer.hovering[1]
-            const subset = grain_surfaces.get_positions(selections[sm_viewer.hovering[0]].inds, t)
+            const subset = grainSurfaces.getPositions(selections[sm_viewer.hovering[0]].inds, t)
             context_image.draw(t, subset)
             global_fields.set_time(t, numT)
         } else {
@@ -443,7 +443,7 @@ function slice (output) {
     forcePlot.updateSlices(gl, getCurrentPlaneFilters())
     ribbon_flow.slice(planes)
 
-    context_image.update_slices(grain_surfaces.get_sliced(slices))
+    context_image.update_slices(grainSurfaces.getSliced(slices))
 
     frozen = false
 }
@@ -493,7 +493,7 @@ function get_hovered_sm (e) {
     view.setLookAt(item.camera.x, item.camera.y, item.camera.y, off.x * 0.025, off.y * 0.025, off.z * 0.025, 0, 0, 1)
     const vec = unprojectvector(e.clientX, canvas.height - e.clientY, view, proj, vp, rot)
 
-    const ind = grain_surfaces.get_hovering(sm_viewer.hovering[1], selections[sm_viewer.hovering[0]].inds, off, vec, [color[0] / 255.0, color[1] / 255.0, color[2] / 255.0])
+    const ind = grainSurfaces.getHovering(sm_viewer.hovering[1], selections[sm_viewer.hovering[0]].inds, off, vec, [color[0] / 255.0, color[1] / 255.0, color[2] / 255.0])
     update_hovered_sm(ind, sm_viewer.hovering[1])
 }
 
@@ -569,7 +569,7 @@ function resize_all () {
         if (params) { params = params[0] }
         if (vis_mode == 1 && params) {
             for (let i = 0; i < params.length; i++) {
-                grain_surfaces.draw_sm(
+                grainSurfaces.drawSmallMultiples(
                     gl,
                     viewMatrix,
                     projMatrix,
@@ -930,8 +930,8 @@ document.getElementById('select_button').onmouseup = function () {
         case 0:
             brush_vecs(select_interface.finish_step())
             if (select_interface.mode == 1) {
-                const inds = grain_surfaces.get_cross(timeline.timestep, select_vectors[0], 15, slices)
-                selections.push(make_selection_item(inds, grain_surfaces.get_positions_t(inds), numT, select_ind))
+                const inds = grainSurfaces.getCross(timeline.timestep, select_vectors[0], 15, slices)
+                selections.push(make_selection_item(inds, grainSurfaces.getPositionsT(inds), numT, select_ind))
                 select_ind++
                 select_vectors = []
                 select_interface.finish_all()
@@ -955,8 +955,8 @@ document.getElementById('select_button').onmouseup = function () {
             break
         case 2:
             brush_vecs(select_interface.finish_all())
-            const inds = grain_surfaces.get_chain(timeline.timestep, select_vectors, 15, slices)
-            selections.push(make_selection_item(inds, grain_surfaces.get_positions_t(inds), numT, select_ind))
+            const inds = grainSurfaces.getChain(timeline.timestep, select_vectors, 15, slices)
+            selections.push(make_selection_item(inds, grainSurfaces.getPositionsT(inds), numT, select_ind))
             select_ind++
             select_vectors = []
             frozen = false
@@ -973,14 +973,14 @@ document.getElementById('add_cmap').onchange = function () {
 cmap_reader.onloadend = function () {
     const data = msgpack.unpack(this.result)
     color_mapper.change_data(data)
-    grain_surfaces.color_map(color_mapper)
+    grainSurfaces.colorMap(color_mapper)
     for (let i = 0; i < selections.length; i++) {
         selections[i].refresh_sm()
     }
 }
 
 document.getElementById('edit_color_map').onmouseup = function () {
-    grain_surfaces.color_map(color_mapper)
+    grainSurfaces.colorMap(color_mapper)
     for (let i = 0; i < selections.length; i++) {
         selections[i].refresh_sm()
     }

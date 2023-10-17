@@ -1,13 +1,13 @@
 class GrainSurfaces {
     constructor (surfaces, inds, positions, rotations, numT, numG) {
-        this.p_fpv = 3
-        this.num_t = numT
-        this.num_g = numG
-        this.buffer_changed = false
-
+        this.posBuffer = surfaces
         this.inds = inds
         this.positions = positions
         this.rotations = rotations
+        this.numT = numT
+        this.numG = numG
+
+        this.bufferChanged = false
 
         const defaultColor = [1.0, 1.0, 1.0]
         const timestepColors = []
@@ -18,23 +18,15 @@ class GrainSurfaces {
         for (let t = 0; t < numT; t++) {
             this.colors.push(timestepColors.slice())
         }
-        this.position_buffer = surfaces
     }
 
-    async init_gl (gl) {
+    async initGl (gl) {
         const vert = await fetch('./shaders/grain-vert.glsl').then(res => res.text())
         const frag = await fetch('./shaders/grain-frag.glsl').then(res => res.text())
         this.program = initProgram(gl, vert, frag)
         bindProgram(gl, this.program)
 
-        this.bindPos = initAttribBuffer(
-            gl,
-            'a_Position',
-            this.p_fpv,
-            this.position_buffer,
-            gl.FLOAT,
-            gl.STATIC_DRAW
-        )
+        this.bindPos = initAttribBuffer(gl, 'a_Position', 3, this.posBuffer, gl.FLOAT, gl.STATIC_DRAW)
 
         this.u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix')
         this.u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix')
@@ -43,7 +35,7 @@ class GrainSurfaces {
         this.u_Color = gl.getUniformLocation(gl.program, 'u_Color')
     }
 
-    draw_inds (gl, viewMatrix, projMatrix, inds, t, viewport) {
+    drawInds (gl, viewMatrix, projMatrix, inds, t, viewport) {
         gl.enable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
 
@@ -85,10 +77,10 @@ class GrainSurfaces {
         }
     }
 
-    draw_sm (gl, viewMatrix, projMatrix, selectitem, t, viewport) {
+    drawSmallMultiples (gl, viewMatrix, projMatrix, selectitem, t, viewport) {
         bindProgram(gl, this.program)
 
-        this.buffer_changed = true
+        this.bufferChanged = true
 
         const rot = new Matrix4()
         rot.rotate(-selectitem.rotation.x, 1, 0, 0)
@@ -156,7 +148,7 @@ class GrainSurfaces {
         }
     }
 
-    get_chain (t, vectors, delta, subsets) {
+    getChain (t, vectors, delta, subsets) {
         const inside = []
         for (let g = 0; g < this.positions[t].length; g++) {
             const pos = this.positions[t][g]
@@ -175,11 +167,11 @@ class GrainSurfaces {
         for (let i = 0; i < inside.length; i++) {
             let hit = false
             for (let v = 0; v < vectors[0].length && !hit; v++) {
-                hit = hit | this.hit_test(this.positions[t][inside[i]], vectors[0][v], delta)
+                hit = hit | this.hitTest(this.positions[t][inside[i]], vectors[0][v], delta)
             }
             if (hit) {
                 for (let v = 0; v < vectors[1].length; v++) {
-                    if (this.hit_test(this.positions[t][inside[i]], vectors[1][v], delta)) {
+                    if (this.hitTest(this.positions[t][inside[i]], vectors[1][v], delta)) {
                         chain.push(inside[i])
                         v = vectors[1].length
                     }
@@ -189,7 +181,7 @@ class GrainSurfaces {
         return chain
     }
 
-    get_cross (t, vectors, delta, subsets) {
+    getCross (t, vectors, delta, subsets) {
         const inside = []
         for (let g = 0; g < this.positions[t].length; g++) {
             const pos = this.positions[t][g]
@@ -208,7 +200,7 @@ class GrainSurfaces {
         for (let i = 0; i < inside.length; i++) {
             let hit = false
             for (let v = 0; v < vectors.length && !hit; v++) {
-                hit = hit | this.hit_test(this.positions[t][inside[i]], vectors[v], delta)
+                hit = hit | this.hitTest(this.positions[t][inside[i]], vectors[v], delta)
                 if (hit) {
                     cross.push(inside[i])
                 }
@@ -217,7 +209,7 @@ class GrainSurfaces {
         return cross
     }
 
-    get_sliced (subsets) {
+    getSliced (subsets) {
         if (subsets.length <= 0) { return [] }
         const sliced = []
         for (let t = 0; t < this.positions.length; t++) {
@@ -238,13 +230,13 @@ class GrainSurfaces {
         return sliced
     }
 
-    get_hovering (t, inds, offset, vec, color) {
+    getHovering (t, inds, offset, vec, color) {
         const off = [offset.x, offset.y, offset.z]
         const delta = 100
         if (color[0] > 0 || color[1] > 0 || color[2] > 0) {
             const near = []
             for (let i = 0; i < inds.length; i++) {
-                if (this.hit_test(this.positions[t][inds[i]], vec, delta)) {
+                if (this.hitTest(this.positions[t][inds[i]], vec, delta)) {
                     near.push(inds[i])
                 }
             }
@@ -260,9 +252,9 @@ class GrainSurfaces {
                     let dist_from_cam = 0
                     for (let p = 0; p < 3; p++) {
                         triangles[ind].push([])
-                        for (let x = 0; x < this.p_fpv; x++) {
+                        for (let x = 0; x < 3; x++) {
                             triangles[ind][p].push(
-                                this.position_buffer[(tri + p) * this.p_fpv + x] + this.positions[t][canidates[i]][x]
+                                this.posBuffer[(tri + p) * 3 + x] + this.positions[t][canidates[i]][x]
                             )
                         }
                         dist_from_cam += dist(triangles[ind][p], vec[0])
@@ -283,9 +275,9 @@ class GrainSurfaces {
         return -1
     }
 
-    get_shell () {
+    getShell () {
         const core = []
-        for (let g = 0; g < this.num_g; g++) {
+        for (let g = 0; g < this.numG; g++) {
             if (magnitude(this.positions[0][g].slice(0, 2)) > 310 && this.positions[0][g][1] > 0) {
                 core.push(g)
             }
@@ -293,7 +285,7 @@ class GrainSurfaces {
         return core
     }
 
-    get_positions (inds, t) {
+    getPositions (inds, t) {
         const positions = []
         for (let i = 0; i < inds.length; i++) {
             positions.push(this.positions[t][inds[i]])
@@ -301,9 +293,9 @@ class GrainSurfaces {
         return positions
     }
 
-    get_positions_t (inds) {
+    getPositionsT (inds) {
         const positions = []
-        for (let t = 0; t < this.num_t; t++) {
+        for (let t = 0; t < this.numT; t++) {
             positions.push([])
             for (let i = 0; i < inds.length; i++) {
                 positions[t].push(this.positions[t][inds[i]])
@@ -312,14 +304,14 @@ class GrainSurfaces {
         return positions
     }
 
-    hit_test (pos, vec, delta) {
+    hitTest (pos, vec, delta) {
         const d = magnitude(cross(sub(pos, vec[0]), sub(pos, vec[1]))) / magnitude(sub(vec[1], vec[0]))
         return d < delta
     }
 
-    color_map (color_mapper) {
-        for (let t = 0; t < this.num_t; t++) {
-            for (let g = 0; g < this.num_g; g++) {
+    colorMap (color_mapper) {
+        for (let t = 0; t < this.numT; t++) {
+            for (let g = 0; g < this.numG; g++) {
                 const mapped = color_mapper.color_map(t, g)
                 this.colors[t][g] = [mapped.r, mapped.g, mapped.b]
             }
