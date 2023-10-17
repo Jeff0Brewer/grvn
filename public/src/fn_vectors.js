@@ -54,22 +54,14 @@ class FnVectors {
         })
         this.images = []
 
-        // get buffer of vertex indices for
-        // texture attribute lookup in shader
+        // get buffer of vertex indices for texture attribute lookup in shader
         const buffer = new Float32Array(this.metadata.max_lines * 6) // 6 vertices per meshline
         for (let i = 0; i < buffer.length; i++) {
             buffer[i] = i
         }
         this.numVertex = buffer.length
 
-        this.bindIndex = initAttribBuffer(
-            gl,
-            'a_Index',
-            1,
-            buffer,
-            gl.FLOAT,
-            gl.STATIC_DRAW
-        )
+        this.bindIndex = initAttribBuffer(gl, 'a_Index', 1, buffer, gl.FLOAT, gl.STATIC_DRAW)
 
         this.updateUniformLocations(gl)
         this.updateStaticUniforms(gl)
@@ -77,18 +69,20 @@ class FnVectors {
 
     draw (gl, viewMatrix, projMatrix, cameraPosition, timestep, viewport) {
         gl.disable(gl.DEPTH_TEST)
-        bindProgram(gl, this.program)
 
+        bindProgram(gl, this.program)
         this.bindIndex(gl)
 
         const scale = 0.025
         const model = new Matrix4()
         model.scale(scale, scale, scale)
+        // scale camera to same space as vertex coords
+        const scaledCameraPosition = mult(cameraPosition, 1 / scale)
 
         gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
-        gl.uniform3fv(this.u_CameraPosition, mult(cameraPosition, 1 / scale))
+        gl.uniform3fv(this.u_CameraPosition, scaledCameraPosition)
         gl.bindTexture(gl.TEXTURE_2D, this.textures[timestep])
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
