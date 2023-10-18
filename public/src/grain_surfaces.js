@@ -196,8 +196,7 @@ class GrainSurfaces {
     colorMap (color_mapper) {
         for (let t = 0; t < this.numT; t++) {
             for (let g = 0; g < this.numG; g++) {
-                const mapped = color_mapper.color_map(t, g)
-                this.colors[t][g] = [mapped.r, mapped.g, mapped.b]
+                this.colors[t][g] = color_mapper.color_map(t, g)
             }
         }
     }
@@ -209,6 +208,10 @@ class GrainSurfaces {
             return null
         }
 
+        const cameraPosition = mouseVec[0]
+
+        // find grain indices close to mouse for hit test / depth sorting
+        // since don't want to check all grain surfaces
         const nearInds = []
         for (const i of inds) {
             const nearMouse = this.hitTestSingle(this.positions[t][i], mouseVec, HOVER_DELTA)
@@ -217,8 +220,7 @@ class GrainSurfaces {
             }
         }
 
-        const cameraPosition = mouseVec[0]
-
+        // find all grain depths for depth sorting and all surface triangles for hit testing
         const grainDepths = []
         const grainTriangles = {}
         for (const i of nearInds) {
@@ -245,9 +247,9 @@ class GrainSurfaces {
             grainTriangles[i] = triangles
         }
 
-        // sort by depth
+        // in order of ascending grain depth, hit test surface triangles
+        // with mouse vec to find hovered grain
         grainDepths.sort((a, b) => a[1] - b[1])
-
         for (const [grainInd] of grainDepths) {
             for (const triangle of grainTriangles[grainInd]) {
                 const intersectsMouseVec = triangle_check(mouseVec, triangle)

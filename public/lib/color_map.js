@@ -31,11 +31,14 @@ class ColorMap {
         if (i >= this.steps.length - 1) {
             return this.colors[i]
         }
+
         const mid = (percentage - this.steps[i]) / (this.steps[i + 1] - this.steps[i])
-        return {
-            r: this.colors[i].r * (1 - mid) + this.colors[i + 1].r * mid,
-            g: this.colors[i].g * (1 - mid) + this.colors[i + 1].g * mid,
-            b: this.colors[i].b * (1 - mid) + this.colors[i + 1].b * mid
-        }
+        const [r0, g0, b0] = this.colors[i]
+        const [r1, g1, b1] = this.colors[i + 1]
+        return [
+            r0 * (1 - mid) + r1 * mid,
+            g0 * (1 - mid) + g1 * mid,
+            b0 * (1 - mid) + b1 * mid
+        ]
     }
 }
