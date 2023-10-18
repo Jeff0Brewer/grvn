@@ -152,13 +152,26 @@ class GrainSurfaces {
     getSlicePositions (subsets) {
         if (subsets.length === 0) { return [] }
 
-        const sliced = []
+        const slicePositions = []
         for (let t = 0; t < this.numT; t++) {
             const inds = this.getSliceInds(t, subsets)
             const positions = inds.map(i => this.positions[t][i])
-            sliced.push(positions)
+            slicePositions.push(positions)
         }
-        return sliced
+
+        return slicePositions
+    }
+
+    getPositions (inds, t) {
+        return inds.map(i => this.positions[t][i])
+    }
+
+    getPositionsAllT (inds) {
+        const positions = []
+        for (let t = 0; t < this.numT; t++) {
+            positions.push(this.getPositions(inds, t))
+        }
+        return positions
     }
 
     getHovering (t, inds, offset, vec, color) {
@@ -213,25 +226,6 @@ class GrainSurfaces {
             }
         }
         return core
-    }
-
-    getPositions (inds, t) {
-        const positions = []
-        for (let i = 0; i < inds.length; i++) {
-            positions.push(this.positions[t][inds[i]])
-        }
-        return positions
-    }
-
-    getPositionsT (inds) {
-        const positions = []
-        for (let t = 0; t < this.numT; t++) {
-            positions.push([])
-            for (let i = 0; i < inds.length; i++) {
-                positions[t].push(this.positions[t][inds[i]])
-            }
-        }
-        return positions
     }
 
     hitTestSingle (position, vector, delta) {

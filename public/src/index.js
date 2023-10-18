@@ -928,7 +928,7 @@ document.getElementById('select_button').onmouseup = function () {
             brush_vecs(select_interface.finish_step())
             if (select_interface.mode == 1) {
                 const inds = grainSurfaces.getPlane(timeline.timestep, select_vectors[0], slices)
-                selections.push(make_selection_item(inds, grainSurfaces.getPositionsT(inds), numT, select_ind))
+                selections.push(make_selection_item(inds, grainSurfaces.getPositionsAllT(inds), numT, select_ind))
                 select_ind++
                 select_vectors = []
                 select_interface.finish_all()
@@ -953,7 +953,7 @@ document.getElementById('select_button').onmouseup = function () {
         case 2:
             brush_vecs(select_interface.finish_all())
             const inds = grainSurfaces.getChain(timeline.timestep, select_vectors, slices)
-            selections.push(make_selection_item(inds, grainSurfaces.getPositionsT(inds), numT, select_ind))
+            selections.push(make_selection_item(inds, grainSurfaces.getPositionsAllT(inds), numT, select_ind))
             select_ind++
             select_vectors = []
             frozen = false
