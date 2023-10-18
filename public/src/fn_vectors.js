@@ -52,7 +52,8 @@ class ForcePlot {
     }
 
     draw (gl, viewMatrix, projMatrix, cameraPosition, timestep, viewport) {
-        gl.disable(gl.DEPTH_TEST)
+        gl.enable(gl.DEPTH_TEST)
+        gl.depthMask(false)
 
         bindProgram(gl, this.program)
         this.bindIndex(gl)
@@ -72,6 +73,8 @@ class ForcePlot {
         viewport.setCurrent(gl)
 
         gl.drawArrays(gl.TRIANGLES, 0, this.numVertex)
+
+        gl.depthMask(true)
     }
 
     updateUniformLocations (gl) {

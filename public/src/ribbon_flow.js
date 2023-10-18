@@ -177,12 +177,13 @@ class RibbonFlow {
     }
 
     draw (gl, viewMatrix, projMatrix, timestep, viewport) {
+        gl.enable(gl.DEPTH_TEST)
+        gl.depthMask(false)
+
         this.buffer_changed ||= timestep !== this.last_step
         this.last_step = timestep
 
-        gl.disable(gl.DEPTH_TEST)
         bindProgram(gl, this.program)
-
         this.bindPos(gl)
         this.bindCol(gl)
         this.bindVis(gl)
@@ -204,6 +205,8 @@ class RibbonFlow {
         viewport.setCurrent(gl)
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.position_buffer.length / this.p_fpv)
+
+        gl.depthMask(true)
     }
 
     slice (planefilters) {

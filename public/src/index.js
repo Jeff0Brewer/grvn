@@ -265,6 +265,8 @@ function draw (elapsed) {
         updateCameraTraceRender()
         updateCameraAxisRender()
 
+        clearCanvas(gl, canvas)
+
         if (!global_fields.dragging && !fs_camera.dragging) {
             timeline.tick(elapsed)
         }
@@ -272,32 +274,8 @@ function draw (elapsed) {
             global_fields.set_time(timeline.timestep, numT)
         }
 
-        if (flow_visible) {
-            viewport_ind++
-            viewports[viewport_ind].clear(gl)
-            ribbon_flow.draw(
-                gl,
-                viewMatrix,
-                projMatrix,
-                timeline.timestep,
-                viewports[viewport_ind]
-            )
-        }
-
-        if (vector_visible) {
-            viewport_ind++
-            viewports[viewport_ind].clear(gl)
-            forcePlot.draw(
-                gl,
-                viewMatrix,
-                projMatrix,
-                fs_camera.position,
-                timeline.timestep,
-                viewports[viewport_ind]
-            )
-        }
-
-        if (selections.length > 0 && viewport_ind >= 0) {
+        if (selections.length > 0 && (flow_visible || vector_visible)) {
+            const grainViewportInd = flow_visible && vector_visible ? 1 : 0
             let drawing_inds = []
             for (let i = 0; i < selections.length; i++) {
                 if (selections[i].removed) {
@@ -314,9 +292,32 @@ function draw (elapsed) {
                     projMatrix,
                     drawing_inds,
                     timeline.timestep,
-                    viewports[viewport_ind]
+                    viewports[grainViewportInd]
                 )
             }
+        }
+
+        if (flow_visible) {
+            viewport_ind++
+            ribbon_flow.draw(
+                gl,
+                viewMatrix,
+                projMatrix,
+                timeline.timestep,
+                viewports[viewport_ind]
+            )
+        }
+
+        if (vector_visible) {
+            viewport_ind++
+            forcePlot.draw(
+                gl,
+                viewMatrix,
+                projMatrix,
+                fs_camera.position,
+                timeline.timestep,
+                viewports[viewport_ind]
+            )
         }
 
         if (fs_camera.dragging) {
