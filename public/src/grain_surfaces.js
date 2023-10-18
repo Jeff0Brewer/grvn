@@ -162,45 +162,6 @@ class GrainSurfaces {
         return plane
     }
 
-    getPositions (inds, t) {
-        return inds.map(i => this.positions[t][i])
-    }
-
-    getPositionsAllT (inds) {
-        const positions = []
-        for (let t = 0; t < this.numT; t++) {
-            positions.push(this.getPositions(inds, t))
-        }
-        return positions
-    }
-
-    hitTestSingle (position, vector, delta) {
-        const crossMag = magnitude(
-            cross(
-                sub(position, vector[0]),
-                sub(position, vector[1])
-            )
-        )
-        const vectorMag = magnitude(sub(vector[0], vector[1]))
-        return crossMag / vectorMag < delta
-    }
-
-    hitTest (position, vectors, delta) {
-        let intersection = false
-        for (const vector of vectors) {
-            intersection = intersection || this.hitTestSingle(position, vector, delta)
-        }
-        return intersection
-    }
-
-    colorMap (color_mapper) {
-        for (let t = 0; t < this.numT; t++) {
-            for (let g = 0; g < this.numG; g++) {
-                this.colors[t][g] = color_mapper.color_map(t, g)
-            }
-        }
-    }
-
     getHovering (t, inds, offset, mouseVec, mousePixel) {
         // no hovered grain if hovering black (background) pixel
         const [r, g, b] = mousePixel
@@ -262,13 +223,43 @@ class GrainSurfaces {
         return null
     }
 
-    getShell () {
-        const core = []
-        for (let g = 0; g < this.numG; g++) {
-            if (magnitude(this.positions[0][g].slice(0, 2)) > 310 && this.positions[0][g][1] > 0) {
-                core.push(g)
+    getPositions (inds, t) {
+        return inds.map(i => this.positions[t][i])
+    }
+
+    getPositionsAllT (inds) {
+        const positions = []
+        for (let t = 0; t < this.numT; t++) {
+            positions.push(this.getPositions(inds, t))
+        }
+        return positions
+    }
+
+    colorMap (color_mapper) {
+        for (let t = 0; t < this.numT; t++) {
+            for (let g = 0; g < this.numG; g++) {
+                this.colors[t][g] = color_mapper.color_map(t, g)
             }
         }
-        return core
+    }
+
+    hitTestSingle (position, vector, delta) {
+        const crossMag = magnitude(
+            cross(
+                sub(position, vector[0]),
+                sub(position, vector[1])
+            )
+        )
+        const vectorMag = magnitude(sub(vector[0], vector[1]))
+        return crossMag / vectorMag < delta
+    }
+
+    hitTest (position, vectors, delta) {
+        for (const vector of vectors) {
+            if (this.hitTestSingle(position, vector, delta)) {
+                return true
+            }
+        }
+        return false
     }
 }
