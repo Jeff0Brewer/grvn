@@ -67,12 +67,11 @@ class Axis {
 
     draw (gl, viewMatrix, projMatrix, x, y, z, rx, rz, viewport, scale) {
         gl.enable(gl.DEPTH_TEST)
-        bindProgram(gl, this.program)
 
+        bindProgram(gl, this.program)
         this.bindPos(gl)
 
-        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+        viewport.setCurrent(gl)
 
         const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)

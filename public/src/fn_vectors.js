@@ -69,8 +69,7 @@ class ForcePlot {
         gl.uniform3fv(this.u_CameraPosition, scaledCameraPosition)
         gl.bindTexture(gl.TEXTURE_2D, this.textures[timestep])
 
-        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+        viewport.setCurrent(gl)
 
         gl.drawArrays(gl.TRIANGLES, 0, this.numVertex)
     }

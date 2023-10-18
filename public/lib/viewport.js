@@ -1,46 +1,50 @@
-class ViewPort{
-	constructor(x, y, width, height, window_width, window_height){
-		this.x = x;
-		this.y = y;
-		this.width = width;
-		this.height = height;
+class ViewPort {
+    constructor (x, y, width, height, windowWidth, windowHeight) {
+        this.x = x
+        this.y = y
+        this.width = width
+        this.height = height
 
-		if (window_width === undefined) 
-			this.w_width = -1;
-		else
-			this.w_width = window_width;
-		
-		if(window_height === undefined)
-			this.w_height = -1;
-		else
-			this.w_height = window_height;
-	}
+        // store window width / height to scale viewport on window resize
+        this.windowWidth = windowWidth || -1
+        this.windowHeight = windowHeight || -1
+    }
 
-	check_hit(x, y){
-		return x >= this.x && y >= this.y && x < this.x + this.width && y < this.y + this.height;
-	}
+    setCurrent (gl) {
+        gl.scissor(this.x, this.y, this.width, this.height)
+        gl.viewport(this.x, this.y, this.width, this.height)
+    }
 
-	equals(other){
-		return this.x == other.x && this.y == other.y && this.width == other.width && this.height == other.height;
-	}
+    clear (gl) {
+        this.setCurrent(gl)
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    }
 
-	clear(){
-		gl.scissor(this.x, this.y, this.width, this.height);
-		gl.viewport(this.x, this.y, this.width, this.height);
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	}
+    resize (windowWidth, windowHeight) {
+        const scaleX = windowWidth / this.windowWidth
+        const scaleY = windowHeight / this.windowHeight
+        this.windowWidth = windowWidth
+        this.windowHeight = windowHeight
 
-	resize(window_width, window_height){
-		let x_scl = window_width/this.w_width;
-		let y_scl = window_height/this.w_height;
+        this.x *= scaleX
+        this.y *= scaleY
+        this.width *= scaleX
+        this.height *= scaleY
+    }
 
-		this.x *= x_scl;
-		this.y *= y_scl;
-		this.width *= x_scl;
-		this.height *= y_scl;
+    check_hit (x, y) {
+        return (
+            x >= this.x && x < this.x + this.width &&
+            y >= this.y && y < this.y + this.height
+        )
+    }
 
-		this.w_width = window_width;
-		this.w_height = window_height;
-	}
+    equals (other) {
+        return (
+            this.x === other.x &&
+            this.y === other.y &&
+            this.width === other.width &&
+            this.height === other.height
+        )
+    }
 }
-

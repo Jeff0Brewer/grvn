@@ -96,6 +96,12 @@ forceWidthInput.addEventListener('input', e => {
     forcePlot.setLineWidth(gl, e.target.value)
 })
 
+const clearCanvas = (gl, canvas) => {
+    gl.scissor(0, 0, canvas.width, canvas.height)
+    gl.viewport(0, 0, canvas.width, canvas.height)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+}
+
 const setup_gl = async () => {
     gl = canvas.getContext('webgl', { preserveDrawingBuffer: true })
     gl.enableVertexAttribArray(0)
@@ -265,7 +271,7 @@ function draw (elapsed) {
 
         if (flow_visible) {
             viewport_ind++
-            viewports[viewport_ind].clear()
+            viewports[viewport_ind].clear(gl)
             ribbon_flow.draw(
                 gl,
                 viewMatrix,
@@ -277,7 +283,7 @@ function draw (elapsed) {
 
         if (vector_visible) {
             viewport_ind++
-            viewports[viewport_ind].clear()
+            viewports[viewport_ind].clear(gl)
             forcePlot.draw(
                 gl,
                 viewMatrix,
@@ -350,7 +356,7 @@ function draw (elapsed) {
         const out = sm_viewer.update(selections, elapsed)
         const params = out[0]
         for (let i = 0; i < params.length; i++) {
-            params[i][2].clear()
+            params[i][2].clear(gl)
         }
 
         for (let i = 0; i < params.length; i++) {
@@ -387,9 +393,7 @@ function draw (elapsed) {
             one_visible = one_visible | selections[i].selected
         }
         if (!one_visible) {
-            gl.scissor(0, 0, canvas.width, canvas.height)
-            gl.viewport(0, 0, canvas.width, canvas.height)
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+            clearCanvas(gl, canvas)
         }
         if (sm_viewer.hovering.length > 0) {
             const t = sm_viewer.hovering[1] < 0
@@ -510,9 +514,7 @@ function switch_mode (mode) {
     if (mode != vis_mode) {
         vis_mode = mode
         if (gl) {
-            gl.scissor(0, 0, canvas.width, canvas.height)
-            gl.viewport(0, 0, canvas.width, canvas.height)
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+            clearCanvas(gl, canvas)
         }
 
         if (global_fields) {
@@ -804,9 +806,7 @@ document.getElementById('flow_toggle').onmouseup = function () {
     }
 
     if (viewport_count == 0) {
-        gl.scissor(0, 0, canvas.width, canvas.height)
-        gl.viewport(0, 0, canvas.width, canvas.height)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+        clearCanvas(gl, canvas)
     }
 
     viewports = []
@@ -837,9 +837,7 @@ document.getElementById('vector_toggle').onmouseup = function () {
     }
 
     if (viewport_count == 0) {
-        gl.scissor(0, 0, canvas.width, canvas.height)
-        gl.viewport(0, 0, canvas.width, canvas.height)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+        clearCanvas(gl, canvas)
     }
 
     viewports = []
@@ -866,9 +864,7 @@ document.getElementById('standard_layout').onmouseup = function () {
             selections[i].refresh_sm()
         }
 
-        gl.scissor(0, 0, canvas.width, canvas.height)
-        gl.viewport(0, 0, canvas.width, canvas.height)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+        clearCanvas(gl, canvas)
 
         replace_class(this, 'toggle_passive', 'toggle_active')
         replace_class(document.getElementById('tiled_layout'), 'toggle_active', 'toggle_passive')
@@ -883,9 +879,7 @@ document.getElementById('tiled_layout').onmouseup = function () {
             selections[i].refresh_sm()
         }
 
-        gl.scissor(0, 0, canvas.width, canvas.height)
-        gl.viewport(0, 0, canvas.width, canvas.height)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+        clearCanvas(gl, canvas)
 
         replace_class(this, 'toggle_passive', 'toggle_active')
         replace_class(document.getElementById('standard_layout'), 'toggle_active', 'toggle_passive')

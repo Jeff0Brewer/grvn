@@ -61,8 +61,7 @@ class GrainSurfaces {
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
 
-        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+        viewport.setCurrent(gl)
 
         for (const i of grainInds) {
             this.drawGrain(gl, t, i)
@@ -94,8 +93,7 @@ class GrainSurfaces {
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
 
-        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+        viewport.setCurrent(gl)
 
         for (const i of selectitem.inds) {
             this.drawGrain(gl, t, i)

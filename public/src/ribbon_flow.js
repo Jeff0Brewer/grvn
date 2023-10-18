@@ -200,8 +200,9 @@ class RibbonFlow {
         gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
-        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+
+        viewport.setCurrent(gl)
+
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.position_buffer.length / this.p_fpv)
     }
 
