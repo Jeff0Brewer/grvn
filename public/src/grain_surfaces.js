@@ -103,7 +103,7 @@ class GrainSurfaces {
         }
     }
 
-    getSlicedInds (t, slices) {
+    getSliceInds (t, slices) {
         const currentSlice = []
         for (let i = 0; i < this.numG; i++) {
             let inside = true
@@ -119,7 +119,7 @@ class GrainSurfaces {
 
     getChain (t, vectors, slices) {
         // get grain indices in current slice
-        const currentSlice = this.getSlicedInds(t, slices)
+        const currentSlice = this.getSliceInds(t, slices)
 
         // check intersection with drawn paths
         const [firstPath, secondPath] = vectors
@@ -139,7 +139,7 @@ class GrainSurfaces {
     }
 
     getPlane (t, vectors, slices) {
-        const currentSlice = this.getSlicedInds(t, slices)
+        const currentSlice = this.getSliceInds(t, slices)
 
         const plane = []
         for (const i of currentSlice) {
@@ -149,25 +149,14 @@ class GrainSurfaces {
         return plane
     }
 
-    getSliced (subsets) {
-        if (subsets.length === 0) {
-            return []
-        }
+    getSlicePositions (subsets) {
+        if (subsets.length === 0) { return [] }
+
         const sliced = []
         for (let t = 0; t < this.numT; t++) {
-            sliced.push([])
-            for (let g = 0; g < this.numG; g++) {
-                const pos = this.positions[t][g]
-                let outside = false
-                for (let sub = 0; sub < subsets.length && !outside; sub++) {
-                    for (let pf = 0; pf < subsets[sub].planefilters.length && !outside; pf++) {
-                        outside = subsets[sub].planefilters[pf].check(pos)
-                    }
-                }
-                if (!outside) {
-                    sliced[t].push(this.positions[t][g])
-                }
-            }
+            const inds = this.getSliceInds(t, subsets)
+            const positions = inds.map(i => this.positions[t][i])
+            sliced.push(positions)
         }
         return sliced
     }

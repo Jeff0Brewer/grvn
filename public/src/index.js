@@ -198,14 +198,17 @@ async function main (data) {
         if (slice_interface.new_planes) {
             slice(slice_interface.get_output())
         } else {
+            let slicesRemoved = false
             for (let i = 0; i < slices.length; i++) {
                 if (slices[i].removed) {
-                    const removedSlices = [...slices[i].planefilters]
-                    slices.splice(i, 1)
-                    unslice(removedSlices)
-                    context_image.update_slices(grainSurfaces.getSliced(slices))
+                    slicesRemoved = true
+                    const removed = slices.splice(i, 1)
+                    unslice(removed[0].planefilters)
                     i--
                 }
+            }
+            if (slicesRemoved) {
+                context_image.update_slices(grainSurfaces.getSlicePositions(slices))
             }
         }
 
@@ -447,7 +450,7 @@ function slice (output) {
     forcePlot.updateSlices(gl, getCurrentPlaneFilters())
     ribbon_flow.slice(planes)
 
-    context_image.update_slices(grainSurfaces.getSliced(slices))
+    context_image.update_slices(grainSurfaces.getSlicePositions(slices))
 
     frozen = false
 }
