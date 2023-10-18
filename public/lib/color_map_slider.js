@@ -89,7 +89,7 @@ class ColorMapSlider {
     }
 
     update_hover (ind, t) {
-        if (ind < 0) {
+        if (!ind) {
             add_class(this.elements.hover.section, ' hidden')
         } else {
             remove_class(this.elements.hover.section, ' hidden')

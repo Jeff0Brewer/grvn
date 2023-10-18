@@ -506,11 +506,8 @@ function get_hovered_sm (e) {
 }
 
 function update_hovered_sm (ind, t) {
-    if (ind && color_mapper && color_mapper.data.length > 0) {
+    if (color_mapper && color_mapper.data.length > 0) {
         color_mapper.update_hover(ind, t)
-    }
-    if (ind && sm_viewer) {
-        sm_viewer.update_highlight(ind)
     }
 }
 
@@ -704,7 +701,7 @@ canvas.onmouseleave = function (e) {
     if (sm_viewer) {
         sm_viewer.mouseleave(selections)
     }
-    update_hovered_sm(-1, 0)
+    update_hovered_sm(null, 0)
 }
 
 sidebar.onmousedown = function () {

@@ -174,60 +174,6 @@ class GrainSurfaces {
         return positions
     }
 
-    getHovering (t, inds, offset, vec, color) {
-        const off = [offset.x, offset.y, offset.z]
-        if (color[0] > 0 || color[1] > 0 || color[2] > 0) {
-            const near = []
-            for (let i = 0; i < inds.length; i++) {
-                if (this.hitTestSingle(this.positions[t][inds[i]], vec, HOVER_DELTA)) {
-                    near.push(inds[i])
-                }
-            }
-            let canidates = []
-            if (canidates.length == 0 && near.length > 0) {
-                canidates = near
-            }
-            const triangles = []
-            for (let i = 0; i < canidates.length; i++) {
-                for (let tri = this.indBounds[canidates[i]][0]; tri < this.indBounds[canidates[i]][1]; tri += 3) {
-                    const ind = triangles.length
-                    triangles.push([])
-                    let dist_from_cam = 0
-                    for (let p = 0; p < 3; p++) {
-                        triangles[ind].push([])
-                        for (let x = 0; x < 3; x++) {
-                            triangles[ind][p].push(
-                                this.posBuffer[(tri + p) * 3 + x] + this.positions[t][canidates[i]][x]
-                            )
-                        }
-                        dist_from_cam += dist(triangles[ind][p], vec[0])
-                    }
-                    triangles[ind].push(canidates[i])
-                    triangles[ind].push(dist_from_cam / 3)
-                }
-            }
-            triangles.sort(function (a, b) { return a[4] - b[4] })
-
-            for (let i = 0; i < triangles.length; i++) {
-                if (triangle_check(vec, triangles[i].slice(0, 3))) {
-                    return triangles[i][3]
-                }
-            }
-            return
-        }
-        return -1
-    }
-
-    getShell () {
-        const core = []
-        for (let g = 0; g < this.numG; g++) {
-            if (magnitude(this.positions[0][g].slice(0, 2)) > 310 && this.positions[0][g][1] > 0) {
-                core.push(g)
-            }
-        }
-        return core
-    }
-
     hitTestSingle (position, vector, delta) {
         const crossMag = magnitude(
             cross(
@@ -254,5 +200,73 @@ class GrainSurfaces {
                 this.colors[t][g] = [mapped.r, mapped.g, mapped.b]
             }
         }
+    }
+
+    getHovering (t, inds, offset, mouseVec, mousePixel) {
+        // no hovered grain if hovering black (background) pixel
+        const [r, g, b] = mousePixel
+        if (r === 0 && g === 0 && b === 0) {
+            return null
+        }
+
+        const nearInds = []
+        for (const i of inds) {
+            const nearMouse = this.hitTestSingle(this.positions[t][i], mouseVec, HOVER_DELTA)
+            if (nearMouse) {
+                nearInds.push(i)
+            }
+        }
+
+        const cameraPosition = mouseVec[0]
+
+        const grainDepths = []
+        const grainTriangles = {}
+        for (const i of nearInds) {
+            const [startInd, endInd] = this.indBounds[i]
+            const invNumPoints = 1 / (endInd - startInd)
+
+            let grainDepth = 0
+            const triangles = []
+            for (let ti = startInd; ti < endInd; ti += 3) {
+                const triangle = []
+                for (let pi = 0; pi < 3; pi++) {
+                    const point = []
+                    for (let ci = 0; ci < 3; ci++) {
+                        const vertexCoordinate = this.posBuffer[(ti + pi) * 3 + ci]
+                        const grainCoordinate = this.positions[t][i][ci]
+                        point.push(vertexCoordinate + grainCoordinate)
+                    }
+                    grainDepth += dist(point, cameraPosition) * invNumPoints
+                    triangle.push(point)
+                }
+                triangles.push(triangle)
+            }
+            grainDepths.push([i, grainDepth])
+            grainTriangles[i] = triangles
+        }
+
+        // sort by depth
+        grainDepths.sort((a, b) => a[1] - b[1])
+
+        for (const [grainInd] of grainDepths) {
+            for (const triangle of grainTriangles[grainInd]) {
+                const intersectsMouseVec = triangle_check(mouseVec, triangle)
+                if (intersectsMouseVec) {
+                    return grainInd
+                }
+            }
+        }
+
+        return null
+    }
+
+    getShell () {
+        const core = []
+        for (let g = 0; g < this.numG; g++) {
+            if (magnitude(this.positions[0][g].slice(0, 2)) > 310 && this.positions[0][g][1] > 0) {
+                core.push(g)
+            }
+        }
+        return core
     }
 }
