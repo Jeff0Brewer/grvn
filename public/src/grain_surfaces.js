@@ -2,22 +2,22 @@ const SELECT_DELTA = 15
 const HOVER_DELTA = 100
 
 class GrainSurfaces {
-    constructor (surfaces, inds, positions, rotations, numT, numG) {
+    constructor (surfaces, indBounds, positions, rotations, numT, numG) {
         this.posBuffer = surfaces
-        this.inds = inds
+        this.indBounds = indBounds
         this.positions = positions
         this.rotations = rotations
         this.numT = numT
         this.numG = numG
 
         const defaultColor = [1.0, 1.0, 1.0]
-        const timestepColors = []
+        const singleTimestepColors = []
         for (let g = 0; g < numG; g++) {
-            timestepColors.push(defaultColor.slice())
+            singleTimestepColors.push(defaultColor.slice())
         }
         this.colors = []
         for (let t = 0; t < numT; t++) {
-            this.colors.push(timestepColors.slice())
+            this.colors.push(singleTimestepColors.slice())
         }
     }
 
@@ -47,7 +47,7 @@ class GrainSurfaces {
         gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
         gl.uniform3fv(this.u_Color, this.colors[t][i])
 
-        const [startInd, endInd] = this.inds[i]
+        const [startInd, endInd] = this.indBounds[i]
         gl.drawArrays(gl.TRIANGLES, startInd, endInd - startInd)
     }
 
@@ -189,7 +189,7 @@ class GrainSurfaces {
             }
             const triangles = []
             for (let i = 0; i < canidates.length; i++) {
-                for (let tri = this.inds[canidates[i]][0]; tri < this.inds[canidates[i]][1]; tri += 3) {
+                for (let tri = this.indBounds[canidates[i]][0]; tri < this.indBounds[canidates[i]][1]; tri += 3) {
                     const ind = triangles.length
                     triangles.push([])
                     let dist_from_cam = 0
