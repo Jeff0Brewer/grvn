@@ -103,40 +103,50 @@ class GrainSurfaces {
         }
     }
 
-    getChain (t, vectors, subsets) {
-        // get grain indices in current slice
+    getSlicedInds (t, slices) {
         const currentSlice = []
         for (let i = 0; i < this.numG; i++) {
             let inside = true
-            for (const subset of subsets) {
-                for (const filter of subset.planefilters) {
+            for (const slice of slices) {
+                for (const filter of slice.planefilters) {
                     inside = inside && !filter.check(this.positions[t][i])
                 }
             }
             if (inside) { currentSlice.push(i) }
         }
+        return currentSlice
+    }
+
+    getChain (t, vectors, slices) {
+        // get grain indices in current slice
+        const currentSlice = this.getSlicedInds(t, slices)
 
         // check intersection with drawn paths
         const [firstPath, secondPath] = vectors
         const chainInds = []
         for (const i of currentSlice) {
-            let intersected = false
-            for (const vector of firstPath) {
-                intersected = intersected || this.hitTest(this.positions[t][i], vector, SELECT_DELTA)
-            }
+            const intersectFirstPath = this.hitTest(this.positions[t][i], firstPath, SELECT_DELTA)
 
             // don't check second path if no intersection with first
-            if (!intersected) { continue }
+            if (!intersectFirstPath) { continue }
 
-            intersected = false
-            for (const vector of secondPath) {
-                intersected = intersected || this.hitTest(this.positions[t][i], vector, SELECT_DELTA)
-            }
+            const intersectSecondPath = this.hitTest(this.positions[t][i], secondPath, SELECT_DELTA)
 
             // add to chain if intersected by both paths
-            if (intersected) { chainInds.push(i) }
+            if (intersectSecondPath) { chainInds.push(i) }
         }
         return chainInds
+    }
+
+    getPlane (t, vectors, slices) {
+        const currentSlice = this.getSlicedInds(t, slices)
+
+        const plane = []
+        for (const i of currentSlice) {
+            const intersectsPath = this.hitTest(this.positions[t][i], vectors, SELECT_DELTA)
+            if (intersectsPath) { plane.push(i) }
+        }
+        return plane
     }
 
     getSliced (subsets) {
@@ -162,40 +172,12 @@ class GrainSurfaces {
         return sliced
     }
 
-    getCross (t, vectors, subsets) {
-        const inside = []
-        for (let g = 0; g < this.positions[t].length; g++) {
-            const pos = this.positions[t][g]
-            let outside = false
-            for (let sub = 0; sub < subsets.length && !outside; sub++) {
-                for (let pf = 0; pf < subsets[sub].planefilters.length && !outside; pf++) {
-                    outside = subsets[sub].planefilters[pf].check(pos)
-                }
-            }
-            if (!outside) {
-                inside.push(g)
-            }
-        }
-
-        const cross = []
-        for (let i = 0; i < inside.length; i++) {
-            let hit = false
-            for (let v = 0; v < vectors.length && !hit; v++) {
-                hit = hit | this.hitTest(this.positions[t][inside[i]], vectors[v], SELECT_DELTA)
-                if (hit) {
-                    cross.push(inside[i])
-                }
-            }
-        }
-        return cross
-    }
-
     getHovering (t, inds, offset, vec, color) {
         const off = [offset.x, offset.y, offset.z]
         if (color[0] > 0 || color[1] > 0 || color[2] > 0) {
             const near = []
             for (let i = 0; i < inds.length; i++) {
-                if (this.hitTest(this.positions[t][inds[i]], vec, HOVER_DELTA)) {
+                if (this.hitTestSingle(this.positions[t][inds[i]], vec, HOVER_DELTA)) {
                     near.push(inds[i])
                 }
             }
@@ -263,9 +245,23 @@ class GrainSurfaces {
         return positions
     }
 
-    hitTest (pos, vec, delta) {
-        const d = magnitude(cross(sub(pos, vec[0]), sub(pos, vec[1]))) / magnitude(sub(vec[1], vec[0]))
-        return d < delta
+    hitTestSingle (position, vector, delta) {
+        const crossMag = magnitude(
+            cross(
+                sub(position, vector[0]),
+                sub(position, vector[1])
+            )
+        )
+        const vectorMag = magnitude(sub(vector[0], vector[1]))
+        return crossMag / vectorMag < delta
+    }
+
+    hitTest (position, vectors, delta) {
+        let intersection = false
+        for (const vector of vectors) {
+            intersection = intersection || this.hitTestSingle(position, vector, delta)
+        }
+        return intersection
     }
 
     colorMap (color_mapper) {
