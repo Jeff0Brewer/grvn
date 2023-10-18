@@ -299,7 +299,7 @@ function draw (elapsed) {
                 }
             }
             if (drawing_inds.length > 0) {
-                grainSurfaces.drawInds(
+                grainSurfaces.drawOverFullSample(
                     gl,
                     viewMatrix,
                     projMatrix,

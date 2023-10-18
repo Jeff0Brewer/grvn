@@ -7,8 +7,6 @@ class GrainSurfaces {
         this.numT = numT
         this.numG = numG
 
-        this.bufferChanged = false
-
         const defaultColor = [1.0, 1.0, 1.0]
         const timestepColors = []
         for (let g = 0; g < numG; g++) {
@@ -35,7 +33,22 @@ class GrainSurfaces {
         this.u_Color = gl.getUniformLocation(gl.program, 'u_Color')
     }
 
-    drawInds (gl, viewMatrix, projMatrix, grainInds, t, viewport) {
+    drawGrain (gl, t, i) {
+        const grainRotation = new Matrix4()
+        grainRotation.setFromQuat(...this.rotations[t][i])
+
+        const grainPos = new Matrix4()
+        grainPos.translate(...this.positions[t][i])
+        grainPos.multiply(grainRotation)
+
+        gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
+        gl.uniform3fv(this.u_Color, this.colors[t][i])
+
+        const [startInd, endInd] = this.inds[i]
+        gl.drawArrays(gl.TRIANGLES, startInd, endInd - startInd)
+    }
+
+    drawOverFullSample (gl, viewMatrix, projMatrix, grainInds, t, viewport) {
         gl.enable(gl.DEPTH_TEST)
 
         bindProgram(gl, this.program)
@@ -43,97 +56,49 @@ class GrainSurfaces {
 
         const model = new Matrix4()
         model.scale(0.025, 0.025, 0.025)
+
+        gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
-        gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
 
         gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
         gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
         for (const i of grainInds) {
-            const grainRotation = new Matrix4()
-            grainRotation.setFromQuat(...this.rotations[t][i])
-
-            const grainPos = new Matrix4()
-            grainPos.translate(...this.positions[t][i])
-            grainPos.multiply(grainRotation)
-
-            gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
-            gl.uniform3fv(this.u_Color, this.colors[t][i])
-
-            const [startInd, endInd] = this.inds[i]
-            gl.drawArrays(gl.TRIANGLES, startInd, endInd - startInd)
+            this.drawGrain(gl, t, i)
         }
     }
 
     drawSmallMultiples (gl, viewMatrix, projMatrix, selectitem, t, viewport) {
+        gl.enable(gl.DEPTH_TEST)
+
         bindProgram(gl, this.program)
-
-        this.bufferChanged = true
-
-        const rot = new Matrix4()
-        rot.rotate(-selectitem.rotation.x, 1, 0, 0)
-        rot.rotate(-selectitem.rotation.y, 0, 1, 0)
-        rot.rotate(-selectitem.rotation.z, 0, 0, 1)
-
-        let select_cam = new Vector4()
-        select_cam.elements[0] = selectitem.camera.x / 0.025 - selectitem.offsets[t].x
-        select_cam.elements[1] = selectitem.camera.y / 0.025 - selectitem.offsets[t].y
-        select_cam.elements[2] = selectitem.camera.z / 0.025 - selectitem.offsets[t].z
-        select_cam.elements[3] = 1
-        select_cam = rot.multiplyVector4(select_cam)
-
-        const cam = [0, 0, 0]
-        cam[0] = select_cam.elements[0] / select_cam.elements[3] + selectitem.offsets[t].x
-        cam[1] = select_cam.elements[1] / select_cam.elements[3] + selectitem.offsets[t].y
-        cam[2] = select_cam.elements[2] / select_cam.elements[3] + selectitem.offsets[t].z
-
-        const pos = this.positions
-
         this.bindPos(gl)
 
-        gl.enable(gl.DEPTH_TEST)
-        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
-        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+        const scale = 0.025
+        const { x: ox, y: oy, z: oz } = selectitem.offsets[t]
+        const { x: rx, z: rz } = selectitem.rotation
 
-        const modelMatrix = new Matrix4()
-        modelMatrix.scale(0.025, 0.025, 0.025)
-        modelMatrix.translate(selectitem.offsets[t].x, selectitem.offsets[t].y, selectitem.offsets[t].z)
-        modelMatrix.rotate(selectitem.rotation.x, 1, 0, 0)
-        modelMatrix.rotate(selectitem.rotation.z, 0, 0, 1)
-        modelMatrix.translate(-selectitem.offsets[t].x, -selectitem.offsets[t].y, -selectitem.offsets[t].z)
+        const model = new Matrix4()
+        model.scale(scale, scale, scale)
+        model.translate(ox, oy, oz)
+        model.rotate(rx, 1, 0, 0)
+        model.rotate(rz, 0, 0, 1)
+        model.translate(-ox, -oy, -oz)
 
-        viewMatrix.setLookAt(selectitem.camera.x, selectitem.camera.y, selectitem.camera.z, selectitem.offsets[t].x * 0.025, selectitem.offsets[t].y * 0.025, selectitem.offsets[t].z * 0.025, 0, 0, 1)
+        const { x: cx, y: cy, z: cz } = selectitem.camera
+        viewMatrix.setLookAt(cx, cy, cz, ox * scale, oy * scale, oz * scale, 0, 0, 1)
         projMatrix.setPerspective(35, viewport.width / viewport.height, 1, 500)
 
-        gl.uniformMatrix4fv(this.u_ModelMatrix, false, modelMatrix.elements)
+        gl.uniformMatrix4fv(this.u_ModelMatrix, false, model.elements)
         gl.uniformMatrix4fv(this.u_ViewMatrix, false, viewMatrix.elements)
         gl.uniformMatrix4fv(this.u_ProjMatrix, false, projMatrix.elements)
 
-        for (let i = 0; i < selectitem.inds.length; i++) {
-            const grainPos = new Matrix4()
+        gl.scissor(viewport.x, viewport.y, viewport.width, viewport.height)
+        gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
 
-            grainPos.translate(
-                this.positions[t][selectitem.inds[i]][0],
-                this.positions[t][selectitem.inds[i]][1],
-                this.positions[t][selectitem.inds[i]][2]
-            )
-            const quat = new Matrix4()
-            quat.setFromQuat(
-                this.rotations[t][selectitem.inds[i]][0],
-                this.rotations[t][selectitem.inds[i]][1],
-                this.rotations[t][selectitem.inds[i]][2],
-                this.rotations[t][selectitem.inds[i]][3]
-            )
-            grainPos.multiply(quat)
-
-            gl.uniformMatrix4fv(this.u_GrainPos, false, grainPos.elements)
-            gl.uniform3fv(this.u_Color, this.colors[t][selectitem.inds[i]])
-            gl.drawArrays(
-                gl.TRIANGLES,
-                this.inds[selectitem.inds[i]][0],
-                this.inds[selectitem.inds[i]][1] - this.inds[selectitem.inds[i]][0]
-            )
+        for (const i of selectitem.inds) {
+            this.drawGrain(gl, t, i)
         }
     }
 
