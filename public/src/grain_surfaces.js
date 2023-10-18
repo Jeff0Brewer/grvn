@@ -117,6 +117,19 @@ class GrainSurfaces {
         return currentSlice
     }
 
+    getSlicePositions (subsets) {
+        if (subsets.length === 0) { return [] }
+
+        const slicePositions = []
+        for (let t = 0; t < this.numT; t++) {
+            const inds = this.getSliceInds(t, subsets)
+            const positions = inds.map(i => this.positions[t][i])
+            slicePositions.push(positions)
+        }
+
+        return slicePositions
+    }
+
     getChain (t, vectors, slices) {
         // get grain indices in current slice
         const currentSlice = this.getSliceInds(t, slices)
@@ -147,19 +160,6 @@ class GrainSurfaces {
             if (intersectsPath) { plane.push(i) }
         }
         return plane
-    }
-
-    getSlicePositions (subsets) {
-        if (subsets.length === 0) { return [] }
-
-        const slicePositions = []
-        for (let t = 0; t < this.numT; t++) {
-            const inds = this.getSliceInds(t, subsets)
-            const positions = inds.map(i => this.positions[t][i])
-            slicePositions.push(positions)
-        }
-
-        return slicePositions
     }
 
     getPositions (inds, t) {
