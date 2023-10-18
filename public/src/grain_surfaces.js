@@ -1,3 +1,6 @@
+const SELECT_DELTA = 15
+const HOVER_DELTA = 100
+
 class GrainSurfaces {
     constructor (surfaces, inds, positions, rotations, numT, numG) {
         this.posBuffer = surfaces
@@ -100,40 +103,66 @@ class GrainSurfaces {
         }
     }
 
-    getChain (t, vectors, delta, subsets) {
-        const inside = []
-        for (let g = 0; g < this.positions[t].length; g++) {
-            const pos = this.positions[t][g]
-            let outside = false
-            for (let sub = 0; sub < subsets.length && !outside; sub++) {
-                for (let pf = 0; pf < subsets[sub].planefilters.length && !outside; pf++) {
-                    outside = subsets[sub].planefilters[pf].check(pos)
+    getChain (t, vectors, subsets) {
+        // get grain indices in current slice
+        const currentSlice = []
+        for (let i = 0; i < this.numG; i++) {
+            let inside = true
+            for (const subset of subsets) {
+                for (const filter of subset.planefilters) {
+                    inside = inside && !filter.check(this.positions[t][i])
                 }
             }
-            if (!outside) {
-                inside.push(g)
-            }
+            if (inside) { currentSlice.push(i) }
         }
 
-        const chain = []
-        for (let i = 0; i < inside.length; i++) {
-            let hit = false
-            for (let v = 0; v < vectors[0].length && !hit; v++) {
-                hit = hit | this.hitTest(this.positions[t][inside[i]], vectors[0][v], delta)
+        // check intersection with drawn paths
+        const [firstPath, secondPath] = vectors
+        const chainInds = []
+        for (const i of currentSlice) {
+            let intersected = false
+            for (const vector of firstPath) {
+                intersected = intersected || this.hitTest(this.positions[t][i], vector, SELECT_DELTA)
             }
-            if (hit) {
-                for (let v = 0; v < vectors[1].length; v++) {
-                    if (this.hitTest(this.positions[t][inside[i]], vectors[1][v], delta)) {
-                        chain.push(inside[i])
-                        v = vectors[1].length
-                    }
-                }
+
+            // don't check second path if no intersection with first
+            if (!intersected) { continue }
+
+            intersected = false
+            for (const vector of secondPath) {
+                intersected = intersected || this.hitTest(this.positions[t][i], vector, SELECT_DELTA)
             }
+
+            // add to chain if intersected by both paths
+            if (intersected) { chainInds.push(i) }
         }
-        return chain
+        return chainInds
     }
 
-    getCross (t, vectors, delta, subsets) {
+    getSliced (subsets) {
+        if (subsets.length === 0) {
+            return []
+        }
+        const sliced = []
+        for (let t = 0; t < this.numT; t++) {
+            sliced.push([])
+            for (let g = 0; g < this.numG; g++) {
+                const pos = this.positions[t][g]
+                let outside = false
+                for (let sub = 0; sub < subsets.length && !outside; sub++) {
+                    for (let pf = 0; pf < subsets[sub].planefilters.length && !outside; pf++) {
+                        outside = subsets[sub].planefilters[pf].check(pos)
+                    }
+                }
+                if (!outside) {
+                    sliced[t].push(this.positions[t][g])
+                }
+            }
+        }
+        return sliced
+    }
+
+    getCross (t, vectors, subsets) {
         const inside = []
         for (let g = 0; g < this.positions[t].length; g++) {
             const pos = this.positions[t][g]
@@ -152,7 +181,7 @@ class GrainSurfaces {
         for (let i = 0; i < inside.length; i++) {
             let hit = false
             for (let v = 0; v < vectors.length && !hit; v++) {
-                hit = hit | this.hitTest(this.positions[t][inside[i]], vectors[v], delta)
+                hit = hit | this.hitTest(this.positions[t][inside[i]], vectors[v], SELECT_DELTA)
                 if (hit) {
                     cross.push(inside[i])
                 }
@@ -161,34 +190,12 @@ class GrainSurfaces {
         return cross
     }
 
-    getSliced (subsets) {
-        if (subsets.length <= 0) { return [] }
-        const sliced = []
-        for (let t = 0; t < this.positions.length; t++) {
-            sliced.push([])
-            for (let g = 0; g < this.positions[t].length; g++) {
-                const pos = this.positions[t][g]
-                let outside = false
-                for (let sub = 0; sub < subsets.length && !outside; sub++) {
-                    for (let pf = 0; pf < subsets[sub].planefilters.length && !outside; pf++) {
-                        outside = subsets[sub].planefilters[pf].check(pos)
-                    }
-                }
-                if (!outside) {
-                    sliced[t].push(this.positions[t][g])
-                }
-            }
-        }
-        return sliced
-    }
-
     getHovering (t, inds, offset, vec, color) {
         const off = [offset.x, offset.y, offset.z]
-        const delta = 100
         if (color[0] > 0 || color[1] > 0 || color[2] > 0) {
             const near = []
             for (let i = 0; i < inds.length; i++) {
-                if (this.hitTest(this.positions[t][inds[i]], vec, delta)) {
+                if (this.hitTest(this.positions[t][inds[i]], vec, HOVER_DELTA)) {
                     near.push(inds[i])
                 }
             }

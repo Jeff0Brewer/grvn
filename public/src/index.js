@@ -924,7 +924,7 @@ document.getElementById('select_button').onmouseup = function () {
         case 0:
             brush_vecs(select_interface.finish_step())
             if (select_interface.mode == 1) {
-                const inds = grainSurfaces.getCross(timeline.timestep, select_vectors[0], 15, slices)
+                const inds = grainSurfaces.getCross(timeline.timestep, select_vectors[0], slices)
                 selections.push(make_selection_item(inds, grainSurfaces.getPositionsT(inds), numT, select_ind))
                 select_ind++
                 select_vectors = []
@@ -949,7 +949,7 @@ document.getElementById('select_button').onmouseup = function () {
             break
         case 2:
             brush_vecs(select_interface.finish_all())
-            const inds = grainSurfaces.getChain(timeline.timestep, select_vectors, 15, slices)
+            const inds = grainSurfaces.getChain(timeline.timestep, select_vectors, slices)
             selections.push(make_selection_item(inds, grainSurfaces.getPositionsT(inds), numT, select_ind))
             select_ind++
             select_vectors = []
