@@ -7,7 +7,7 @@ const ROTATION_SCALE = 10
 const MAX_ROTATION = 2
 const DEG_TO_RAD = 180 / Math.PI
 
-class RibbonFlow {
+class MotionPlot {
     constructor (positions, rotations, forces, maxForce, numT, numG) {
         this.pFpv = 3
         this.cFpv = 4

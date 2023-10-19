@@ -127,7 +127,7 @@ async function main (data) {
         data.forcePlot.metadata,
         data.forcePlot.textures
     )
-    ribbon_flow = new RibbonFlow(
+    ribbon_flow = new MotionPlot(
         data.grains.positions,
         data.rotationMagnitudes,
         data.forces,
