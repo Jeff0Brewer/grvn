@@ -88,7 +88,7 @@ const flowWidthButton = document.getElementById('flowWidthButton')
 flowWidthButton.addEventListener('mousedown', () => {
     const value = parseFloat(flowWidthInput.value)
     if (!Number.isNaN(value) && ribbon_flow) {
-        ribbon_flow.resize_ribbons(gl, value)
+        ribbon_flow.resizeRibbons(gl, value)
     }
 })
 const forceWidthInput = document.getElementById('forceWidthInput')

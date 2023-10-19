@@ -201,7 +201,7 @@ class RibbonFlow {
         this.updateSlice(planefilters, -this.numT)
     }
 
-    resize_ribbons (gl, scale) {
+    resizeRibbons (gl, scale) {
         for (let i = 0; i < this.posBuffer.length; i += 2 * this.pFpv) {
             const ribbonLeft = this.posBuffer.slice(i, i + this.pFpv)
             const ribbonRight = this.posBuffer.slice(i + this.pFpv, i + 2 * this.pFpv)
@@ -212,8 +212,6 @@ class RibbonFlow {
 
             for (let j = 0; j < this.pFpv; j++) {
                 this.posBuffer[i + j] = newLeft[j]
-            }
-            for (let j = 0; j < this.pFpv; j++) {
                 this.posBuffer[i + j + this.pFpv] = newRight[j]
             }
         }
