@@ -44,8 +44,8 @@ class ColorMapSlider {
         this.elements.bars.high.style.width = '0px'
 
         this.elements.bars.gradient.style.background = 'linear-gradient(90deg,' + css_def + ')'
-        this.elements.bars.low.style.background = 'rgb(' + (this.map.colors[0].r * 255).toString() + ',' + (this.map.colors[0].g * 255).toString() + ',' + (this.map.colors[0].b * 255).toString() + ')'
-        this.elements.bars.high.style.background = 'rgb(' + (this.map.colors[this.map.colors.length - 1].r * 255).toString() + ',' + (this.map.colors[this.map.colors.length - 1].g * 255).toString() + ',' + (this.map.colors[this.map.colors.length - 1].b * 255).toString() + ')'
+        this.elements.bars.low.style.background = colorToRgbString(this.map.colors[0])
+        this.elements.bars.high.style.background = colorToRgbString(this.map.colors[this.map.colors.length - 1])
 
         this.elements.labels.min.innerHTML = this.values.min
         this.elements.labels.max.innerHTML = this.values.max
@@ -157,4 +157,9 @@ class ColorMapSlider {
         }
         return this.map.map(this.data[t][g], this.values.low, this.values.high)
     }
+}
+
+const colorToRgbString = (color) => {
+    const [r, g, b] = color.map(v => v * 255)
+    return `rgb(${r}, ${g}, ${b})`
 }
