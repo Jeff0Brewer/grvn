@@ -1,142 +1,130 @@
+const MIN_WIDTH = 0.2
+const MAX_WIDTH = 15
+const WIDTH_EXP = 2.5
+const MIN_COLOR = [140, 140, 255]
+const MAX_COLOR = [255, 255, 255]
+const ROTATION_SCALE = 10
+const MAX_ROTATION = 2
+const DEG_TO_RAD = 180 / Math.PI
+
 class RibbonFlow {
-    constructor (positions, rotations, forces, max_force, num_t, num_g) {
-        this.p_fpv = 3
-        this.c_fpv = 4
-        this.v_fpv = 1
-        this.num_t = num_t
-        this.buffer_changed = false
-        this.last_step = -1
+    constructor (positions, rotations, forces, maxForce, numT, numG) {
+        this.pFpv = 3
+        this.cFpv = 4
+        this.vFpv = 1
 
-        const lw = 0.2
-        const hw = 15
-        const wf = 2.5
-        const rs = 10
-        // let lc = [.35,.35,.8];
-        const lc = [0.55, 0.55, 1]
-        const hc = [1, 1, 1]
-        const cr = 1
-        const mr = 2
-        const cmap = 1
+        this.numT = numT
+        this.lastTimestep = -1
+        this.visibilityChanged = false
 
-        const num_vert = (num_t * num_g + num_g * 2) * 2
-        this.position_buffer = new Float32Array(num_vert * this.p_fpv)
-        this.color_buffer = new Uint8Array(num_vert * this.c_fpv)
-        this.visibility_buffer = new Uint16Array(num_vert * this.v_fpv)
-        let pos_ind = 0
-        let col_ind = 0
-        let vis_ind = 0
+        const numVertex = (numT * numG + numG * 2) * 2
+        this.posBuffer = new Float32Array(numVertex * this.pFpv)
+        this.colBuffer = new Uint8Array(numVertex * this.cFpv)
+        this.visBuffer = new Uint16Array(numVertex * this.vFpv)
 
-        for (let g = 0; g < num_g; g++) {
-            let total_rotation = 0
+        let posInd = 0
+        let colInd = 0
+        let visInd = 0
 
-            const last_pos = []
-            const this_pos = []
-            const last_pll = []
-            const this_pll = []
-            for (let pp = 0; pp < 3; pp++) {
-                last_pos.push(positions[0][g][pp])
-                this_pos.push(positions[0][g][pp])
-                last_pll.push(this_pos[pp] - last_pos[pp])
-                this_pll.push(this_pos[pp] - last_pos[pp])
+        const addHiddenVerts = (position) => {
+            for (let i = 0; i < 2; i++) {
+                this.posBuffer.set(position, posInd)
+                this.colBuffer.set([0, 0, 0, 0], colInd)
+                this.visBuffer[visInd] = this.numT
+
+                posInd += this.pFpv
+                colInd += this.cFpv
+                visInd += this.vFpv
             }
+        }
 
-            let ribbon_vec = norm([
-                1 / (positions[1][g][0] - this_pos[0]),
-                1 / (positions[1][g][1] - this_pos[1]),
-                -2 / (positions[1][g][2] - this_pos[2])
-            ])
+        const mapColor = (rotation, pllVec) => {
+            return [
+                map(rotation, 0, MAX_ROTATION, MIN_COLOR[0], MAX_COLOR[0]),
+                map(rotation, 0, MAX_ROTATION, MIN_COLOR[1], MAX_COLOR[1]),
+                map(rotation, 0, MAX_ROTATION, MIN_COLOR[2], MAX_COLOR[2]),
+                Math.pow((14 - magnitude(pllVec)) / 14, 10) * 255
+            ]
+        }
 
-            for (let pp = 0; pp < this.p_fpv * 2; pp++, pos_ind++) {
-                this.position_buffer[pos_ind] = positions[0][g][pp % this.p_fpv]
-                last_pos[pp] = positions[0][g][pp % this.p_fpv]
-                this_pos[pp] = positions[0][g][pp % this.p_fpv]
-            }
-            for (let pc = 0; pc < this.c_fpv * 2; pc++, col_ind++) {
-                this.color_buffer[col_ind] = 0
-            }
-            for (let pv = 0; pv < this.v_fpv * 2; pv++, vis_ind++) {
-                this.visibility_buffer[vis_ind] = this.num_t
-            }
+        // one ribbon per grain
+        for (let g = 0; g < numG; g++) {
+            const lastPos = positions[0][g].slice()
+            const thisPos = positions[0][g].slice()
+            const lastPll = [0, 0, 0]
+            const thisPll = [0, 0, 0]
 
-            for (let t = 0; t < num_t; t++) {
-                total_rotation += rotations[t][g]
+            // initialize ribbon direction vector perpendicular to line motion
+            const firstLine = sub(positions[1][g], positions[0][g])
+            let ribbonVec = norm([1 / firstLine[0], 1 / firstLine[1], -2 / firstLine[2]])
 
-                let mapper = total_rotation
-                if (cmap == 1) { mapper = rotations[t][g] }
+            addHiddenVerts(positions[0][g])
 
-                for (let pp = 0; pp < this.p_fpv; pp++) {
-                    this_pos[pp] = positions[t][g][pp]
-                    this_pll[pp] = this_pos[pp] - last_pos[pp]
+            // num timstep positions per ribbon
+            for (let t = 0; t < numT; t++) {
+                for (let i = 0; i < this.pFpv; i++) {
+                    thisPos[i] = positions[t][g][i]
+                    thisPll[i] = thisPos[i] - lastPos[i]
                 }
 
-                const elbow = cross(this_pll, last_pll)
-                let elbow_rot = Math.acos(dot(this_pll, last_pll) / (magnitude(this_pll) * magnitude(last_pll)))
+                // rotate ribbon by change in grain motion direction
+                const motionAngle = angle_between(thisPll, lastPll)
+                const motionAxis = cross(thisPll, lastPll)
+                ribbonVec = rotateabout(ribbonVec, motionAxis, motionAngle)
 
-                if (Number.isNaN(elbow_rot)) { elbow_rot = 0 }
+                // rotate ribbon about center based on grain rotation at timestep
+                const ribbonRotation = rotations[t][g] * DEG_TO_RAD * ROTATION_SCALE
+                ribbonVec = rotateabout(ribbonVec, thisPll, ribbonRotation)
 
-                ribbon_vec = rotateabout(ribbon_vec, elbow, elbow_rot)
-                ribbon_vec = rotateabout(ribbon_vec, this_pll, rs * rotations[t][g] * Math.PI / 180)
+                const ribbonSize = pow_map(forces[t][g], 0, maxForce, MIN_WIDTH, MAX_WIDTH, WIDTH_EXP)
 
-                const ribbon_size = pow_map(forces[t][g], 0, max_force, lw, hw, wf)
+                const color = mapColor(rotations[t][g], thisPll)
 
-                for (let p = 0; p < this.p_fpv; p++, pos_ind++) {
-                    this.position_buffer[pos_ind] = positions[t][g][p] + ribbon_vec[p] * ribbon_size
+                // copy ribbon attributes into buffers
+                for (let i = 0; i < this.pFpv; i++, posInd++) {
+                    this.posBuffer[posInd] = thisPos[i] + ribbonVec[i] * ribbonSize
+                    this.posBuffer[posInd + this.pFpv] = thisPos[i] - ribbonVec[i] * ribbonSize
                 }
-                for (let p = 0; p < this.p_fpv; p++, pos_ind++) {
-                    this.position_buffer[pos_ind] = positions[t][g][p] - ribbon_vec[p] * ribbon_size
+                posInd += this.pFpv
+                for (let i = 0; i < this.cFpv; i++, colInd++) {
+                    this.colBuffer[colInd] = color[i]
+                    this.colBuffer[colInd + this.cFpv] = color[i]
                 }
-
-                const col = [
-                    pow_map(mapper, 0, mr, lc[0], hc[0], cr),
-                    pow_map(mapper, 0, mr, lc[1], hc[1], cr),
-                    pow_map(mapper, 0, mr, lc[2], hc[2], cr),
-                    Math.pow((14 - magnitude(this_pll)) / 14, 10)
-                ]
-
-                for (let c = 0; c < this.c_fpv * 2; c++, col_ind++) {
-                    this.color_buffer[col_ind] = col[c % this.c_fpv] * 255
+                colInd += this.cFpv
+                for (let i = 0; i < this.vFpv; i++, visInd++) {
+                    this.visBuffer[visInd] = t
+                    this.visBuffer[visInd + this.vFpv] = t
                 }
+                visInd += this.vFpv
 
-                for (let v = 0; v < this.v_fpv * 2; v++, vis_ind++) {
-                    this.visibility_buffer[vis_ind] = t
-                }
-
-                for (let pp = 0; pp < this.p_fpv; pp++) {
-                    last_pos[pp] = this_pos[pp]
-                    last_pll[pp] = this_pll[pp]
+                for (let i = 0; i < this.pFpv; i++) {
+                    lastPos[i] = thisPos[i]
+                    lastPll[i] = thisPll[i]
                 }
             }
 
-            for (let pp = 0; pp < this.p_fpv * 2; pp++, pos_ind++) {
-                this.position_buffer[pos_ind] = positions[num_t - 1][g][pp % this.p_fpv]
-            }
-            for (let pc = 0; pc < this.c_fpv * 2; pc++, col_ind++) {
-                this.color_buffer[col_ind] = 0
-            }
-            for (let pv = 0; pv < this.v_fpv * 2; pv++, vis_ind++) {
-                this.visibility_buffer[vis_ind] = this.num_t
-            }
+            addHiddenVerts(positions[numT - 1][g])
         }
     }
 
     resize_ribbons (gl, scale) {
-        for (let i = 0; i < this.position_buffer.length; i += 2 * this.p_fpv) {
-            const ribbonLeft = this.position_buffer.slice(i, i + this.p_fpv)
-            const ribbonRight = this.position_buffer.slice(i + this.p_fpv, i + 2 * this.p_fpv)
+        for (let i = 0; i < this.posBuffer.length; i += 2 * this.pFpv) {
+            const ribbonLeft = this.posBuffer.slice(i, i + this.pFpv)
+            const ribbonRight = this.posBuffer.slice(i + this.pFpv, i + 2 * this.pFpv)
             const center = midpoint(ribbonLeft, ribbonRight)
 
             const newLeft = add(mult(sub(ribbonLeft, center), scale), center)
             const newRight = add(mult(sub(ribbonRight, center), scale), center)
 
-            for (let j = 0; j < this.p_fpv; j++) {
-                this.position_buffer[i + j] = newLeft[j]
+            for (let j = 0; j < this.pFpv; j++) {
+                this.posBuffer[i + j] = newLeft[j]
             }
-            for (let j = 0; j < this.p_fpv; j++) {
-                this.position_buffer[i + j + this.p_fpv] = newRight[j]
+            for (let j = 0; j < this.pFpv; j++) {
+                this.posBuffer[i + j + this.pFpv] = newRight[j]
             }
         }
         this.bindPos(gl)
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.position_buffer)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.posBuffer)
     }
 
     async init_gl (gl) {
@@ -148,24 +136,24 @@ class RibbonFlow {
         this.bindPos = initAttribBuffer(
             gl,
             'a_Position',
-            this.p_fpv,
-            this.position_buffer,
+            this.pFpv,
+            this.posBuffer,
             gl.FLOAT,
             gl.STATIC_DRAW
         )
         this.bindCol = initAttribBuffer(
             gl,
             'a_Color',
-            this.c_fpv,
-            this.color_buffer,
+            this.cFpv,
+            this.colBuffer,
             gl.UNSIGNED_BYTE,
             gl.STATIC_DRAW
         )
         this.bindVis = initAttribBuffer(
             gl,
             'a_Visibility',
-            this.v_fpv,
-            this.visibility_buffer,
+            this.vFpv,
+            this.visBuffer,
             gl.UNSIGNED_SHORT,
             gl.STATIC_DRAW
         )
@@ -180,18 +168,17 @@ class RibbonFlow {
         gl.enable(gl.DEPTH_TEST)
         gl.depthMask(false)
 
-        this.buffer_changed ||= timestep !== this.last_step
-        this.last_step = timestep
+        this.visibilityChanged ||= timestep !== this.lastTimestep
+        this.lastTimestep = timestep
 
         bindProgram(gl, this.program)
         this.bindPos(gl)
         this.bindCol(gl)
         this.bindVis(gl)
-        if (this.buffer_changed) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visibility_buffer)
+        if (this.visibilityChanged) {
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.visBuffer)
+            this.visibilityChanged = false
         }
-
-        this.buffer_changed = false
 
         // drawing
         const model = new Matrix4()
@@ -204,46 +191,46 @@ class RibbonFlow {
 
         viewport.setCurrent(gl)
 
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.position_buffer.length / this.p_fpv)
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.posBuffer.length / this.pFpv)
 
         gl.depthMask(true)
     }
 
     slice (planefilters) {
-        for (let v = 0; v < this.visibility_buffer.length; v++) {
-            const pos_ind = v / this.v_fpv * this.p_fpv
+        for (let v = 0; v < this.visBuffer.length; v++) {
+            const posInd = v / this.vFpv * this.pFpv
             const pos = [
-                this.position_buffer[pos_ind],
-                this.position_buffer[pos_ind + 1],
-                this.position_buffer[pos_ind + 2]
+                this.posBuffer[posInd],
+                this.posBuffer[posInd + 1],
+                this.posBuffer[posInd + 2]
             ]
             let outside = false
             for (let f = 0; !outside && f < planefilters.length; f++) {
                 outside = planefilters[f].check(pos)
             }
             if (outside) {
-                this.visibility_buffer[v] += this.num_t
+                this.visBuffer[v] += this.numT
             }
         }
-        this.buffer_changed = true
+        this.visibilityChanged = true
     }
 
     unslice (planefilters) {
-        for (let v = 0; v < this.visibility_buffer.length; v++) {
-            const pos_ind = v / this.v_fpv * this.p_fpv
+        for (let v = 0; v < this.visBuffer.length; v++) {
+            const posInd = v / this.vFpv * this.pFpv
             const pos = [
-                this.position_buffer[pos_ind],
-                this.position_buffer[pos_ind + 1],
-                this.position_buffer[pos_ind + 2]
+                this.posBuffer[posInd],
+                this.posBuffer[posInd + 1],
+                this.posBuffer[posInd + 2]
             ]
             let outside = false
             for (let f = 0; !outside && f < planefilters.length; f++) {
                 outside = planefilters[f].check(pos)
             }
             if (outside) {
-                this.visibility_buffer[v] -= this.num_t
+                this.visBuffer[v] -= this.numT
             }
         }
-        this.buffer_changed = true
+        this.visibilityChanged = true
     }
 }
