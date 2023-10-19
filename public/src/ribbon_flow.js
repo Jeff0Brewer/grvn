@@ -107,26 +107,6 @@ class RibbonFlow {
         }
     }
 
-    resize_ribbons (gl, scale) {
-        for (let i = 0; i < this.posBuffer.length; i += 2 * this.pFpv) {
-            const ribbonLeft = this.posBuffer.slice(i, i + this.pFpv)
-            const ribbonRight = this.posBuffer.slice(i + this.pFpv, i + 2 * this.pFpv)
-            const center = midpoint(ribbonLeft, ribbonRight)
-
-            const newLeft = add(mult(sub(ribbonLeft, center), scale), center)
-            const newRight = add(mult(sub(ribbonRight, center), scale), center)
-
-            for (let j = 0; j < this.pFpv; j++) {
-                this.posBuffer[i + j] = newLeft[j]
-            }
-            for (let j = 0; j < this.pFpv; j++) {
-                this.posBuffer[i + j + this.pFpv] = newRight[j]
-            }
-        }
-        this.bindPos(gl)
-        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.posBuffer)
-    }
-
     async init_gl (gl) {
         const vert = await fetch('./shaders/flow-vert.glsl').then(res => res.text())
         const frag = await fetch('./shaders/flow-frag.glsl').then(res => res.text())
@@ -196,41 +176,48 @@ class RibbonFlow {
         gl.depthMask(true)
     }
 
-    slice (planefilters) {
-        for (let v = 0; v < this.visBuffer.length; v++) {
-            const posInd = v / this.vFpv * this.pFpv
-            const pos = [
-                this.posBuffer[posInd],
-                this.posBuffer[posInd + 1],
-                this.posBuffer[posInd + 2]
-            ]
+    updateSlice (planefilters, visibilityDelta) {
+        const posIndToVisInd = this.vFpv / this.pFpv
+        for (let i = 0; i < this.posBuffer.length; i += this.pFpv) {
+            const pos = this.posBuffer.slice(i, i + 3)
+
             let outside = false
-            for (let f = 0; !outside && f < planefilters.length; f++) {
-                outside = planefilters[f].check(pos)
+            for (const filter of planefilters) {
+                outside = outside || filter.check(pos)
             }
+
             if (outside) {
-                this.visBuffer[v] += this.numT
+                this.visBuffer[i * posIndToVisInd] += visibilityDelta
             }
         }
         this.visibilityChanged = true
     }
 
+    slice (planefilters) {
+        this.updateSlice(planefilters, this.numT)
+    }
+
     unslice (planefilters) {
-        for (let v = 0; v < this.visBuffer.length; v++) {
-            const posInd = v / this.vFpv * this.pFpv
-            const pos = [
-                this.posBuffer[posInd],
-                this.posBuffer[posInd + 1],
-                this.posBuffer[posInd + 2]
-            ]
-            let outside = false
-            for (let f = 0; !outside && f < planefilters.length; f++) {
-                outside = planefilters[f].check(pos)
+        this.updateSlice(planefilters, -this.numT)
+    }
+
+    resize_ribbons (gl, scale) {
+        for (let i = 0; i < this.posBuffer.length; i += 2 * this.pFpv) {
+            const ribbonLeft = this.posBuffer.slice(i, i + this.pFpv)
+            const ribbonRight = this.posBuffer.slice(i + this.pFpv, i + 2 * this.pFpv)
+            const center = midpoint(ribbonLeft, ribbonRight)
+
+            const newLeft = add(mult(sub(ribbonLeft, center), scale), center)
+            const newRight = add(mult(sub(ribbonRight, center), scale), center)
+
+            for (let j = 0; j < this.pFpv; j++) {
+                this.posBuffer[i + j] = newLeft[j]
             }
-            if (outside) {
-                this.visBuffer[v] -= this.numT
+            for (let j = 0; j < this.pFpv; j++) {
+                this.posBuffer[i + j + this.pFpv] = newRight[j]
             }
         }
-        this.visibilityChanged = true
+        this.bindPos(gl)
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.posBuffer)
     }
 }
