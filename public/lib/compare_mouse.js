@@ -1,22 +1,24 @@
 class CompareMouse {
-    constructor (width, height, size, strokeColor, strokeWidth) {
-        this.color = strokeColor
-        this.stroke = strokeWidth
-        this.radius = size * 0.5
-        this.lastPositions = []
-
+    constructor (width, height, size, strokeStyle, lineWidth) {
         this.canvas = document.getElementById('mousecanvas')
         this.canvas.width = width
         this.canvas.height = height
 
         this.ctx = this.canvas.getContext('2d')
-        this.ctx.strokeStyle = this.color
-        this.ctx.lineWidth = this.stroke
+        this.ctx.strokeStyle = strokeStyle
+        this.ctx.lineWidth = lineWidth
+
+        this.size = size
+        this.lastPositions = []
+
+        // store stroke and width values to reset in context on resize
+        this.strokeStyle = strokeStyle
+        this.lineWidth = lineWidth
     }
 
     update (x, y, viewports) {
         // clear last drawn cursors, don't want to clear full canvas for performance
-        const clearSize = 4 * this.radius
+        const clearSize = 2 * this.size
         for (const [x, y] of this.lastPositions) {
             this.ctx.clearRect(x - clearSize * 0.5, y - clearSize * 0.5, clearSize, clearSize)
         }
@@ -50,24 +52,25 @@ class CompareMouse {
     }
 
     draw_cursor (x, y) {
-        const radius = this.radius / 5
+        const corner = this.size * 0.1
+        const outer = this.size * 0.5
+        const inner = outer - corner
+        const angleInc = Math.PI * 0.5
+
         this.ctx.beginPath()
-        this.ctx.moveTo(x - this.radius, y + this.radius - radius)
-        this.ctx.lineTo(x - this.radius, y - this.radius + radius)
-        this.ctx.arc(x - this.radius + radius, y - this.radius + radius, radius, Math.PI, 1.5 * Math.PI)
-        this.ctx.lineTo(x + this.radius - radius, y - this.radius)
-        this.ctx.arc(x + this.radius - radius, y - this.radius + radius, radius, 1.5 * Math.PI, 0)
-        this.ctx.lineTo(x + this.radius, y + this.radius - radius)
-        this.ctx.arc(x + this.radius - radius, y + this.radius - radius, radius, 0, 0.5 * Math.PI)
-        this.ctx.lineTo(x - this.radius + radius, y + this.radius)
-        this.ctx.arc(x - this.radius + radius, y + this.radius - radius, radius, 0.5 * Math.PI, Math.PI)
+        this.ctx.moveTo(x + outer, y - inner)
+        this.ctx.arc(x + inner, y + inner, corner, 0, angleInc)
+        this.ctx.arc(x - inner, y + inner, corner, angleInc, 2 * angleInc)
+        this.ctx.arc(x - inner, y - inner, corner, 2 * angleInc, 3 * angleInc)
+        this.ctx.arc(x + inner, y - inner, corner, 3 * angleInc, 4 * angleInc)
         this.ctx.stroke()
     }
 
-    resize (w, h) {
-        this.canvas.width = w
-        this.canvas.height = h
-        this.ctx.strokeStyle = this.color
-        this.ctx.lineWidth = this.stroke
+    resize (width, height) {
+        this.canvas.width = width
+        this.canvas.height = height
+
+        this.ctx.strokeStyle = this.strokeStyle
+        this.ctx.lineWidth = this.lineWidth
     }
 }
