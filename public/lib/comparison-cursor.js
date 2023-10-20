@@ -26,7 +26,7 @@ class ComparisonCursor {
 
         let hoveredViewport
         for (const viewport of viewports) {
-            if (viewport.check_hit(x, y)) {
+            if (viewport.hitTest(x, y)) {
                 hoveredViewport = viewport
                 break
             }

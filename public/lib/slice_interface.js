@@ -80,7 +80,7 @@ class SliceInterface {
         switch (this.state) {
             case 0:
                 for (let i = 0; i < viewports.length; i++) {
-                    if (viewports[i].check_hit(x, y)) {
+                    if (viewports[i].hitTest(x, y)) {
                         this.slice_viewport = viewports[i]
                     } else {
                         this.ctx.fillRect(viewports[i].x, viewports[i].y, viewports[i].width, viewports[i].height)
@@ -124,7 +124,7 @@ class SliceInterface {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         if (this.state == 0) {
             for (let i = 0; i < this.viewports.length; i++) {
-                if (!viewports[i].check_hit(x, y)) {
+                if (!viewports[i].hitTest(x, y)) {
                     this.ctx.fillRect(viewports[i].x, viewports[i].y, viewports[i].width, viewports[i].height)
                 }
             }

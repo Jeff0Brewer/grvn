@@ -32,7 +32,7 @@ class ViewPort {
         this.height *= scaleY
     }
 
-    check_hit (x, y) {
+    hitTest (x, y) {
         return (
             x >= this.x && x < this.x + this.width &&
             y >= this.y && y < this.y + this.height
