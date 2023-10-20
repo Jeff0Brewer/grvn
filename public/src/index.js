@@ -445,7 +445,7 @@ function slice (output) {
         planes.push(new PlaneFilter(plane, out_mouse_def[i][2]))
     }
 
-    slices.push(make_slice_item(slice_ind, planes, output))
+    slices.push(new SliceItem(slice_ind, planes, output))
     slice_ind++
 
     forcePlot.updateSlices(gl, getCurrentPlaneFilters())

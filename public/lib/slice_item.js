@@ -1,9 +1,12 @@
 class SliceItem {
-    constructor (source, dest, insert, ind, planefilters, interface_out) {
+    constructor (ind, planefilters, interface_out) {
         this.planefilters = planefilters
         this.ind = ind
         this.removed = false
 
+        const insert = document.getElementById('slice_proto')
+        const source = insert.childNodes[1]
+        const dest = document.getElementById('slice_list')
         const cloned = source.cloneNode(true)
         dest.insertBefore(cloned, insert)
 
@@ -42,6 +45,10 @@ class SliceItem {
         }
 
         this.elements.ind.innerHTML += ind.toString()
+
+        this.elements.body.onmouseenter = () => { this.hover_on() }
+        this.elements.body.onmouseleave = () => { this.hover_off() }
+        this.elements.delete.onmouseup = () => { this.delete() }
     }
 
     hover_on () {
@@ -56,26 +63,4 @@ class SliceItem {
         this.elements.body.remove()
         this.removed = true
     }
-}
-
-function make_slice_item (ind, planefilters, interface_out) {
-    const si_insert = document.getElementById('slice_proto')
-    const si_source = si_insert.childNodes[1]
-    const si_dest = document.getElementById('slice_list')
-
-    const si = new SliceItem(si_source, si_dest, si_insert, ind, planefilters, interface_out)
-
-    si.elements.body.onmouseenter = function () {
-        si.hover_on()
-    }
-
-    si.elements.body.onmouseleave = function () {
-        si.hover_off()
-    }
-
-    si.elements.delete.onmouseup = function () {
-        si.delete()
-    }
-
-    return si
 }
