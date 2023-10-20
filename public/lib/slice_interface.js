@@ -56,9 +56,7 @@ class SliceInterface {
     }
 
     deactivate () {
-        if (!this.apply_button.className.includes(' hidden')) {
-            this.apply_button.className = this.apply_button.className + ' hidden'
-        }
+        this.apply_button.classList.add('hidden')
         this.canvas.style.pointerEvents = 'none'
         this.ctx.restore()
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
@@ -74,9 +72,7 @@ class SliceInterface {
             this.output = []
             this.new_planes = false
             this.state = 0
-            if (!this.apply_button.className.includes(' hidden')) {
-                this.apply_button.className = this.apply_button.className + ' hidden'
-            }
+            this.apply_button.classList.add('hidden')
         }
     }
 
@@ -100,7 +96,7 @@ class SliceInterface {
                 this.ctx.lineTo(this.slice_viewport.x, this.slice_viewport.y)
                 this.ctx.clip()
 
-                this.apply_button.className = this.apply_button.className.replace(' hidden', '')
+                this.apply_button.classList.remove('hidden')
                 this.apply_button.style.left = (this.slice_viewport.x + (this.slice_viewport.width - this.apply_button.clientWidth) / 2).toString() + 'px'
                 this.apply_button.style.top = (this.slice_viewport.y + 9 * (this.slice_viewport.height - this.apply_button.clientHeight) / 10).toString() + 'px'
 
