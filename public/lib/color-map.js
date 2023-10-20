@@ -54,8 +54,6 @@ class ColorMapState {
         this.highValue = this.maxValue
         this.lastLow = this.lowValue
         this.lastHigh = this.highValue
-
-        this.hoverValue = null
     }
 
     hasChanged () {
@@ -91,13 +89,11 @@ class ColorMapState {
         this.highValue = clamp(newValue, this.lowValue, this.maxValue)
     }
 
-    updateHover (ind, t) {
+    getValue (ind, t) {
         if (ind !== null) {
-            this.hoverValue = this.data[t][ind]
-        } else {
-            this.hoverValue = null
+            return this.data[t][ind]
         }
-        return this.hoverValue
+        return null
     }
 
     map (t, g) {
@@ -224,7 +220,7 @@ class ColorMapSlider {
     }
 
     updateHover (ind, t) {
-        const hoverValue = this.state.updateHover(ind, t)
+        const hoverValue = this.state.getValue(ind, t)
         if (hoverValue === null || this.state.hasChanged()) {
             this.hover.section.classList.add('hidden')
         } else {
