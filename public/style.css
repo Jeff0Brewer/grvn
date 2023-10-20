@@ -254,6 +254,15 @@ canvas{
 
   line-height: 25px;
   text-align: center;
+  display: none;
+}
+
+.list_item:hover .item_delete {
+    display: block;
+}
+
+.item_delete:hover {
+    display: block;
 }
 
 .item_delete_unselected{

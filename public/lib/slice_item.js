@@ -46,17 +46,7 @@ class SliceItem {
 
         this.elements.ind.innerHTML += ind.toString()
 
-        this.elements.body.onmouseenter = () => { this.hover_on() }
-        this.elements.body.onmouseleave = () => { this.hover_off() }
         this.elements.delete.onmouseup = () => { this.delete() }
-    }
-
-    hover_on () {
-        this.elements.delete.className = this.elements.delete.className.replace(' hidden', '')
-    }
-
-    hover_off () {
-        this.elements.delete.className = this.elements.delete.className + ' hidden'
     }
 
     delete () {
