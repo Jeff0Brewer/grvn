@@ -235,10 +235,10 @@ class GrainSurfaces {
         return positions
     }
 
-    colorMap (color_mapper) {
+    colorMap (colorMapper) {
         for (let t = 0; t < this.numT; t++) {
             for (let g = 0; g < this.numG; g++) {
-                this.colors[t][g] = color_mapper.color_map(t, g)
+                this.colors[t][g] = colorMapper.map(t, g)
             }
         }
     }

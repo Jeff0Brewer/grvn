@@ -145,7 +145,7 @@ async function main (data) {
     )
     context_image = new ContextImage('rgb(35,35,35)', 'rgb(108,108,108)', data.grains.positions)
 
-    color_mapper.change_data(data.forces)
+    color_mapper.setData(data.forces)
     grainSurfaces.colorMap(color_mapper)
     global_fields.add_field(data.global)
 
@@ -506,8 +506,8 @@ function get_hovered_sm (e) {
 }
 
 function update_hovered_sm (ind, t) {
-    if (color_mapper && color_mapper.data.length > 0) {
-        color_mapper.update_hover(ind, t)
+    if (color_mapper && color_mapper.state.data.length > 0) {
+        color_mapper.updateHover(ind, t)
     }
 }
 
@@ -621,7 +621,7 @@ document.body.onmousemove = function (e) {
         }
     }
     if (color_mapper) {
-        color_mapper.mousemove(e)
+        color_mapper.mouseMove(e)
     }
     if (global_fields.dragging && timeline) {
         timeline.set_time(global_fields.get_time(e, numT, timeline.workspace.low, timeline.workspace.high))
@@ -636,7 +636,7 @@ document.body.onmouseup = function (e) {
         timeline.mouseup()
     }
     if (color_mapper) {
-        color_mapper.mouseup()
+        color_mapper.mouseUp()
     }
     if (global_fields) {
         global_fields.end_drag()
@@ -967,7 +967,7 @@ document.getElementById('add_cmap').onchange = function () {
 
 cmap_reader.onloadend = function () {
     const data = msgpack.unpack(this.result)
-    color_mapper.change_data(data)
+    color_mapper.setData(data)
     grainSurfaces.colorMap(color_mapper)
     for (let i = 0; i < selections.length; i++) {
         selections[i].refresh_sm()

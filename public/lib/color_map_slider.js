@@ -1,162 +1,212 @@
-class ColorMapSlider {
-    constructor (css_def) {
-        this.map = new ColorMap(css_def)
+const TEXT_PRECISION = 2
+const LABEL_PADDING = 5
 
+class ColorMapSliderState {
+    constructor (cssGradient) {
+        this.colorMap = new ColorMap(cssGradient)
         this.data = []
 
-        this.values = {
-            low: 0,
-            high: 1,
-            min: 0,
-            max: 1
-        }
+        this.minValue = 0
+        this.maxValue = 1
+        this.lowValue = this.minValue
+        this.highValue = this.maxValue
+        this.lastLow = this.lowValue
+        this.lastHigh = this.highValue
 
-        this.dragging = { left: false, right: false }
-
-        this.elements = {
-            bar: document.getElementById('cm_bar'),
-            bars: {
-                low: document.getElementById('cm_low'),
-                gradient: document.getElementById('cm_g'),
-                high: document.getElementById('cm_high')
-            },
-            handles: {
-                low: document.getElementById('cm_h_low'),
-                high: document.getElementById('cm_h_high')
-            },
-            labels: {
-                min: document.getElementById('cm_min'),
-                max: document.getElementById('cm_max'),
-                low: document.getElementById('cm_low_val'),
-                high: document.getElementById('cm_high_val')
-            },
-            hover: {
-                section: document.getElementById('cm_hover_section'),
-                line: document.getElementById('cm_hover_line'),
-                label: document.getElementById('cm_hover_label')
-            },
-            button: document.getElementById('edit_color_map')
-        }
-
-        const body_rect = this.elements.bar.getBoundingClientRect()
-        this.elements.bars.gradient.style.width = body_rect.width.toString() + 'px'
-        this.elements.bars.low.style.width = '0px'
-        this.elements.bars.high.style.width = '0px'
-
-        this.elements.bars.gradient.style.background = 'linear-gradient(90deg,' + css_def + ')'
-        this.elements.bars.low.style.background = colorToRgbString(this.map.colors[0])
-        this.elements.bars.high.style.background = colorToRgbString(this.map.colors[this.map.colors.length - 1])
-
-        this.elements.labels.min.innerHTML = this.values.min
-        this.elements.labels.max.innerHTML = this.values.max
-        this.elements.labels.low.innerHTML = this.values.low
-        this.elements.labels.high.innerHTML = this.values.high
-
-        this.elements.handles.low.onmousedown = () => { this.dragging.left = true }
-        this.elements.handles.high.onmousedown = () => { this.dragging.right = true }
-        this.elements.bars.low.onmousedown = () => { this.dragging.left = true }
-        this.elements.bars.high.onmousedown = () => { this.dragging.right = true }
+        this.hoverValue = null
     }
 
-    change_data (data) {
-        this.data = data
-        this.values.max = -10000000
-        this.values.min = 10000000
-        for (let t = 0; t < this.data.length; t++) {
-            for (let g = 0; g < this.data[t].length; g++) {
-                this.values.max = Math.max(this.values.max, this.data[t][g])
-                this.values.min = Math.min(this.values.min, this.data[t][g])
+    hasChanged () {
+        return this.lowValue !== this.lastLow || this.highValue !== this.lastHigh
+    }
+
+    setData (data) {
+        let newMin = Number.MAX_VALUE
+        let newMax = Number.MIN_VALUE
+        for (let i = 0; i < data.length; i++) {
+            for (let j = 0; j < data[i].length; j++) {
+                newMin = Math.min(newMin, data[i][j])
+                newMax = Math.max(newMax, data[i][j])
             }
         }
-        this.values.low = this.values.min
-        this.values.high = this.values.max
 
-        this.elements.labels.min.innerHTML = this.values.min.toFixed(2)
-        this.elements.labels.max.innerHTML = this.values.max.toFixed(2)
-        this.elements.labels.low.innerHTML = this.values.min.toFixed(2)
-        this.elements.labels.high.innerHTML = this.values.max.toFixed(2)
-
-        const body_rect = this.elements.bar.getBoundingClientRect()
-
-        this.elements.bars.low.style.width = '0px'
-        this.elements.bars.gradient.style.width = body_rect.width.toString() + 'px'
-        this.elements.bars.high.style.width = '0px'
-
-        this.elements.labels.low.style.marginLeft = '0px'
-        this.elements.labels.high.style.marginRight = '0px'
-
-        remove_class(document.getElementById('color_map_container'), ' hidden')
+        this.minValue = newMin
+        this.maxValue = newMax
+        this.lowValue = newMin
+        this.highValue = newMax
+        this.data = data
     }
 
-    update_hover (ind, t) {
-        if (!ind) {
-            add_class(this.elements.hover.section, ' hidden')
+    setLow (percentage) {
+        const newValue = (this.maxValue - this.minValue) * percentage + this.minValue
+        this.lowValue = clamp(newValue, this.minValue, this.highValue)
+    }
+
+    setHigh (percentage) {
+        const newValue = (this.maxValue - this.minValue) * percentage + this.minValue
+        this.highValue = clamp(newValue, this.lowValue, this.maxValue)
+    }
+
+    updateHover (ind, t) {
+        if (ind !== null) {
+            this.hoverValue = this.data[t][ind]
         } else {
-            remove_class(this.elements.hover.section, ' hidden')
+            this.hoverValue = null
+        }
+        return this.hoverValue
+    }
 
-            this.elements.hover.label.innerHTML = this.data[t][ind].toFixed(2)
-            let pos = map(this.data[t][ind], this.values.min, this.values.max, 0, this.elements.hover.section.clientWidth)
-            this.elements.hover.line.style.marginLeft = (pos - this.elements.hover.line.clientWidth / 2).toString() + 'px'
-            pos = pos - this.elements.hover.label.clientWidth / 2
-            pos = min(max(pos, 0), this.elements.hover.section.clientWidth - this.elements.hover.label.clientWidth)
-            this.elements.hover.label.style.marginLeft = pos.toString() + 'px'
+    map (t, g) {
+        this.lastLow = this.lowValue
+        this.lastHigh = this.highValue
+        return this.colorMap.map(this.data[t][g], this.lowValue, this.highValue)
+    }
+}
+
+class ColorMapSlider {
+    constructor (cssGradient) {
+        this.state = new ColorMapSliderState(cssGradient)
+
+        this.dragLeft = false
+        this.dragRight = false
+
+        this.bars = {
+            wrap: document.getElementById('cm_bar'),
+            low: document.getElementById('cm_low'),
+            mid: document.getElementById('cm_g'),
+            high: document.getElementById('cm_high')
+        }
+        this.handles = {
+            low: document.getElementById('cm_h_low'),
+            high: document.getElementById('cm_h_high')
+        }
+        this.labels = {
+            min: document.getElementById('cm_min'),
+            max: document.getElementById('cm_max'),
+            low: document.getElementById('cm_low_val'),
+            high: document.getElementById('cm_high_val')
+        }
+        this.hover = {
+            section: document.getElementById('cm_hover_section'),
+            line: document.getElementById('cm_hover_line'),
+            label: document.getElementById('cm_hover_label')
+        }
+        this.button = document.getElementById('edit_color_map')
+
+        const barWidth = this.bars.wrap.getBoundingClientRect().width
+        this.bars.low.style.width = '0px'
+        this.bars.mid.style.width = `${barWidth}px`
+        this.bars.high.style.width = '0px'
+
+        this.bars.low.style.background = colorToRgbString(this.state.colorMap.colors[0])
+        this.bars.mid.style.background = 'linear-gradient(90deg,' + cssGradient + ')'
+        this.bars.high.style.background = colorToRgbString(this.state.colorMap.colors[this.state.colorMap.colors.length - 1])
+
+        this.handles.low.onmousedown = () => { this.dragLeft = true }
+        this.handles.high.onmousedown = () => { this.dragRight = true }
+        this.bars.low.onmousedown = () => { this.dragLeft = true }
+        this.bars.high.onmousedown = () => { this.dragRight = true }
+        this.button.onmouseup = () => { this.updateDom() }
+    }
+
+    map (t, g) {
+        return this.state.map(t, g)
+    }
+
+    setData (data) {
+        this.state.setData(data)
+
+        this.updateDom()
+    }
+
+    mouseUp () {
+        this.dragLeft = false
+        this.dragRight = false
+
+        this.updateDom()
+    }
+
+    mouseMove (e) {
+        if (!this.dragLeft && !this.dragRight) { return }
+
+        const barBounds = this.bars.wrap.getBoundingClientRect()
+        const newValue = (e.clientX - barBounds.left) / barBounds.width
+
+        if (this.dragLeft) {
+            this.state.setLow(newValue)
+        } else if (this.dragRight) {
+            this.state.setHigh(newValue)
+        }
+
+        this.updateDom()
+    }
+
+    updateDom () {
+        const { minValue, maxValue, lowValue, highValue } = this.state
+
+        const barWidth = this.bars.wrap.getBoundingClientRect().width
+        const lowWidth = map(lowValue, minValue, maxValue, 0, barWidth)
+        const highWidth = barWidth - map(highValue, minValue, maxValue, 0, barWidth)
+        const midWidth = barWidth - lowWidth - highWidth
+        this.bars.low.style.width = `${lowWidth}px`
+        this.bars.mid.style.width = `${midWidth}px`
+        this.bars.high.style.width = `${highWidth}px`
+
+        this.labels.min.innerHTML = minValue.toFixed(TEXT_PRECISION)
+        this.labels.max.innerHTML = maxValue.toFixed(TEXT_PRECISION)
+        this.labels.low.innerHTML = lowValue.toFixed(TEXT_PRECISION)
+        this.labels.high.innerHTML = highValue.toFixed(TEXT_PRECISION)
+
+        const lowLabelWidth = this.labels.low.getBoundingClientRect().width
+        const highLabelWidth = this.labels.high.getBoundingClientRect().width
+        const idealLowLabelLeft = Math.max(lowWidth - lowLabelWidth * 0.5, 0)
+        const idealHighLabelRight = Math.max(highWidth - highLabelWidth * 0.5, 0)
+        const totalLowLeft = idealLowLabelLeft + lowLabelWidth
+        const totalHighLeft = barWidth - (idealHighLabelRight + highLabelWidth)
+
+        // calculate overlap amount of low / high labels
+        const overlap = Math.max(totalLowLeft - totalHighLeft + LABEL_PADDING, 0)
+        // if one label is at end of range, correct overlap scaling to prevent negative margins
+        const overlapScale = idealLowLabelLeft !== 0 ? idealHighLabelRight !== 0 ? 0.5 : 1 : 0
+        const lowLabelLeft = idealLowLabelLeft - overlap * overlapScale
+        const highLabelRight = idealHighLabelRight - overlap * (1 - overlapScale)
+
+        this.labels.low.style.marginLeft = `${lowLabelLeft}px`
+        this.labels.high.style.marginRight = `${highLabelRight}px`
+
+        if (this.state.hasChanged()) {
+            this.button.classList.remove('hidden')
+        } else {
+            this.button.classList.add('hidden')
         }
     }
 
-    mouseup () {
-        if (this.dragging.left || this.dragging.right) {
-            remove_class(this.elements.button, ' hidden')
-        }
-        this.dragging.left = false
-        this.dragging.right = false
-    }
+    updateHover (ind, t) {
+        const hoverValue = this.state.updateHover(ind, t)
+        if (hoverValue === null || this.state.hasChanged()) {
+            this.hover.section.classList.add('hidden')
+        } else {
+            this.hover.section.classList.remove('hidden')
 
-    mousemove (e) {
-        if (this.dragging.left) {
-            const body_rect = this.elements.bar.getBoundingClientRect()
-            const right_rect = this.elements.bars.high.getBoundingClientRect()
+            this.hover.label.innerHTML = hoverValue.toFixed(TEXT_PRECISION)
 
-            const low_width = min(max(e.clientX - body_rect.left, 0), right_rect.left - body_rect.left)
-            this.elements.bars.low.style.width = low_width.toString() + 'px'
-            this.elements.bars.gradient.style.width = (body_rect.width - right_rect.width - low_width).toString() + 'px'
+            const hoverWidth = this.hover.section.clientWidth
+            const lineWidth = this.hover.line.clientWidth
+            const labelWidth = this.hover.label.clientWidth
 
-            this.values.low = (low_width / body_rect.width) * (this.values.max - this.values.min) + this.values.min
-            this.elements.labels.low.innerHTML = this.values.low.toFixed(2)
+            const { minValue, maxValue } = this.state
+            const centerPosition = map(hoverValue, minValue, maxValue, 0, hoverWidth)
+            const linePosition = centerPosition - lineWidth * 0.5
+            const labelPosition = clamp(centerPosition - labelWidth * 0.5, 0, hoverWidth - labelWidth)
 
-            const low_label_rect = this.elements.labels.low.getBoundingClientRect()
-            const high_label_rect = this.elements.labels.high.getBoundingClientRect()
-            const label_left = min(max(low_width - low_label_rect.width / 2, 0), low_label_rect.right - body_rect.left + (high_label_rect.left - low_label_rect.right) / 2 - low_label_rect.width - 2.5)
-            this.elements.labels.low.style.marginLeft = label_left.toString() + 'px'
-            const label_right = min(max(right_rect.width - high_label_rect.width / 2, 0), body_rect.right - high_label_rect.left + (high_label_rect.left - low_label_rect.right) / 2 - high_label_rect.width - 2.5)
-            this.elements.labels.high.style.marginRight = label_right.toString() + 'px'
-        } else if (this.dragging.right) {
-            const body_rect = this.elements.bar.getBoundingClientRect()
-            const left_rect = this.elements.bars.low.getBoundingClientRect()
-
-            const high_width = min(max(body_rect.right - e.clientX, 0), body_rect.right - left_rect.right)
-            this.elements.bars.high.style.width = high_width.toString() + 'px'
-            this.elements.bars.gradient.style.width = (body_rect.width - left_rect.width - high_width).toString() + 'px'
-
-            this.values.high = (1 - high_width / body_rect.width) * (this.values.max - this.values.min) + this.values.min
-            this.elements.labels.high.innerHTML = this.values.high.toFixed(2)
-
-            const low_label_rect = this.elements.labels.low.getBoundingClientRect()
-            const high_label_rect = this.elements.labels.high.getBoundingClientRect()
-            const label_right = min(max(high_width - high_label_rect.width / 2, 0), body_rect.right - high_label_rect.left + (high_label_rect.left - low_label_rect.right) / 2 - high_label_rect.width - 2.5)
-            this.elements.labels.high.style.marginRight = label_right.toString() + 'px'
-            const label_left = min(max(left_rect.width - low_label_rect.width / 2, 0), low_label_rect.right - body_rect.left + (high_label_rect.left - low_label_rect.right) / 2 - low_label_rect.width - 2.5)
-            this.elements.labels.low.style.marginLeft = label_left.toString() + 'px'
+            this.hover.line.style.marginLeft = `${linePosition}px`
+            this.hover.label.style.marginLeft = `${labelPosition}px`
         }
     }
+}
 
-    color_map (t, g) {
-        if (this.data.length === 1) {
-            t = 1
-        } else if (t > this.data.length) {
-            return
-        }
-        return this.map.map(this.data[t][g], this.values.low, this.values.high)
-    }
+const clamp = (value, min, max) => {
+    return Math.max(Math.min(value, max), min)
 }
 
 const colorToRgbString = (color) => {
