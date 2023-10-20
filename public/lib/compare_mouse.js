@@ -1,72 +1,73 @@
-class CompareMouse{
-	constructor(width, height, color, size, stroke){
-		this.canvas = document.getElementById('mousecanvas');
-		this.canvas.width = width;
-		this.canvas.height = height;
-		this.ctx = this.canvas.getContext('2d');
+class CompareMouse {
+    constructor (width, height, size, strokeColor, strokeWidth) {
+        this.color = strokeColor
+        this.stroke = strokeWidth
+        this.radius = size * 0.5
+        this.lastPositions = []
 
-		this.color = color;
-		this.stroke = stroke;
-		this.radius = size/2;
+        this.canvas = document.getElementById('mousecanvas')
+        this.canvas.width = width
+        this.canvas.height = height
 
-		this.ctx.strokeStyle = color;
-		this.ctx.lineWidth = stroke;
+        this.ctx = this.canvas.getContext('2d')
+        this.ctx.strokeStyle = this.color
+        this.ctx.lineWidth = this.stroke
+    }
 
-		this.last = [];
-	}
+    update (x, y, viewports) {
+        // clear last drawn cursors, don't want to clear full canvas for performance
+        const clearSize = 4 * this.radius
+        for (const [x, y] of this.lastPositions) {
+            this.ctx.clearRect(x - clearSize * 0.5, y - clearSize * 0.5, clearSize, clearSize)
+        }
+        this.lastPositions = []
 
-	update(x, y, viewports){
-		//clear last cursors
-		if(this.last.length > 0){
-			for(let i = 0; i < this.last.length; i++){
-				this.ctx.clearRect(this.last[i][0] - 2*this.radius, this.last[i][1] - 2*this.radius, this.radius*4, this.radius*4);
-			}
-			this.last = [];
-		}
+        let hoveredViewport
+        for (const viewport of viewports) {
+            if (viewport.check_hit(x, y)) {
+                hoveredViewport = viewport
+                break
+            }
+        }
+        if (!hoveredViewport) { return }
 
-		//draw new cursors
-		if(viewports.length > 1){
-			let hit_ind = -1;
-			for(let i = 0; i < viewports.length && hit_ind < 0; i++){
-				if(viewports[i].check_hit(x, y))
-					hit_ind = i;
-			}
-			if(hit_ind >= 0){
-				let x_per = (x - viewports[hit_ind].x)/viewports[hit_ind].width;
-				let y_per = (y - viewports[hit_ind].y)/viewports[hit_ind].height;
-				for(let i = 0; i < viewports.length; i++){
-					if(!viewports[i].equals(viewports[hit_ind])){
-						let pos = [viewports[i].x + viewports[i].width*x_per, viewports[i].y + viewports[i].height*y_per];
+        // get mouse position within hovered viewport to scale to other viewports
+        const percentX = (x - hoveredViewport.x) / hoveredViewport.width
+        const percentY = (y - hoveredViewport.y) / hoveredViewport.height
 
-						this.draw_cursor(pos[0], pos[1]);
+        for (const viewport of viewports) {
+            // don't draw cursor in viewport mouse is hovering
+            if (viewport.equals(hoveredViewport)) { continue }
 
-						this.last.push(pos);
-					}
-				}
-			}
-		}
-	}
+            // convert mouse position in hovered viewport
+            // to same relative position in other viewport
+            const { x, y, width, height } = viewport
+            const pos = [x + width * percentX, y + height * percentY]
 
-	draw_cursor(x,y){
-		let radius = this.radius/5;
-		this.ctx.beginPath();
-		this.ctx.moveTo(x - this.radius, y + this.radius - radius);
-		this.ctx.lineTo(x - this.radius, y - this.radius + radius);
-		this.ctx.arc(x - this.radius + radius, y - this.radius + radius, radius, Math.PI, 1.5*Math.PI);
-		this.ctx.lineTo(x + this.radius - radius, y - this.radius);
-		this.ctx.arc(x + this.radius - radius, y - this.radius + radius, radius, 1.5*Math.PI, 0);
-		this.ctx.lineTo(x + this.radius, y + this.radius - radius);
-		this.ctx.arc(x + this.radius - radius, y + this.radius - radius, radius, 0, .5*Math.PI);
-		this.ctx.lineTo(x - this.radius + radius, y + this.radius);
-		this.ctx.arc(x - this.radius + radius, y + this.radius - radius, radius, .5*Math.PI, Math.PI);
-		this.ctx.stroke();
-	}
+            this.draw_cursor(...pos)
+            this.lastPositions.push(pos)
+        }
+    }
 
-	resize(w, h){
-		this.canvas.width = w;
-		this.canvas.height = h;
-		this.ctx.strokeStyle = this.color;
-		this.ctx.lineWidth = this.stroke;
-	}
+    draw_cursor (x, y) {
+        const radius = this.radius / 5
+        this.ctx.beginPath()
+        this.ctx.moveTo(x - this.radius, y + this.radius - radius)
+        this.ctx.lineTo(x - this.radius, y - this.radius + radius)
+        this.ctx.arc(x - this.radius + radius, y - this.radius + radius, radius, Math.PI, 1.5 * Math.PI)
+        this.ctx.lineTo(x + this.radius - radius, y - this.radius)
+        this.ctx.arc(x + this.radius - radius, y - this.radius + radius, radius, 1.5 * Math.PI, 0)
+        this.ctx.lineTo(x + this.radius, y + this.radius - radius)
+        this.ctx.arc(x + this.radius - radius, y + this.radius - radius, radius, 0, 0.5 * Math.PI)
+        this.ctx.lineTo(x - this.radius + radius, y + this.radius)
+        this.ctx.arc(x - this.radius + radius, y + this.radius - radius, radius, 0.5 * Math.PI, Math.PI)
+        this.ctx.stroke()
+    }
+
+    resize (w, h) {
+        this.canvas.width = w
+        this.canvas.height = h
+        this.ctx.strokeStyle = this.color
+        this.ctx.lineWidth = this.stroke
+    }
 }
-

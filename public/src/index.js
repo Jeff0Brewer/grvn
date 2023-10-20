@@ -182,7 +182,7 @@ async function main (data) {
     await setup_gl()
 
     // init overlay interface elements
-    compare_mouse = new CompareMouse(canvas.width, canvas.height, 'rgb(63,215,177,.9)', 40, 1.75)
+    compare_mouse = new CompareMouse(canvas.width, canvas.height, 40, 'rgb(63,215,177,.9)', 1.75)
     slice_interface = new SliceInterface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)', 15)
     select_interface = make_select_interface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)')
 
