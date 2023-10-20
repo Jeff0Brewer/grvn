@@ -13,7 +13,7 @@ var viewports
 var viewport_count
 
 var context_axis
-var ribbon_flow
+var motionPlot
 var forcePlot
 var grainSurfaces
 
@@ -87,8 +87,8 @@ const flowWidthInput = document.getElementById('flowWidthInput')
 const flowWidthButton = document.getElementById('flowWidthButton')
 flowWidthButton.addEventListener('mousedown', () => {
     const value = parseFloat(flowWidthInput.value)
-    if (!Number.isNaN(value) && ribbon_flow) {
-        ribbon_flow.resizeRibbons(gl, value)
+    if (!Number.isNaN(value) && motionPlot) {
+        motionPlot.resizeRibbons(gl, value)
     }
 })
 const forceWidthInput = document.getElementById('forceWidthInput')
@@ -113,7 +113,7 @@ const setup_gl = async () => {
     await forcePlot.initGl(gl)
     await context_axis.initGl(gl)
     await grainSurfaces.initGl(gl)
-    await ribbon_flow.init_gl(gl)
+    await motionPlot.init_gl(gl)
 
     const cameraModelMatrix = new Matrix4()
     await cameraTrace.initGl(gl, cameraModelMatrix, viewMatrix, projMatrix)
@@ -127,7 +127,7 @@ async function main (data) {
         data.forcePlot.metadata,
         data.forcePlot.textures
     )
-    ribbon_flow = new MotionPlot(
+    motionPlot = new MotionPlot(
         data.grains.positions,
         data.rotationMagnitudes,
         data.forces,
@@ -299,7 +299,7 @@ function draw (elapsed) {
 
         if (flow_visible) {
             viewport_ind++
-            ribbon_flow.draw(
+            motionPlot.draw(
                 gl,
                 viewMatrix,
                 projMatrix,
@@ -449,7 +449,7 @@ function slice (output) {
     slice_ind++
 
     forcePlot.updateSlices(gl, getCurrentPlaneFilters())
-    ribbon_flow.slice(planes)
+    motionPlot.slice(planes)
 
     context_image.update_slices(grainSurfaces.getSlicePositions(slices))
 
@@ -457,7 +457,7 @@ function slice (output) {
 }
 
 function unslice (planes) {
-    ribbon_flow.unslice(planes)
+    motionPlot.unslice(planes)
     forcePlot.updateSlices(gl, getCurrentPlaneFilters())
 }
 
