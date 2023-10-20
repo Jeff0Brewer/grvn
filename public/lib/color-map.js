@@ -10,11 +10,21 @@ const colorToRgbString = (color) => {
     return `rgb(${r}, ${g}, ${b})`
 }
 
+const lerpVec3 = (a, b, t) => {
+    return [
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t,
+        a[2] + (b[2] - a[2]) * t
+    ]
+}
+
 class ColorMap {
     constructor (cssGradient) {
         this.steps = []
         this.colors = []
 
+        // parse css gradient definition into lists of colors
+        // and percentage steps for each color
         let currInd = 0
         while (true) {
             const colorStart = cssGradient.indexOf('#', currInd)
@@ -40,19 +50,14 @@ class ColorMap {
 
         let i = 0
         const percentage = (value - low) / (high - low)
+        // find index of color step directly below value
         while (i + 1 < this.steps.length && this.steps[i + 1] < percentage) {
             i++
         }
-        if (i === this.steps.length - 1) { return this.colors[i] }
 
-        const mid = (percentage - this.steps[i]) / (this.steps[i + 1] - this.steps[i])
-        const [r0, g0, b0] = this.colors[i]
-        const [r1, g1, b1] = this.colors[i + 1]
-        return [
-            r0 * (1 - mid) + r1 * mid,
-            g0 * (1 - mid) + g1 * mid,
-            b0 * (1 - mid) + b1 * mid
-        ]
+        // interpolate between color steps above and below value
+        const stepPercent = (percentage - this.steps[i]) / (this.steps[i + 1] - this.steps[i])
+        return lerpVec3(this.colors[i], this.colors[i + 1], stepPercent)
     }
 }
 
@@ -118,8 +123,8 @@ class ColorMapSlider {
     constructor (cssGradient) {
         this.state = new ColorMapState(cssGradient)
 
-        this.dragLeft = false
-        this.dragRight = false
+        this.dragLow = false
+        this.dragHigh = false
 
         this.bars = {
             wrap: document.getElementById('cm_bar'),
@@ -153,41 +158,38 @@ class ColorMapSlider {
         this.bars.mid.style.background = 'linear-gradient(90deg,' + cssGradient + ')'
         this.bars.high.style.background = colorToRgbString(this.state.colorMap.colors[this.state.colorMap.colors.length - 1])
 
-        this.handles.low.onmousedown = () => { this.dragLeft = true }
-        this.handles.high.onmousedown = () => { this.dragRight = true }
-        this.bars.low.onmousedown = () => { this.dragLeft = true }
-        this.bars.high.onmousedown = () => { this.dragRight = true }
         this.button.onmouseup = () => { this.updateDom() }
-        document.body.onmouseleave = () => {
-            this.dragLeft = false
-            this.dragRight = false
+        this.handles.low.onmousedown = () => { this.dragLow = true }
+        this.handles.high.onmousedown = () => { this.dragHigh = true }
+        this.bars.low.onmousedown = () => { this.dragLow = true }
+        this.bars.high.onmousedown = () => { this.dragHigh = true }
+
+        const clearDrag = () => {
+            this.dragLow = false
+            this.dragHigh = false
         }
-    }
-
-    setData (data) {
-        this.state.setData(data)
-
-        this.updateDom()
+        window.addEventListener('mouseup', clearDrag)
+        window.addEventListener('mouseleave', clearDrag)
     }
 
     map (t, g) {
         return this.state.map(t, g)
     }
 
-    mouseUp () {
-        this.dragLeft = false
-        this.dragRight = false
+    setData (data) {
+        this.state.setData(data)
+        this.updateDom()
     }
 
     mouseMove (e) {
-        if (!this.dragLeft && !this.dragRight) { return }
+        if (!this.dragLow && !this.dragHigh) { return }
 
         const barBounds = this.bars.wrap.getBoundingClientRect()
         const newValue = (e.clientX - barBounds.left) / barBounds.width
 
-        if (this.dragLeft) {
+        if (this.dragLow) {
             this.state.setLow(newValue)
-        } else if (this.dragRight) {
+        } else {
             this.state.setHigh(newValue)
         }
 
@@ -201,6 +203,7 @@ class ColorMapSlider {
         const lowWidth = map(lowValue, minValue, maxValue, 0, barWidth)
         const highWidth = barWidth - map(highValue, minValue, maxValue, 0, barWidth)
         const midWidth = barWidth - lowWidth - highWidth
+
         this.bars.low.style.width = `${lowWidth}px`
         this.bars.mid.style.width = `${midWidth}px`
         this.bars.high.style.width = `${highWidth}px`

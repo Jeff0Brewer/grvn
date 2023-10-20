@@ -635,9 +635,6 @@ document.body.onmouseup = function (e) {
     if (timeline) {
         timeline.mouseup()
     }
-    if (color_mapper) {
-        color_mapper.mouseUp()
-    }
     if (global_fields) {
         global_fields.end_drag()
     }
