@@ -2,12 +2,6 @@ function dist_point_line (point, line) {
     return (point[0] - line[0][0]) * (line[1][1] - line[0][1]) - (point[1] - line[0][1]) * (line[1][0] - line[0][0])
 }
 
-function make_vec (a, b) {
-    const vec = []
-    for (let i = 0; i < a.length; i++) { vec.push(a[i] - b[i]) }
-    return vec
-}
-
 function resize (vec, delta) {
     let mag = 0
     const resized = []

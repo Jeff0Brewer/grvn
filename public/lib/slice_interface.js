@@ -110,7 +110,7 @@ class SliceInterface {
 
                 if (this.state == 2) {
                     const line_length = dist(p0, p1)
-                    const line = make_vec(this.slice_points[i + 1], this.slice_points[i])
+                    const line = sub(this.slice_points[i + 1], this.slice_points[i])
                     const axis = [1, 0]
                     let angle = angle_between(axis, line)
                     if (this.slice_points[i][1] > this.slice_points[i + 1][1]) { angle *= -1 }
