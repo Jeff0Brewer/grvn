@@ -1,24 +1,20 @@
+const IMG_SIZE = 20
+
 class SliceItem {
     constructor (ind, planefilters, interface_out) {
         this.planefilters = planefilters
         this.removed = false
 
-        this.dom = document.createElement('div')
-        const canvas = document.createElement('canvas')
-        const label = document.createElement('p')
-        const deleteButton = document.createElement('button')
-        this.dom.className = 'list_item selection_highlight'
-        canvas.className = 'item_canvas'
-        label.className = 'item_label'
-        deleteButton.className = 'item_delete'
-        this.dom.append(canvas, label, deleteButton)
+        this.dom = SLICE_ITEM_DOM.cloneNode(true)
         document.getElementById('slice_list').appendChild(this.dom)
+        const [canvas, label, deleteButton] = this.dom.children
 
         label.innerHTML = `Slice ${ind}`
         deleteButton.onmouseup = () => { this.delete() }
 
-        canvas.width = 20 * window.devicePixelRatio
-        canvas.height = 20 * window.devicePixelRatio
+        canvas.width = IMG_SIZE * window.devicePixelRatio
+        canvas.height = canvas.width
+
         const ctx = canvas.getContext('2d')
         ctx.lineWidth = 1
         ctx.strokeStyle = 'rgb(189,189,189)'
@@ -50,3 +46,20 @@ class SliceItem {
         this.removed = true
     }
 }
+
+const initSliceItemDom = () => {
+    const dom = document.createElement('div')
+    const canvas = document.createElement('canvas')
+    const label = document.createElement('p')
+    const deleteButton = document.createElement('button')
+
+    dom.className = 'list_item selection_highlight'
+    canvas.className = 'item_canvas'
+    label.className = 'item_label'
+    deleteButton.className = 'item_delete'
+
+    dom.append(canvas, label, deleteButton)
+
+    return dom
+}
+const SLICE_ITEM_DOM = initSliceItemDom()
