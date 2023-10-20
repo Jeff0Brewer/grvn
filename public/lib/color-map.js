@@ -1,6 +1,15 @@
 const TEXT_PRECISION = 2
 const LABEL_PADDING = 5
 
+const clamp = (value, min, max) => {
+    return Math.max(Math.min(value, max), min)
+}
+
+const colorToRgbString = (color) => {
+    const [r, g, b] = color.map(v => v * 255)
+    return `rgb(${r}, ${g}, ${b})`
+}
+
 class ColorMap {
     constructor (cssGradient) {
         this.steps = []
@@ -8,16 +17,20 @@ class ColorMap {
 
         let currInd = 0
         while (true) {
-            const a = cssGradient.indexOf('#', currInd)
-            const b = cssGradient.indexOf(' ', currInd)
-            const c = cssGradient.indexOf('%', currInd)
-            currInd = c + 3
-            if (a < 0 || b < 0 || c < 0) {
+            const colorStart = cssGradient.indexOf('#', currInd)
+            const colorEnd = cssGradient.indexOf(' ', currInd)
+            const percentEnd = cssGradient.indexOf('%', currInd)
+            if (colorStart < 0 || colorEnd < 0 || percentEnd < 0) {
                 break
             }
 
-            this.colors.push(hex_to_rgb(cssGradient.substring(a, b)))
-            this.steps.push(parseFloat(cssGradient.substring(b + 1, c)) / 100)
+            const color = cssGradient.substring(colorStart, colorEnd)
+            const percentage = cssGradient.substring(colorEnd + 1, percentEnd)
+
+            this.colors.push(hex_to_rgb(color))
+            this.steps.push(parseFloat(percentage) / 100)
+
+            currInd = percentEnd + 3
         }
     }
 
@@ -46,8 +59,8 @@ class ColorMap {
 class ColorMapState {
     constructor (cssGradient) {
         this.colorMap = new ColorMap(cssGradient)
-        this.data = []
 
+        this.data = []
         this.minValue = 0
         this.maxValue = 1
         this.lowValue = this.minValue
@@ -90,10 +103,8 @@ class ColorMapState {
     }
 
     getValue (ind, t) {
-        if (ind !== null) {
-            return this.data[t][ind]
-        }
-        return null
+        if (ind === null) { return null }
+        return this.data[t][ind]
     }
 
     map (t, g) {
@@ -153,14 +164,14 @@ class ColorMapSlider {
         }
     }
 
-    map (t, g) {
-        return this.state.map(t, g)
-    }
-
     setData (data) {
         this.state.setData(data)
 
         this.updateDom()
+    }
+
+    map (t, g) {
+        return this.state.map(t, g)
     }
 
     mouseUp () {
@@ -203,11 +214,12 @@ class ColorMapSlider {
         const highLabelWidth = this.labels.high.getBoundingClientRect().width
         const idealLowLabelLeft = Math.max(lowWidth - lowLabelWidth * 0.5, 0)
         const idealHighLabelRight = Math.max(highWidth - highLabelWidth * 0.5, 0)
-        const totalLowLeft = idealLowLabelLeft + lowLabelWidth
-        const totalHighLeft = barWidth - (idealHighLabelRight + highLabelWidth)
 
         // calculate overlap amount of low / high labels
+        const totalLowLeft = idealLowLabelLeft + lowLabelWidth
+        const totalHighLeft = barWidth - (idealHighLabelRight + highLabelWidth)
         const overlap = Math.max(totalLowLeft - totalHighLeft + LABEL_PADDING, 0)
+
         // if one label is at end of range, correct overlap scaling to prevent negative margins
         const overlapScale = idealLowLabelLeft !== 0 ? idealHighLabelRight !== 0 ? 0.5 : 1 : 0
         const lowLabelLeft = idealLowLabelLeft - overlap * overlapScale
@@ -232,26 +244,17 @@ class ColorMapSlider {
 
             this.hover.label.innerHTML = hoverValue.toFixed(TEXT_PRECISION)
 
-            const hoverWidth = this.hover.section.clientWidth
+            const sectionWidth = this.hover.section.clientWidth
             const lineWidth = this.hover.line.clientWidth
             const labelWidth = this.hover.label.clientWidth
 
             const { minValue, maxValue } = this.state
-            const centerPosition = map(hoverValue, minValue, maxValue, 0, hoverWidth)
+            const centerPosition = map(hoverValue, minValue, maxValue, 0, sectionWidth)
             const linePosition = centerPosition - lineWidth * 0.5
-            const labelPosition = clamp(centerPosition - labelWidth * 0.5, 0, hoverWidth - labelWidth)
+            const labelPosition = clamp(centerPosition - labelWidth * 0.5, 0, sectionWidth - labelWidth)
 
             this.hover.line.style.marginLeft = `${linePosition}px`
             this.hover.label.style.marginLeft = `${labelPosition}px`
         }
     }
-}
-
-const clamp = (value, min, max) => {
-    return Math.max(Math.min(value, max), min)
-}
-
-const colorToRgbString = (color) => {
-    const [r, g, b] = color.map(v => v * 255)
-    return `rgb(${r}, ${g}, ${b})`
 }
