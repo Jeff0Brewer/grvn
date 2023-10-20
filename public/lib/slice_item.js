@@ -4,6 +4,7 @@ class SliceItem {
     constructor (ind, planefilters, interface_out) {
         this.planefilters = planefilters
         this.removed = false
+        const [lines, viewport] = interface_out
 
         this.dom = SLICE_ITEM_DOM.cloneNode(true)
         document.getElementById('slice_list').appendChild(this.dom)
@@ -12,31 +13,34 @@ class SliceItem {
         label.innerHTML = `Slice ${ind}`
         deleteButton.onmouseup = () => { this.delete() }
 
+        // setup canvas to draw slice lines on
         canvas.width = IMG_SIZE * window.devicePixelRatio
         canvas.height = canvas.width
-
         const ctx = canvas.getContext('2d')
         ctx.lineWidth = 1
         ctx.strokeStyle = 'rgb(189,189,189)'
 
-        const vp = interface_out[1]
-        const points = interface_out[0]
-        const scale = max(vp.width, vp.height)
-        const x_margin = map(scale - vp.width, 0, scale, 0, canvas.width)
-        const y_margin = map(scale - vp.height, 0, scale, 0, canvas.height)
+        // get scaling factor for main window to img canvas bounds
+        // and padding values to maintain aspect ratio of viewport while drawing
+        const scale = Math.max(viewport.width, viewport.height)
+        const padX = map(scale - viewport.width, 0, scale, 0, canvas.width) * 0.5
+        const padY = map(scale - viewport.height, 0, scale, 0, canvas.height) * 0.5
 
-        for (let i = 0; i < points.length; i++) {
-            for (let j = 0; j < 2; j++) {
-                points[i][j][0] = map(points[i][j][0] - vp.x, 0, scale, x_margin, canvas.width - x_margin)
-                points[i][j][1] = map(points[i][j][1] - vp.y, 0, scale, canvas.height - y_margin, y_margin)
+        for (const [p0, p1] of lines) {
+            // scale points from main window to img canvas coords
+            for (const point of [p0, p1]) {
+                point[0] = map(point[0] - viewport.x, 0, viewport.width, padX, canvas.width - padX)
+                point[1] = map(point[1] - viewport.y, 0, viewport.height, canvas.height - padY, padY)
             }
-            const slope = (points[i][1][1] - points[i][0][1]) / (points[i][1][0] - points[i][0][0])
-            const p0 = [points[i][0][0] + canvas.width, points[i][0][1] + slope * canvas.width]
-            const p1 = [points[i][0][0] - canvas.width, points[i][0][1] - slope * canvas.width]
+
+            // extend line to edges of canvas
+            const slope = (p1[1] - p0[1]) / (p1[0] - p0[0])
+            const extended0 = [p0[0] + canvas.width, p0[1] + slope * canvas.width]
+            const extended1 = [p1[0] - canvas.width, p1[1] - slope * canvas.width]
 
             ctx.beginPath()
-            ctx.moveTo(p0[0], p0[1])
-            ctx.lineTo(p1[0], p1[1])
+            ctx.moveTo(...extended0)
+            ctx.lineTo(...extended1)
             ctx.stroke()
         }
     }
