@@ -147,6 +147,10 @@ class ColorMapSlider {
         this.bars.low.onmousedown = () => { this.dragLeft = true }
         this.bars.high.onmousedown = () => { this.dragRight = true }
         this.button.onmouseup = () => { this.updateDom() }
+        document.body.onmouseleave = () => {
+            this.dragLeft = false
+            this.dragRight = false
+        }
     }
 
     map (t, g) {
