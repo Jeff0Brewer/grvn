@@ -1,4 +1,4 @@
-class ViewPort {
+class Viewport {
     constructor (x, y, width, height, windowWidth, windowHeight) {
         this.x = x
         this.y = y

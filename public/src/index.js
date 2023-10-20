@@ -172,8 +172,8 @@ async function main (data) {
 
     // init viewports
     viewports = [
-        new ViewPort(0, 0, canvas.width / 2, canvas.height, canvas.width, canvas.height),
-        new ViewPort(canvas.width / 2, 0, canvas.width / 2, canvas.height, canvas.width, canvas.height)
+        new Viewport(0, 0, canvas.width / 2, canvas.height, canvas.width, canvas.height),
+        new Viewport(canvas.width / 2, 0, canvas.width / 2, canvas.height, canvas.width, canvas.height)
     ]
     viewport_count = 2
 
@@ -810,7 +810,7 @@ document.getElementById('flow_toggle').onmouseup = function () {
     viewports = []
     const w = canvas.width / viewport_count
     for (let i = 0; i < viewport_count; i++) {
-        viewports.push(new ViewPort(w * i, 0, w, canvas.height, canvas.width, canvas.height))
+        viewports.push(new Viewport(w * i, 0, w, canvas.height, canvas.width, canvas.height))
     }
     if (viewports.length == 0) {
         add_class(document.getElementById('add_slice'), ' hidden')
@@ -841,7 +841,7 @@ document.getElementById('vector_toggle').onmouseup = function () {
     viewports = []
     const w = canvas.width / viewport_count
     for (let i = 0; i < viewport_count; i++) {
-        viewports.push(new ViewPort(w * i, 0, w, canvas.height, canvas.width, canvas.height))
+        viewports.push(new Viewport(w * i, 0, w, canvas.height, canvas.width, canvas.height))
     }
     if (viewports.length == 0) {
         add_class(document.getElementById('add_slice'), ' hidden')

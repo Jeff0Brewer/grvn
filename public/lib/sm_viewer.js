@@ -103,7 +103,7 @@ class SMViewer {
         const h = this.total_height - margin_bottom
         const w = this.total_width / this.last_num_selected
         for (let i = 0; i < selected.length; i++) {
-            params.push([items[selected[i][0]], this.am_timesteps[selected[i][1]], new ViewPort(w * selected[i][1], margin_bottom, w + 1, h + 1)])
+            params.push([items[selected[i][0]], this.am_timesteps[selected[i][1]], new Viewport(w * selected[i][1], margin_bottom, w + 1, h + 1)])
         }
 
         return [params]
@@ -135,7 +135,7 @@ class SMViewer {
         const h = this.total_height / num_selected
         for (let i = 0; i < updated.length; i++) {
             const w = (this.total_width - margin_left) / items[updated[i][0]].num_steps
-            const vp = new ViewPort(margin_left + w * updated[i][1], this.total_height - h * updated[i][2] - h, w + 1, h + 1)
+            const vp = new Viewport(margin_left + w * updated[i][1], this.total_height - h * updated[i][2] - h, w + 1, h + 1)
             params.push([items[updated[i][0]], items[updated[i][0]].start_t + items[updated[i][0]].step_t * updated[i][1], vp])
         }
         return [params, this.highlighted]
@@ -160,7 +160,7 @@ class SMViewer {
                 remove_class(items[i].elements.time_inputs.panel, ' hidden')
                 add_class(items[i].elements.time_inputs.step_panel, ' hidden')
 
-                params.push([items[i], this.am_timesteps[select_ind], new ViewPort(w * select_ind, margin_bottom, w + 1, h + 1)])
+                params.push([items[i], this.am_timesteps[select_ind], new Viewport(w * select_ind, margin_bottom, w + 1, h + 1)])
                 select_ind++
             } else {
                 add_class(items[i].elements.time_inputs.panel, ' hidden')
@@ -195,7 +195,7 @@ class SMViewer {
 
                 const w = (this.total_width - margin_left) / items[i].num_steps
                 for (let j = 0; j < items[i].num_steps; j++) {
-                    params.push([items[i], items[i].start_t + items[i].step_t * j, new ViewPort(margin_left + w * j, this.total_height - h * select_ind - h, w + 1, h + 1)])
+                    params.push([items[i], items[i].start_t + items[i].step_t * j, new Viewport(margin_left + w * j, this.total_height - h * select_ind - h, w + 1, h + 1)])
                     items[i].updated[j] = false
                 }
                 select_ind++
@@ -250,7 +250,7 @@ class SMViewer {
             if (step < items[ind].num_steps && step >= 0) {
                 this.rotating = [ind, step, selected_ind]
                 const h = this.total_height / this.last_num_selected
-                this.rotating_vp = new ViewPort(step * w + margin_left, this.total_height - h * selected_ind - h, w + 1, h + 1)
+                this.rotating_vp = new Viewport(step * w + margin_left, this.total_height - h * selected_ind - h, w + 1, h + 1)
             } else {
                 this.rotating = []
             }
@@ -272,7 +272,7 @@ class SMViewer {
                     this.rotating = [i, -1, ind]
                     const w = this.total_width / this.last_num_selected
                     const h = this.total_height - margin_bottom
-                    this.rotating_vp = new ViewPort(w * ind, margin_bottom, w + 1, h + 1)
+                    this.rotating_vp = new Viewport(w * ind, margin_bottom, w + 1, h + 1)
                     return
                 }
             }
@@ -402,7 +402,7 @@ class SMViewer {
 
                     const h = this.total_height / this.last_num_selected
                     const w = (this.total_width - margin_left) / items[ind].num_steps
-                    this.hover_viewport = new ViewPort(margin_left + w * step_ind, this.total_height - h * select_ind - h, w + 1, h + 1)
+                    this.hover_viewport = new Viewport(margin_left + w * step_ind, this.total_height - h * select_ind - h, w + 1, h + 1)
                 }
             }
         }
