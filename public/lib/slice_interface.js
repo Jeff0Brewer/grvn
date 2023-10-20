@@ -1,15 +1,15 @@
 class SliceInterface {
-    constructor (width, height, linecolor, fillcolor, crosssize) {
-        this.line_color = linecolor
-        this.fill_color = fillcolor
-        this.cross_size = crosssize
+    constructor (width, height, lineColor, fillColor, crossSize) {
+        this.line_color = lineColor
+        this.fill_color = fillColor
+        this.cross_size = crossSize
 
         this.canvas = document.getElementById('slicecanvas')
         this.canvas.width = width
         this.canvas.height = height
         this.ctx = this.canvas.getContext('2d')
-        this.ctx.strokeStyle = linecolor
-        this.ctx.fillStyle = fillcolor
+        this.ctx.strokeStyle = lineColor
+        this.ctx.fillStyle = fillColor
 
         this.apply_button = document.getElementById('apply_slice')
 
@@ -19,6 +19,27 @@ class SliceInterface {
         this.slice_points = []
         this.output = []
         this.new_planes = false
+
+        this.canvas.onmousedown = e => {
+            if (this.state === 2) {
+                add_class(this.apply_button, ' apply_loading')
+            }
+        }
+
+        this.canvas.onmouseup = e => {
+            if (this.state === 2) {
+                remove_class(this.apply_button, ' apply_loading')
+            }
+            this.click(e.clientX, e.clientY)
+        }
+
+        this.canvas.onmousemove = e => {
+            this.hover(e.clientX, e.clientY)
+        }
+
+        this.apply_button.onmouseup = () => {
+            this.select()
+        }
     }
 
     get_output () {
@@ -35,7 +56,9 @@ class SliceInterface {
     }
 
     deactivate () {
-        if (!this.apply_button.className.includes(' hidden')) { this.apply_button.className = this.apply_button.className + ' hidden' }
+        if (!this.apply_button.className.includes(' hidden')) {
+            this.apply_button.className = this.apply_button.className + ' hidden'
+        }
         this.canvas.style.pointerEvents = 'none'
         this.ctx.restore()
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
@@ -51,7 +74,9 @@ class SliceInterface {
             this.output = []
             this.new_planes = false
             this.state = 0
-            if (!this.apply_button.className.includes(' hidden')) { this.apply_button.className = this.apply_button.className + ' hidden' }
+            if (!this.apply_button.className.includes(' hidden')) {
+                this.apply_button.className = this.apply_button.className + ' hidden'
+            }
         }
     }
 
@@ -87,7 +112,13 @@ class SliceInterface {
                 this.slice_points.push([x, y])
                 break
             case 2:
-                for (let i = 0; i + 1 < this.slice_points.length; i += 2) { this.output.push([this.slice_points[i], this.slice_points[i + 1], -1 * Math.sign(dist_point_line([x, y], this.slice_points.slice(i, i + 2)))]) }
+                for (let i = 0; i + 1 < this.slice_points.length; i += 2) {
+                    this.output.push([
+                        this.slice_points[i],
+                        this.slice_points[i + 1],
+                        -1 * Math.sign(dist_point_line([x, y], this.slice_points.slice(i, i + 2)))
+                    ])
+                }
                 this.deactivate()
                 break
         }
@@ -171,27 +202,4 @@ class SliceInterface {
         this.ctx.strokeStyle = this.line_color
         this.ctx.fillStyle = this.fill_color
     }
-}
-
-function make_slice_interface (w, h, lc, fc, cs) {
-    const si = new SliceInterface(w, h, lc, fc, cs)
-
-    si.canvas.onmousedown = function (e) {
-        if (si.state == 2) { add_class(si.apply_button, ' apply_loading') }
-    }
-
-    si.canvas.onmouseup = function (e) {
-        if (si.state == 2) { remove_class(si.apply_button, ' apply_loading') }
-        si.click(e.clientX, e.clientY)
-    }
-
-    si.canvas.onmousemove = function (e) {
-        si.hover(e.clientX, e.clientY)
-    }
-
-    si.apply_button.onmouseup = function () {
-        si.select()
-    }
-
-    return si
 }
