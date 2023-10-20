@@ -34,6 +34,8 @@ class ColorMapSliderState {
         this.maxValue = newMax
         this.lowValue = newMin
         this.highValue = newMax
+        this.lastLow = newMin
+        this.lastHigh = newMax
         this.data = data
     }
 
@@ -122,8 +124,6 @@ class ColorMapSlider {
     mouseUp () {
         this.dragLeft = false
         this.dragRight = false
-
-        this.updateDom()
     }
 
     mouseMove (e) {
