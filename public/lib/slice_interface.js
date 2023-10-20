@@ -22,13 +22,13 @@ class SliceInterface {
 
         this.canvas.onmousedown = e => {
             if (this.state === 2) {
-                add_class(this.apply_button, ' apply_loading')
+                this.apply_button.classList.add('apply_loading')
             }
         }
 
         this.canvas.onmouseup = e => {
             if (this.state === 2) {
-                remove_class(this.apply_button, ' apply_loading')
+                this.apply_button.classList.remove('apply_loading')
             }
             this.click(e.clientX, e.clientY)
         }
