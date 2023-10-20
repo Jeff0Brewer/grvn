@@ -248,3 +248,7 @@ function triangle_check (vec, tri) {
 
     return true
 }
+
+const clamp = (value, min, max) => {
+    return Math.max(Math.min(value, max), min)
+}

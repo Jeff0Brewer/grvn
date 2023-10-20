@@ -1,10 +1,6 @@
 const TEXT_PRECISION = 2
 const LABEL_PADDING = 5
 
-const clamp = (value, min, max) => {
-    return Math.max(Math.min(value, max), min)
-}
-
 const colorToRgbString = (color) => {
     const [r, g, b] = color.map(v => v * 255)
     return `rgb(${r}, ${g}, ${b})`
