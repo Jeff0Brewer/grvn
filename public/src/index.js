@@ -23,7 +23,7 @@ var vector_visible = true
 var timeline
 var save_speed = 0
 
-var compare_mouse
+var comparisonCursor
 
 var slice_interface
 var slices = []
@@ -182,7 +182,7 @@ async function main (data) {
     await setup_gl()
 
     // init overlay interface elements
-    compare_mouse = new CompareMouse(canvas.width, canvas.height, 40, 'rgb(63,215,177,.9)', 1.75)
+    comparisonCursor = new ComparisonCursor(canvas.width, canvas.height, 40, 'rgb(63,215,177,.9)', 1.75)
     slice_interface = new SliceInterface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)', 15)
     select_interface = make_select_interface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)')
 
@@ -551,8 +551,8 @@ function resize_all () {
             viewports[i].resize(canvas.width, canvas.height)
         }
     }
-    if (compare_mouse) {
-        compare_mouse.resize(canvas.width, canvas.height)
+    if (comparisonCursor) {
+        comparisonCursor.resize(canvas.width, canvas.height)
     }
     if (slice_interface) {
         slice_interface.resize(canvas.width, canvas.height)
@@ -655,8 +655,8 @@ canvas.onmousemove = function (e) {
             if (fs_camera) {
                 fs_camera.mousemove(e)
             }
-            if (compare_mouse) {
-                compare_mouse.update(e.clientX, e.clientY, viewports)
+            if (comparisonCursor) {
+                comparisonCursor.update(e.clientX, e.clientY, viewports)
             }
             break
         case 1: // small multiples
@@ -666,8 +666,8 @@ canvas.onmousemove = function (e) {
                     get_hovered_sm(e)
                 }
             }
-            if (compare_mouse) {
-                compare_mouse.update(e.clientX, e.clientY, [])
+            if (comparisonCursor) {
+                comparisonCursor.update(e.clientX, e.clientY, [])
             }
             break
     }
@@ -692,8 +692,8 @@ canvas.onwheel = function (e) {
 }
 
 canvas.onmouseleave = function (e) {
-    if (compare_mouse) {
-        compare_mouse.update(e.clientX, e.clientY, [])
+    if (comparisonCursor) {
+        comparisonCursor.update(e.clientX, e.clientY, [])
     }
     if (sm_viewer) {
         sm_viewer.mouseleave(selections)

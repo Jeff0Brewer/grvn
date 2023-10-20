@@ -1,4 +1,4 @@
-class CompareMouse {
+class ComparisonCursor {
     constructor (width, height, size, strokeStyle, lineWidth) {
         this.canvas = document.getElementById('mousecanvas')
         this.canvas.width = width
@@ -46,12 +46,12 @@ class CompareMouse {
             const { x, y, width, height } = viewport
             const pos = [x + width * percentX, y + height * percentY]
 
-            this.draw_cursor(...pos)
             this.lastPositions.push(pos)
+            this.drawCursor(...pos)
         }
     }
 
-    draw_cursor (x, y) {
+    drawCursor (x, y) {
         const corner = this.size * 0.1
         const outer = this.size * 0.5
         const inner = outer - corner
