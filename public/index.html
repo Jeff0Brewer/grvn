@@ -8,42 +8,43 @@
     </head>
     <body style="margin: 0; overflow: hidden;">
         <section id="ui">
-            <div class="sidebar noselect" id="sidebar">
-                <div class="vis_tabs">
-                    <div class="vis_tab noselect" id="fs_tab">Full Sample</div>
-                    <div class="vis_tab noselect tab_passive" id="sm_tab">Selections</div>
+            <div class="sidebar" id="sidebar">
+                <div class="view-modes">
+                    <button id="fs_tab">Full Sample</button>
+                    <button id="sm_tab">Selections</button>
                 </div>
-                <div class="tab_underline" id="tab_underline"></div>
+                <div class="mode-underline" id="tab_underline"></div>
+
                 <div id="sm_menu_0" class=" hidden">
-                    <div class="button_section new_section noselect">
+                    <div class="button_section new_section">
                         <div class="button_header">Layout</div>
-                        <div class="toggle_button button_wide noselect toggle_active" id="standard_layout">Standard</div>
-                        <div class="toggle_button button_thin noselect toggle_passive" id="tiled_layout">Tiled</div>
+                        <div class="toggle_button button_wide toggle_active" id="standard_layout">Standard</div>
+                        <div class="toggle_button button_thin toggle_passive" id="tiled_layout">Tiled</div>
                     </div>
                 </div>
                 <div id="fs_menu_0" class="">
-                    <div class="button_section new_section noselect">
+                    <div class="button_section new_section">
                         <div class="button_header">Representation</div>
-                        <div class="toggle_button button_thin noselect toggle_active" id="flow_toggle">Motion</div>
-                        <div class="toggle_button button_wide noselect toggle_active" id="vector_toggle">Contact Forces</div>
+                        <div class="toggle_button button_thin toggle_active" id="flow_toggle">Motion</div>
+                        <div class="toggle_button button_wide toggle_active" id="vector_toggle">Contact Forces</div>
                     </div>
                 </div>
                 <div class="scroll_side">
                     <div class="list_section new_section">
-                        <div class="list_section_header noselect">
+                        <div class="list_section_header">
                             Global Fields
-                            <input class="add_color_map noselect" id="add_global" type="file" multiple="false">
+                            <input class="add_color_map" id="add_global" type="file" multiple="false">
                             <label id="add_global_button" class="add_color_map_button" for="add_global">
-                            <div class="list_header_button noselect">+</div>
+                            <div class="list_header_button">+</div>
                             </label>
                         </div>
                         <div class="global_section hidden" id="global_section">
                             <div class="global_tabs" id="global_tabs">
-                                <input type="text" class="global_tab global_tab_active noselect hidden" id="global_tab_source">
+                                <input type="text" class="global_tab global_tab_active hidden" id="global_tab_source">
                             </div>
                             <div class="global_axis_label_container">
-                                <div class="global_axis_label noselect left" id="global_low"></div>
-                                <div class="global_axis_label noselect right" id="global_high"></div>
+                                <div class="global_axis_label left" id="global_low"></div>
+                                <div class="global_axis_label right" id="global_high"></div>
                             </div>
                             <canvas class="global_canvas" id="global_canvas"></canvas>
                             <div class="global_time_container">
@@ -57,7 +58,7 @@
                     </div>
                     <div id="fs_menu_1" class="">
                         <div class="list_section new_section">
-                            <div class="list_section_header noselect">
+                            <div class="list_section_header">
                                 Slices
                                 <div class="list_header_button" id="add_slice">+</div>
                             </div>
@@ -66,7 +67,7 @@
                     </div>
                     <div id="sm_menu_1" class=" hidden">
                         <div class="list_section new_section">
-                            <div class="list_section_header noselect">
+                            <div class="list_section_header">
                                 Color Map
                                 <input class="add_color_map" id="add_cmap" type="file" multiple="false">
                                 <label id="add_cmap_button" class="add_color_map_button" for="add_cmap">
@@ -111,7 +112,7 @@
                         </div>
                     </div>
                     <div class="list_section new_section">
-                        <div class="list_section_header noselect">
+                        <div class="list_section_header">
                             Selected Grains
                             <div class="list_header_button" id="add_selection">+</div>
                         </div>
@@ -125,30 +126,30 @@
                             <div class="hidden" id="selection_proto">
                             <div class="list_item selection_highlight">
                                     <canvas class="item_canvas"></canvas>
-                                    <div class="item_label noselect"></div>
+                                    <div class="item_label"></div>
                                     <div class="selection_arrow hidden">
                                         <svg class="inline" width="5" height="5">
                                             <polygon points="0,0 5,0 2.5,5 0,0"/>
                                         </svg>
                                     </div>
-                                    <div class="item_delete noselect hidden"></div>
+                                    <div class="item_delete hidden"></div>
                                     <div class="selection_ind_list hidden">
                                         <div class="selection_ind"></div>
                                     </div>
                                     <div class="sm_time_container hidden">
-                                        <div class="sm_label noselect"></div>
+                                        <div class="sm_label"></div>
                                         <div class="sm_inputs_container">
                                             <div class="sm_input">
-                                                <input type="text" class="sm_time_box noselect">
-                                                <div class="sm_time_label noselect">initial</div>
+                                                <input type="text" class="sm_time_box">
+                                                <div class="sm_time_label">initial</div>
                                             </div>
                                             <div class="sm_input">
-                                                <input type="text" class="sm_time_box noselect">
-                                                <div class="sm_time_label noselect">end</div>
+                                                <input type="text" class="sm_time_box">
+                                                <div class="sm_time_label">end</div>
                                             </div>
                                             <div class="sm_input">
-                                                <input type="text" class="sm_time_box noselect">
-                                                <div class="sm_time_label noselect">interval</div>
+                                                <input type="text" class="sm_time_box">
+                                                <div class="sm_time_label">interval</div>
                                             </div>
                                         </div>
                                     </div>
@@ -158,18 +159,20 @@
                     </div>
                 </div>
                 <div class="context_container">
-                    <div class="list_section_header noselect">
+                    <div class="list_section_header">
                         Orientation
                     </div>
                     <canvas id="context_image" class="context_canvas new_section"></canvas>
                 </div>
             </div>
+
+
             <div class="fold_sidebar" id="fold_sidebar">
                 <svg class="inline" width="7" height="10">
                     <polygon id="collapse_arrow" points="0,0 0,10, 7,5 0,0"/>
                 </svg>
             </div>
-            <div class="timeline_container noselect" id="timeline_container">
+            <div class="timeline_container" id="timeline_container">
                 <div class="timeline_body" id="timeline_body">
                     <canvas class="timeline_canvas" id="timeline_canvas"></canvas>
                     <div class="outside_work left" id="outside_left"></div>
@@ -204,7 +207,7 @@
                         <button class="timeline_button left" id="create_bookmark">Bookmark</button>
                     </div>
                     <div class="timeline_button_section">
-                        <div class="timeline_button_label noselect left">Speed</div>
+                        <div class="timeline_button_label left">Speed</div>
                         <button class="timeline_button left timeline_button_divider" id="play_full">1x</button>
                         <button class="timeline_button left timeline_button_divider timeline_button_passive" id="play_half">.5x</button>
                         <button class="timeline_button left timeline_button_passive" id="play_quarter">.25x</button>
@@ -259,35 +262,35 @@
         <canvas id="selectcanvas" class="overlaycanvas"></canvas>
         <canvas id="smcanvas" class="overlaycanvas"></canvas>
 
-        <script src="lib/msgpack.js"></script>
-        <script src="lib/zip.min.js"></script>
-        <script src="lib/cuon-matrix-quat.js"></script>
-        <script src="lib/util.js"></script>
-        <script src="lib/concave_hull.js"></script>
-        <script src="lib/viewport.js"></script>
-        <script src="lib/timeline.js"></script>
-        <script src="lib/slice_interface.js"></script>
-        <script src="lib/select_interface.js"></script>
-        <script src="lib/selection_item.js"></script>
-        <script src="lib/sm_viewer.js"></script>
-        <script src="lib/context_image.js"></script>
-        <script src="lib/global_fields.js"></script>
-        <script src="lib/comparison-cursor.js"></script>
-        <script src="lib/plane-filter.js"></script>
-        <script src="lib/slice-item.js"></script>
-        <script src="lib/color-map.js"></script>
-        <script src="lib/full-sample-camera.js"></script>
-        <script src="lib/gl-wrap.js"></script>
-        <script src="lib/global_gl.js"></script>
-        <script src="camera/bezier.js"></script>
-        <script src="camera/path.js"></script>
-        <script src="camera/menu.js"></script>
-        <script src="camera/render.js"></script>
-        <script src="src/context-axis.js"></script>
-        <script src="src/grain-surfaces.js"></script>
-        <script src="src/motion-plot.js"></script>
-        <script src="src/force-plot.js"></script>
-        <script src="src/index.js"></script>
-        <script src="src/load.js"></script>
+        <script src="./lib/msgpack.js"></script>
+        <script src="./lib/zip.min.js"></script>
+        <script src="./lib/cuon-matrix-quat.js"></script>
+        <script src="./lib/util.js"></script>
+        <script src="./lib/concave_hull.js"></script>
+        <script src="./lib/viewport.js"></script>
+        <script src="./lib/timeline.js"></script>
+        <script src="./lib/slice_interface.js"></script>
+        <script src="./lib/select_interface.js"></script>
+        <script src="./lib/selection_item.js"></script>
+        <script src="./lib/sm_viewer.js"></script>
+        <script src="./lib/context_image.js"></script>
+        <script src="./lib/global_fields.js"></script>
+        <script src="./lib/comparison-cursor.js"></script>
+        <script src="./lib/plane-filter.js"></script>
+        <script src="./lib/slice-item.js"></script>
+        <script src="./lib/color-map.js"></script>
+        <script src="./lib/full-sample-camera.js"></script>
+        <script src="./lib/gl-wrap.js"></script>
+        <script src="./lib/global_gl.js"></script>
+        <script src="./camera/bezier.js"></script>
+        <script src="./camera/path.js"></script>
+        <script src="./camera/menu.js"></script>
+        <script src="./camera/render.js"></script>
+        <script src="./src/context-axis.js"></script>
+        <script src="./src/grain-surfaces.js"></script>
+        <script src="./src/motion-plot.js"></script>
+        <script src="./src/force-plot.js"></script>
+        <script src="./src/index.js"></script>
+        <script src="./src/load.js"></script>
     </body>
 </html>
