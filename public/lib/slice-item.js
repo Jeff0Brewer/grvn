@@ -1,10 +1,9 @@
 const IMG_SIZE = 20
 
 class SliceItem {
-    constructor (ind, planefilters, interface_out) {
+    constructor (ind, planefilters, lines, viewport) {
         this.planefilters = planefilters
         this.removed = false
-        const [lines, viewport] = interface_out
 
         this.dom = SLICE_ITEM_DOM.cloneNode(true)
         document.getElementById('slice_list').appendChild(this.dom)

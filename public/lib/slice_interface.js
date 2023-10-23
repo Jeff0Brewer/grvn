@@ -21,86 +21,74 @@ class SliceInterface {
 
         this.state = PICK_VIEWPORT
 
+        this.viewport = null
         this.viewports = []
-        this.slice_viewport = -1
-        this.slice_points = []
-        this.output = []
-        this.new_planes = false
+        this.points = []
+        this.lines = []
 
-        this.canvas.onmouseup = e => { this.mouseup(e) }
+        this.canvas.onmousedown = e => { this.mousedown(e) }
         this.canvas.onmousemove = e => { this.mousemove(e) }
         this.button.onmouseup = () => { this.state = SELECT_AREA }
     }
 
-    get_output () {
-        this.new_planes = false
-        return [this.output, this.slice_viewport]
+    hasOutput () {
+        return this.lines.length > 0
+    }
+
+    getOutput () {
+        const output = {
+            lines: this.lines,
+            viewport: this.viewport
+        }
+        this.lines = []
+        this.viewport = null
+        return output
     }
 
     activate (viewports) {
         this.state = PICK_VIEWPORT
         this.viewports = viewports
         this.canvas.style.pointerEvents = 'auto'
-        this.slice_points = []
-        this.output = []
+        this.points = []
+        this.lines = []
     }
 
     deactivate () {
+        this.button.classList.add('hidden')
         this.canvas.style.pointerEvents = 'none'
         this.ctx.restore()
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        this.button.classList.add('hidden')
-        this.new_planes = true
     }
 
-    cancel () {
-        if (this.canvas.style.pointerEvents === 'none') { return }
-
-        this.canvas.style.pointerEvents = 'none'
-        this.ctx.restore()
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        this.button.classList.add('hidden')
-        this.new_planes = false
-    }
-
-    mouseup (e) {
+    mousedown (e) {
+        const mousePos = [e.clientX, e.clientY]
         switch (this.state) {
             case PICK_VIEWPORT:
-                for (let i = 0; i < viewports.length; i++) {
-                    if (viewports[i].hitTest(e.clientX, e.clientY)) {
-                        this.slice_viewport = viewports[i]
+                for (const viewport of this.viewports) {
+                    if (viewport.hitTest(...mousePos)) {
+                        this.viewport = viewport
                     } else {
-                        this.ctx.fillRect(viewports[i].x, viewports[i].y, viewports[i].width, viewports[i].height)
+                        fillViewport(this.ctx, viewport)
                     }
                 }
+                clipViewport(this.ctx, this.viewport)
+                this.centerButtonInViewport(this.viewport)
 
-                this.ctx.save()
-                this.ctx.beginPath()
-                this.ctx.moveTo(this.slice_viewport.x, this.slice_viewport.y)
-                this.ctx.lineTo(this.slice_viewport.x + this.slice_viewport.width, this.slice_viewport.y)
-                this.ctx.lineTo(this.slice_viewport.x + this.slice_viewport.width, this.slice_viewport.y + this.slice_viewport.height)
-                this.ctx.lineTo(this.slice_viewport.x, this.slice_viewport.y + this.slice_viewport.height)
-                this.ctx.lineTo(this.slice_viewport.x, this.slice_viewport.y)
-                this.ctx.clip()
-
-                this.button.classList.remove('hidden')
-                this.button.style.left = (this.slice_viewport.x + (this.slice_viewport.width - this.button.clientWidth) / 2).toString() + 'px'
-                this.button.style.top = (this.slice_viewport.y + 9 * (this.slice_viewport.height - this.button.clientHeight) / 10).toString() + 'px'
-
-                this.slice_points.push([e.clientX, e.clientY])
-
+                this.points.push([e.clientX, e.clientY])
                 this.state = DRAW_LINES
                 break
+
             case DRAW_LINES:
-                this.slice_points.push([e.clientX, e.clientY])
+                this.points.push(mousePos)
+                if (this.points.length > 1) {
+                    this.button.classList.remove('hidden')
+                }
                 break
             case SELECT_AREA:
-                for (let i = 0; i + 1 < this.slice_points.length; i += 2) {
-                    this.output.push([
-                        this.slice_points[i],
-                        this.slice_points[i + 1],
-                        -1 * Math.sign(dist_point_line([e.clientX, e.clientY], this.slice_points.slice(i, i + 2)))
-                    ])
+                for (let i = 0; i + 1 < this.points.length; i += 2) {
+                    const pair = this.points.slice(i, i + 2)
+                    const clickSide = Math.sign(dist_point_line(mousePos, pair)) * -1
+                    this.lines.push([pair[0], pair[1], clickSide])
                 }
                 this.deactivate()
                 break
@@ -118,19 +106,19 @@ class SliceInterface {
                 }
             }
         } else {
-            for (let i = 0; i + 1 < this.slice_points.length; i += 2) {
-                const slope = (this.slice_points[i + 1][1] - this.slice_points[i][1]) / (this.slice_points[i + 1][0] - this.slice_points[i][0])
+            for (let i = 0; i + 1 < this.points.length; i += 2) {
+                const slope = (this.points[i + 1][1] - this.points[i][1]) / (this.points[i + 1][0] - this.points[i][0])
 
-                const p0 = [this.slice_points[i][0] + this.canvas.width, this.slice_points[i][1] + slope * this.canvas.width]
-                const p1 = [this.slice_points[i][0] - this.canvas.width, this.slice_points[i][1] - slope * this.canvas.width]
+                const p0 = [this.points[i][0] + this.canvas.width, this.points[i][1] + slope * this.canvas.width]
+                const p1 = [this.points[i][0] - this.canvas.width, this.points[i][1] - slope * this.canvas.width]
 
                 if (this.state == SELECT_AREA) {
                     const line_length = dist(p0, p1)
-                    const line = sub(this.slice_points[i + 1], this.slice_points[i])
+                    const line = sub(this.points[i + 1], this.points[i])
                     const axis = [1, 0]
                     let angle = angle_between(axis, line)
-                    if (this.slice_points[i][1] > this.slice_points[i + 1][1]) { angle *= -1 }
-                    const side = -1 * Math.sign(dist_point_line([x, y], this.slice_points.slice(i, i + 2)))
+                    if (this.points[i][1] > this.points[i + 1][1]) { angle *= -1 }
+                    const side = -1 * Math.sign(dist_point_line([x, y], this.points.slice(i, i + 2)))
 
                     this.ctx.save()
                     this.ctx.translate(p0[0], p0[1])
@@ -139,11 +127,11 @@ class SliceInterface {
                     this.ctx.restore()
                 }
             }
-            for (let i = 0; i + 1 < this.slice_points.length; i += 2) {
-                const slope = (this.slice_points[i + 1][1] - this.slice_points[i][1]) / (this.slice_points[i + 1][0] - this.slice_points[i][0])
+            for (let i = 0; i + 1 < this.points.length; i += 2) {
+                const slope = (this.points[i + 1][1] - this.points[i][1]) / (this.points[i + 1][0] - this.points[i][0])
 
-                const p0 = [this.slice_points[i][0] + this.canvas.width, this.slice_points[i][1] + slope * this.canvas.width]
-                const p1 = [this.slice_points[i][0] - this.canvas.width, this.slice_points[i][1] - slope * this.canvas.width]
+                const p0 = [this.points[i][0] + this.canvas.width, this.points[i][1] + slope * this.canvas.width]
+                const p1 = [this.points[i][0] - this.canvas.width, this.points[i][1] - slope * this.canvas.width]
 
                 this.ctx.beginPath()
                 this.ctx.moveTo(p0[0], p0[1])
@@ -152,14 +140,14 @@ class SliceInterface {
             }
         }
         if (this.state != SELECT_AREA) {
-            if (this.slice_points.length % 2 == 1) {
-                const i = this.slice_points.length - 1
+            if (this.points.length % 2 == 1) {
+                const i = this.points.length - 1
                 this.ctx.beginPath()
-                this.ctx.moveTo(this.slice_points[i][0], this.slice_points[i][1])
+                this.ctx.moveTo(this.points[i][0], this.points[i][1])
                 this.ctx.lineTo(x, y)
                 this.ctx.stroke()
 
-                this.draw_cross(this.slice_points[i][0], this.slice_points[i][1])
+                this.draw_cross(this.points[i][0], this.points[i][1])
             }
 
             this.draw_cross(x, y)
@@ -183,4 +171,23 @@ class SliceInterface {
         this.ctx.strokeStyle = this.line_color
         this.ctx.fillStyle = this.fill_color
     }
+
+    centerButtonInViewport (viewport) {
+        const buttonWidth = this.button.clientWidth
+        const buttonHeight = this.button.clientHeight
+        const { x, y, width, height } = viewport
+        this.button.style.left = `${x + (width - buttonWidth) * 0.5}px`
+        this.button.style.top = `${y + (height - buttonHeight) * 0.9}px`
+    }
+}
+
+const clipViewport = (ctx, vp) => {
+    ctx.save() // store pre-clipped state
+    const vpBounds = new Path2D()
+    vpBounds.rect(vp.x, vp.y, vp.width, vp.height)
+    ctx.clip(vpBounds)
+}
+
+const fillViewport = (ctx, vp) => {
+    ctx.fillRect(vp.x, vp.y, vp.width, vp.height)
 }

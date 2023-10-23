@@ -195,8 +195,9 @@ async function main (data) {
         const elapsed = now - g_last
         g_last = now
 
-        if (slice_interface.new_planes) {
-            slice(slice_interface.get_output())
+        if (slice_interface.hasOutput()) {
+            const { lines, viewport } = slice_interface.getOutput()
+            slice(lines, viewport)
         } else {
             let slicesRemoved = false
             for (let i = 0; i < slices.length; i++) {
@@ -417,35 +418,33 @@ const getCurrentPlaneFilters = () => {
     return slices.map(slice => slice.planefilters).flat()
 }
 
-function slice (output) {
-    const out_mouse_def = output[0]
-    const out_vp = output[1]
+function slice (lines, viewport) {
     const rot = new Matrix4()
-    if (out_vp.equals(viewports[0])) {
+    if (viewport.equals(viewports[0])) {
         rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
-    } else if (out_vp.equals(viewports[1])) {
+    } else if (viewport.equals(viewports[1])) {
         rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
     }
 
     const planes = []
-    for (let i = 0; i < out_mouse_def.length; i++) {
+    for (let i = 0; i < lines.length; i++) {
         for (let p = 0; p < 2; p++) {
-            out_mouse_def[i][p][1] = out_vp.height - (out_mouse_def[i][p][1] - out_vp.y)
+            lines[i][p][1] = viewport.height - (lines[i][p][1] - viewport.y)
         }
 
-        const mid = midpoint(out_mouse_def[i][0], out_mouse_def[i][1])
+        const mid = midpoint(lines[i][0], lines[i][1])
 
         const trio = []
-        trio.push(unprojectmouse(out_mouse_def[i][0][0], out_mouse_def[i][0][1], viewMatrix, projMatrix, out_vp, 0, rot))
-        trio.push(unprojectmouse(out_mouse_def[i][1][0], out_mouse_def[i][1][1], viewMatrix, projMatrix, out_vp, 0, rot))
-        trio.push(unprojectmouse(mid[0], mid[1], viewMatrix, projMatrix, out_vp, 1, rot))
+        trio.push(unprojectmouse(lines[i][0][0], lines[i][0][1], viewMatrix, projMatrix, viewport, 0, rot))
+        trio.push(unprojectmouse(lines[i][1][0], lines[i][1][1], viewMatrix, projMatrix, viewport, 0, rot))
+        trio.push(unprojectmouse(mid[0], mid[1], viewMatrix, projMatrix, viewport, 1, rot))
 
         const plane = planefrompoints(trio[0], trio[1], trio[2])
 
-        planes.push(new PlaneFilter(plane, out_mouse_def[i][2]))
+        planes.push(new PlaneFilter(plane, lines[i][2]))
     }
 
-    slices.push(new SliceItem(slice_ind, planes, output))
+    slices.push(new SliceItem(slice_ind, planes, lines, viewport))
     slice_ind++
 
     forcePlot.updateSlices(gl, getCurrentPlaneFilters())
@@ -588,7 +587,7 @@ function resize_all () {
 function keyup (e) {
     switch (e.keyCode) {
         case 27:
-            if (slice_interface) { slice_interface.cancel() }
+            if (slice_interface) { slice_interface.deactivate() }
             if (select_interface) { select_interface.cancel() }
             frozen = false
             break
@@ -703,7 +702,7 @@ canvas.onmouseleave = function (e) {
 
 sidebar.onmousedown = function () {
     if (slice_interface) {
-        slice_interface.cancel()
+        slice_interface.deactivate()
     }
     if (select_interface) {
         select_interface.cancel()
@@ -717,7 +716,7 @@ const collapseSidebar = () => {
         return
     }
     if (slice_interface) {
-        slice_interface.cancel()
+        slice_interface.deactivate()
     }
     if (select_interface) {
         select_interface.cancel()
@@ -744,7 +743,7 @@ document.getElementById('fold_sidebar').onmouseup = function (e) {
         document.getElementById('collapse_arrow').setAttribute('transform', 'rotate(0)')
     } else {
         if (slice_interface) {
-            slice_interface.cancel()
+            slice_interface.deactivate()
         }
         if (select_interface) {
             select_interface.cancel()
