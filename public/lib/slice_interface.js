@@ -96,6 +96,30 @@ class SliceInterface {
         this.ctx.fillStyle = this.fill_color
     }
 
+    drawCurrLines (mousePos) {
+        // draw cursors / current line to mouse if not currently selecting area
+        if (this.state !== SELECT_AREA) {
+            if (this.points.length % 2 === 1) {
+                const lastPoint = this.points[this.points.length - 1]
+                this.drawLine(lastPoint, mousePos)
+                this.drawCursor(...lastPoint)
+            }
+            this.drawCursor(...mousePos)
+        }
+
+        // draw all currently defined lines
+        for (let i = 0; i + 1 < this.points.length; i += 2) {
+            const [x0, y0] = this.points[i]
+            const [x1, y1] = this.points[i + 1]
+            const dx = this.canvas.width
+            const dy = dx * (y1 - y0) / (x1 - x0)
+            this.drawLine(
+                [x0 + dx, y0 + dy],
+                [x1 - dx, y1 - dy]
+            )
+        }
+    }
+
     mousedown (e) {
         const mousePos = [e.clientX, e.clientY]
         switch (this.state) {
@@ -111,10 +135,16 @@ class SliceInterface {
 
             case DRAW_LINES:
                 this.points.push(mousePos)
+
                 // show apply slices button once at least one line defined
                 if (this.points.length > 1) {
                     this.button.classList.remove('hidden')
                 }
+
+                // update drawn lines with new point
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+                this.drawCurrLines(mousePos)
+
                 break
 
             case SELECT_AREA:
@@ -164,28 +194,9 @@ class SliceInterface {
                 this.ctx.fillRect(-0.5 * edgeLength, 0, edgeLength, edgeLength * fillDirection)
                 this.ctx.restore()
             }
-        } else {
-            // draw cursor at current mouse position, connect to last point
-            // if drawing second point in line
-            if (this.points.length % 2 === 1) {
-                const lastPoint = this.points[this.points.length - 1]
-                this.drawLine(lastPoint, mousePos)
-                this.drawCursor(...lastPoint)
-            }
-            this.drawCursor(...mousePos)
         }
 
-        // draw all currently defined lines
-        for (let i = 0; i + 1 < this.points.length; i += 2) {
-            const [x0, y0] = this.points[i]
-            const [x1, y1] = this.points[i + 1]
-            const dx = this.canvas.width
-            const dy = dx * (y1 - y0) / (x1 - x0)
-            this.drawLine(
-                [x0 + dx, y0 + dy],
-                [x1 - dx, y1 - dy]
-            )
-        }
+        this.drawCurrLines(mousePos)
     }
 }
 
