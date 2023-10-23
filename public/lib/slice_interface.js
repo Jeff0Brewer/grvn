@@ -5,11 +5,9 @@ const SELECT_AREA = 2
 
 class SliceInterface {
     constructor (width, height, cursorSize, strokeStyle, fillStyle) {
-        this.line_color = strokeStyle
-        this.fill_color = fillStyle
         this.cursorSize = cursorSize
-
-        this.button = document.getElementById('apply_slice')
+        this.strokeStyle = strokeStyle
+        this.fillStyle = fillStyle
 
         this.canvas = document.getElementById('slicecanvas')
         this.canvas.width = width
@@ -19,8 +17,9 @@ class SliceInterface {
         this.ctx.strokeStyle = strokeStyle
         this.ctx.fillStyle = fillStyle
 
-        this.state = PICK_VIEWPORT
+        this.button = document.getElementById('apply_slice')
 
+        this.state = PICK_VIEWPORT
         this.viewport = null
         this.viewports = []
         this.points = []
@@ -68,13 +67,6 @@ class SliceInterface {
         this.button.style.top = `${y + (height - buttonHeight) * 0.9}px`
     }
 
-    drawLine (a, b) {
-        this.ctx.beginPath()
-        this.ctx.moveTo(a[0], a[1])
-        this.ctx.lineTo(b[0], b[1])
-        this.ctx.stroke()
-    }
-
     drawCursor (x, y) {
         this.ctx.lineWidth = this.cursorSize / 6
 
@@ -89,11 +81,11 @@ class SliceInterface {
         this.ctx.lineWidth = 1
     }
 
-    resize (width, height) {
-        this.canvas.width = width
-        this.canvas.height = height
-        this.ctx.strokeStyle = this.line_color
-        this.ctx.fillStyle = this.fill_color
+    drawLine (a, b) {
+        this.ctx.beginPath()
+        this.ctx.moveTo(a[0], a[1])
+        this.ctx.lineTo(b[0], b[1])
+        this.ctx.stroke()
     }
 
     drawCurrLines (mousePos) {
@@ -197,6 +189,13 @@ class SliceInterface {
         }
 
         this.drawCurrLines(mousePos)
+    }
+
+    resize (width, height) {
+        this.canvas.width = width
+        this.canvas.height = height
+        this.ctx.strokeStyle = this.strokeStyle
+        this.ctx.fillStyle = this.fillStyle
     }
 }
 
