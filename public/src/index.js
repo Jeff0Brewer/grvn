@@ -183,7 +183,7 @@ async function main (data) {
 
     // init overlay interface elements
     comparisonCursor = new ComparisonCursor(canvas.width, canvas.height, 40, 'rgb(63,215,177,.9)', 1.75)
-    slice_interface = new SliceInterface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)', 15)
+    slice_interface = new SliceInterface(canvas.width, canvas.height, 15, 'rgb(255,255,255)', 'rgba(0,0,0,.7)')
     select_interface = make_select_interface(canvas.width, canvas.height, 'rgb(255,255,255)', 'rgba(0,0,0,.7)')
 
     sm_viewer = make_sm_viewer(canvas.width, canvas.height)
@@ -911,12 +911,6 @@ document.getElementById('sel_cross').onmouseup = function () {
     select_interface.activate(viewports, 1)
 }
 
-document.getElementById('select_button').onmousedown = function () {
-    if (select_interface.click_ind == 2 || (select_interface.mode == 1 && select_interface.click_ind == 0)) {
-        add_class(this, ' apply_loading')
-    }
-}
-
 document.getElementById('select_button').onmouseup = function () {
     switch (select_interface.click_ind) {
         case 0:
@@ -927,7 +921,6 @@ document.getElementById('select_button').onmouseup = function () {
                 select_ind++
                 select_vectors = []
                 select_interface.finish_all()
-                remove_class(this, ' apply_loading')
             } else {
                 save_speed = timeline.play_speed
                 timeline.play_speed = 0
@@ -952,7 +945,6 @@ document.getElementById('select_button').onmouseup = function () {
             select_ind++
             select_vectors = []
             frozen = false
-            remove_class(this, ' apply_loading')
             break
     }
 }

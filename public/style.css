@@ -397,10 +397,6 @@ line-height: 17px;
     background-color: rgb(27,27,27);
 }
 
-.apply_loading{
-    opacity: .5;
-}
-
 .timeline_container{
     position: absolute;
     bottom: 0;

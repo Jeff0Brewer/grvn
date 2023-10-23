@@ -1,45 +1,35 @@
+// slice interface states
+const PICK_VIEWPORT = 0
+const DRAW_LINES = 1
+const SELECT_AREA = 2
+
 class SliceInterface {
-    constructor (width, height, lineColor, fillColor, crossSize) {
-        this.line_color = lineColor
-        this.fill_color = fillColor
-        this.cross_size = crossSize
+    constructor (width, height, cursorSize, strokeStyle, fillStyle) {
+        this.line_color = strokeStyle
+        this.fill_color = fillStyle
+        this.cross_size = cursorSize
+
+        this.button = document.getElementById('apply_slice')
 
         this.canvas = document.getElementById('slicecanvas')
         this.canvas.width = width
         this.canvas.height = height
+
         this.ctx = this.canvas.getContext('2d')
-        this.ctx.strokeStyle = lineColor
-        this.ctx.fillStyle = fillColor
+        this.ctx.strokeStyle = strokeStyle
+        this.ctx.fillStyle = fillStyle
 
-        this.apply_button = document.getElementById('apply_slice')
+        this.state = PICK_VIEWPORT
 
-        this.state = 0
         this.viewports = []
         this.slice_viewport = -1
         this.slice_points = []
         this.output = []
         this.new_planes = false
 
-        this.canvas.onmousedown = e => {
-            if (this.state === 2) {
-                this.apply_button.classList.add('apply_loading')
-            }
-        }
-
-        this.canvas.onmouseup = e => {
-            if (this.state === 2) {
-                this.apply_button.classList.remove('apply_loading')
-            }
-            this.click(e.clientX, e.clientY)
-        }
-
-        this.canvas.onmousemove = e => {
-            this.hover(e.clientX, e.clientY)
-        }
-
-        this.apply_button.onmouseup = () => {
-            this.select()
-        }
+        this.canvas.onmouseup = e => { this.mouseup(e) }
+        this.canvas.onmousemove = e => { this.mousemove(e) }
+        this.button.onmouseup = () => { this.state = SELECT_AREA }
     }
 
     get_output () {
@@ -48,39 +38,36 @@ class SliceInterface {
     }
 
     activate (viewports) {
+        this.state = PICK_VIEWPORT
         this.viewports = viewports
         this.canvas.style.pointerEvents = 'auto'
         this.slice_points = []
-        this.state = 0
         this.output = []
     }
 
     deactivate () {
-        this.apply_button.classList.add('hidden')
         this.canvas.style.pointerEvents = 'none'
         this.ctx.restore()
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.button.classList.add('hidden')
         this.new_planes = true
     }
 
     cancel () {
-        if (this.canvas.style.pointerEvents == 'auto') {
-            this.canvas.style.pointerEvents = 'none'
-            this.ctx.restore()
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-            this.slice_points = []
-            this.output = []
-            this.new_planes = false
-            this.state = 0
-            this.apply_button.classList.add('hidden')
-        }
+        if (this.canvas.style.pointerEvents === 'none') { return }
+
+        this.canvas.style.pointerEvents = 'none'
+        this.ctx.restore()
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.button.classList.add('hidden')
+        this.new_planes = false
     }
 
-    click (x, y) {
+    mouseup (e) {
         switch (this.state) {
-            case 0:
+            case PICK_VIEWPORT:
                 for (let i = 0; i < viewports.length; i++) {
-                    if (viewports[i].hitTest(x, y)) {
+                    if (viewports[i].hitTest(e.clientX, e.clientY)) {
                         this.slice_viewport = viewports[i]
                     } else {
                         this.ctx.fillRect(viewports[i].x, viewports[i].y, viewports[i].width, viewports[i].height)
@@ -96,23 +83,23 @@ class SliceInterface {
                 this.ctx.lineTo(this.slice_viewport.x, this.slice_viewport.y)
                 this.ctx.clip()
 
-                this.apply_button.classList.remove('hidden')
-                this.apply_button.style.left = (this.slice_viewport.x + (this.slice_viewport.width - this.apply_button.clientWidth) / 2).toString() + 'px'
-                this.apply_button.style.top = (this.slice_viewport.y + 9 * (this.slice_viewport.height - this.apply_button.clientHeight) / 10).toString() + 'px'
+                this.button.classList.remove('hidden')
+                this.button.style.left = (this.slice_viewport.x + (this.slice_viewport.width - this.button.clientWidth) / 2).toString() + 'px'
+                this.button.style.top = (this.slice_viewport.y + 9 * (this.slice_viewport.height - this.button.clientHeight) / 10).toString() + 'px'
 
-                this.state = 1
+                this.slice_points.push([e.clientX, e.clientY])
 
-                this.slice_points.push([x, y])
+                this.state = DRAW_LINES
                 break
-            case 1:
-                this.slice_points.push([x, y])
+            case DRAW_LINES:
+                this.slice_points.push([e.clientX, e.clientY])
                 break
-            case 2:
+            case SELECT_AREA:
                 for (let i = 0; i + 1 < this.slice_points.length; i += 2) {
                     this.output.push([
                         this.slice_points[i],
                         this.slice_points[i + 1],
-                        -1 * Math.sign(dist_point_line([x, y], this.slice_points.slice(i, i + 2)))
+                        -1 * Math.sign(dist_point_line([e.clientX, e.clientY], this.slice_points.slice(i, i + 2)))
                     ])
                 }
                 this.deactivate()
@@ -120,9 +107,11 @@ class SliceInterface {
         }
     }
 
-    hover (x, y) {
+    mousemove (e) {
+        const x = e.clientX
+        const y = e.clientY
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        if (this.state == 0) {
+        if (this.state == PICK_VIEWPORT) {
             for (let i = 0; i < this.viewports.length; i++) {
                 if (!viewports[i].hitTest(x, y)) {
                     this.ctx.fillRect(viewports[i].x, viewports[i].y, viewports[i].width, viewports[i].height)
@@ -135,7 +124,7 @@ class SliceInterface {
                 const p0 = [this.slice_points[i][0] + this.canvas.width, this.slice_points[i][1] + slope * this.canvas.width]
                 const p1 = [this.slice_points[i][0] - this.canvas.width, this.slice_points[i][1] - slope * this.canvas.width]
 
-                if (this.state == 2) {
+                if (this.state == SELECT_AREA) {
                     const line_length = dist(p0, p1)
                     const line = sub(this.slice_points[i + 1], this.slice_points[i])
                     const axis = [1, 0]
@@ -162,7 +151,7 @@ class SliceInterface {
                 this.ctx.stroke()
             }
         }
-        if (this.state != 2) {
+        if (this.state != SELECT_AREA) {
             if (this.slice_points.length % 2 == 1) {
                 const i = this.slice_points.length - 1
                 this.ctx.beginPath()
@@ -186,10 +175,6 @@ class SliceInterface {
         this.ctx.lineTo(x, y + this.cross_size / 2)
         this.ctx.stroke()
         this.ctx.lineWidth = 1
-    }
-
-    select () {
-        this.state = 2
     }
 
     resize (w, h) {
