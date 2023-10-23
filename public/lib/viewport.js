@@ -47,4 +47,8 @@ class Viewport {
             this.height === other.height
         )
     }
+
+    diagonalLength () {
+        return Math.sqrt(this.width * this.width + this.height * this.height)
+    }
 }
