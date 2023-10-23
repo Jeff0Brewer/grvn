@@ -1,8 +1,10 @@
 const IMG_SIZE = 20
 
 class SliceItem {
-    constructor (ind, planefilters, lines, viewport) {
-        this.planefilters = planefilters
+    constructor (ind, lines, viewport, viewMatrix, projMatrix) {
+        this.planefilters = lines.map(([p0, p1, sign]) =>
+            new PlaneFilter(p0, p1, sign, viewMatrix, projMatrix, viewport)
+        )
         this.removed = false
 
         this.dom = SLICE_ITEM_DOM.cloneNode(true)

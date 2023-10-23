@@ -33,37 +33,6 @@ class SliceInterface {
         this.button.onmouseup = () => { this.state = SELECT_AREA }
     }
 
-    update (view, proj) {
-        const removed = []
-        for (let i = 0; i < this.slices.length; i++) {
-            if (this.slices[i].removed) {
-                const slice = this.slices.splice(i, 1)
-                removed.push(...slice)
-                i--
-            }
-        }
-
-        let added = null
-        if (this.lines.length > 0) {
-            const filters = this.lines.map(([p0, p1, sign]) =>
-                new PlaneFilter(p0, p1, sign, view, proj, this.viewport)
-            )
-            added = new SliceItem(
-                this.sliceInd,
-                filters,
-                this.lines,
-                this.viewport
-            )
-            this.slices.push(added)
-
-            this.sliceInd++
-            this.lines = []
-            this.viewport = null
-        }
-
-        return { added, removed }
-    }
-
     activate (viewports) {
         this.viewports = viewports
         this.points = []
@@ -130,6 +99,13 @@ class SliceInterface {
                 [x1 - dx, y1 - dy]
             )
         }
+    }
+
+    resize (width, height) {
+        this.canvas.width = width
+        this.canvas.height = height
+        this.ctx.strokeStyle = this.strokeStyle
+        this.ctx.fillStyle = this.fillStyle
     }
 
     mousedown (e) {
@@ -214,11 +190,28 @@ class SliceInterface {
         this.drawCurrLines(mousePos)
     }
 
-    resize (width, height) {
-        this.canvas.width = width
-        this.canvas.height = height
-        this.ctx.strokeStyle = this.strokeStyle
-        this.ctx.fillStyle = this.fillStyle
+    update (view, proj) {
+        const removed = []
+        for (let i = 0; i < this.slices.length; i++) {
+            if (this.slices[i].removed) {
+                const slice = this.slices.splice(i, 1)
+                // spread to unwrap slice items from list returned from splice
+                removed.push(...slice)
+                i--
+            }
+        }
+
+        let added = null
+        if (this.lines.length > 0) {
+            added = new SliceItem(this.sliceInd, this.lines, this.viewport, view, proj)
+            this.slices.push(added)
+
+            this.lines = []
+            this.viewport = null
+            this.sliceInd++
+        }
+
+        return { added, removed }
     }
 }
 
