@@ -7,7 +7,7 @@ class SliceInterface {
     constructor (width, height, cursorSize, strokeStyle, fillStyle) {
         this.line_color = strokeStyle
         this.fill_color = fillStyle
-        this.cross_size = cursorSize
+        this.cursorSize = cursorSize
 
         this.button = document.getElementById('apply_slice')
 
@@ -32,7 +32,7 @@ class SliceInterface {
     }
 
     hasOutput () {
-        return this.lines.length > 0
+        return this.lines.length > 0 && this.viewport
     }
 
     getOutput () {
@@ -46,11 +46,11 @@ class SliceInterface {
     }
 
     activate (viewports) {
-        this.state = PICK_VIEWPORT
         this.viewports = viewports
-        this.canvas.style.pointerEvents = 'auto'
         this.points = []
         this.lines = []
+        this.state = PICK_VIEWPORT
+        this.canvas.style.pointerEvents = 'auto'
     }
 
     deactivate () {
@@ -60,124 +60,132 @@ class SliceInterface {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     }
 
-    mousedown (e) {
-        const mousePos = [e.clientX, e.clientY]
-        switch (this.state) {
-            case PICK_VIEWPORT:
-                for (const viewport of this.viewports) {
-                    if (viewport.hitTest(...mousePos)) {
-                        this.viewport = viewport
-                    } else {
-                        fillViewport(this.ctx, viewport)
-                    }
-                }
-                clipViewport(this.ctx, this.viewport)
-                this.centerButtonInViewport(this.viewport)
-
-                this.points.push([e.clientX, e.clientY])
-                this.state = DRAW_LINES
-                break
-
-            case DRAW_LINES:
-                this.points.push(mousePos)
-                if (this.points.length > 1) {
-                    this.button.classList.remove('hidden')
-                }
-                break
-            case SELECT_AREA:
-                for (let i = 0; i + 1 < this.points.length; i += 2) {
-                    const pair = this.points.slice(i, i + 2)
-                    const clickSide = Math.sign(dist_point_line(mousePos, pair)) * -1
-                    this.lines.push([pair[0], pair[1], clickSide])
-                }
-                this.deactivate()
-                break
-        }
-    }
-
-    mousemove (e) {
-        const x = e.clientX
-        const y = e.clientY
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        if (this.state == PICK_VIEWPORT) {
-            for (let i = 0; i < this.viewports.length; i++) {
-                if (!viewports[i].hitTest(x, y)) {
-                    this.ctx.fillRect(viewports[i].x, viewports[i].y, viewports[i].width, viewports[i].height)
-                }
-            }
-        } else {
-            for (let i = 0; i + 1 < this.points.length; i += 2) {
-                const slope = (this.points[i + 1][1] - this.points[i][1]) / (this.points[i + 1][0] - this.points[i][0])
-
-                const p0 = [this.points[i][0] + this.canvas.width, this.points[i][1] + slope * this.canvas.width]
-                const p1 = [this.points[i][0] - this.canvas.width, this.points[i][1] - slope * this.canvas.width]
-
-                if (this.state == SELECT_AREA) {
-                    const line_length = dist(p0, p1)
-                    const line = sub(this.points[i + 1], this.points[i])
-                    const axis = [1, 0]
-                    let angle = angle_between(axis, line)
-                    if (this.points[i][1] > this.points[i + 1][1]) { angle *= -1 }
-                    const side = -1 * Math.sign(dist_point_line([x, y], this.points.slice(i, i + 2)))
-
-                    this.ctx.save()
-                    this.ctx.translate(p0[0], p0[1])
-                    this.ctx.rotate(angle)
-                    this.ctx.fillRect(-line_length, 0, 2 * line_length, -1 * side * line_length)
-                    this.ctx.restore()
-                }
-            }
-            for (let i = 0; i + 1 < this.points.length; i += 2) {
-                const slope = (this.points[i + 1][1] - this.points[i][1]) / (this.points[i + 1][0] - this.points[i][0])
-
-                const p0 = [this.points[i][0] + this.canvas.width, this.points[i][1] + slope * this.canvas.width]
-                const p1 = [this.points[i][0] - this.canvas.width, this.points[i][1] - slope * this.canvas.width]
-
-                this.ctx.beginPath()
-                this.ctx.moveTo(p0[0], p0[1])
-                this.ctx.lineTo(p1[0], p1[1])
-                this.ctx.stroke()
-            }
-        }
-        if (this.state != SELECT_AREA) {
-            if (this.points.length % 2 == 1) {
-                const i = this.points.length - 1
-                this.ctx.beginPath()
-                this.ctx.moveTo(this.points[i][0], this.points[i][1])
-                this.ctx.lineTo(x, y)
-                this.ctx.stroke()
-
-                this.draw_cross(this.points[i][0], this.points[i][1])
-            }
-
-            this.draw_cross(x, y)
-        }
-    }
-
-    draw_cross (x, y) {
-        this.ctx.lineWidth = this.cross_size / 6
-        this.ctx.beginPath()
-        this.ctx.moveTo(x - this.cross_size / 2, y)
-        this.ctx.lineTo(x + this.cross_size / 2, y)
-        this.ctx.moveTo(x, y - this.cross_size / 2)
-        this.ctx.lineTo(x, y + this.cross_size / 2)
-        this.ctx.stroke()
-        this.ctx.lineWidth = 1
-    }
-
-    resize (w, h) {
-        this.canvas.width = w
-        this.canvas.height = h
-        this.ctx.strokeStyle = this.line_color
-        this.ctx.fillStyle = this.fill_color
-    }
-
     centerButtonInViewport (viewport) {
         const buttonWidth = this.button.clientWidth
         const buttonHeight = this.button.clientHeight
         const { x, y, width, height } = viewport
         this.button.style.left = `${x + (width - buttonWidth) * 0.5}px`
         this.button.style.top = `${y + (height - buttonHeight) * 0.9}px`
+    }
+
+    drawLine (a, b) {
+        this.ctx.beginPath()
+        this.ctx.moveTo(a[0], a[1])
+        this.ctx.lineTo(b[0], b[1])
+        this.ctx.stroke()
+    }
+
+    drawCursor (x, y) {
+        this.ctx.lineWidth = this.cursorSize / 6
+
+        const r = this.cursorSize * 0.5
+        this.ctx.beginPath()
+        this.ctx.moveTo(x - r, y)
+        this.ctx.lineTo(x + r, y)
+        this.ctx.moveTo(x, y - r)
+        this.ctx.lineTo(x, y + r)
+        this.ctx.stroke()
+
+        this.ctx.lineWidth = 1
+    }
+
+    resize (width, height) {
+        this.canvas.width = width
+        this.canvas.height = height
+        this.ctx.strokeStyle = this.line_color
+        this.ctx.fillStyle = this.fill_color
+    }
+
+    mousedown (e) {
+        const mousePos = [e.clientX, e.clientY]
+        switch (this.state) {
+            case PICK_VIEWPORT:
+                // setup line drawing state in selected viewport
+                clipViewport(this.ctx, this.viewport)
+                this.centerButtonInViewport(this.viewport)
+                this.state = DRAW_LINES
+
+                // add clicked point as first position
+                this.points.push([e.clientX, e.clientY])
+                break
+
+            case DRAW_LINES:
+                this.points.push(mousePos)
+                // show apply slices button once at least one line defined
+                if (this.points.length > 1) {
+                    this.button.classList.remove('hidden')
+                }
+                break
+
+            case SELECT_AREA:
+                // for each line, calculate which side mouse clicked on and store output
+                for (let i = 0; i + 1 < this.points.length; i += 2) {
+                    const pair = this.points.slice(i, i + 2)
+                    const clickSide = Math.sign(dist_point_line(mousePos, pair)) * -1
+                    this.lines.push([pair[0], pair[1], clickSide])
+                }
+
+                // hide interface once area selection complete
+                this.deactivate()
+                break
+        }
+    }
+
+    mousemove (e) {
+        const mousePos = [e.clientX, e.clientY]
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+        if (this.state === PICK_VIEWPORT) {
+            // highlight / select hovered viewport
+            for (const viewport of this.viewports) {
+                if (viewport.hitTest(...mousePos)) {
+                    this.viewport = viewport
+                } else {
+                    fillViewport(this.ctx, viewport)
+                }
+            }
+        }
+
+        if (this.state === SELECT_AREA) {
+            // highlight hovered slice area by filling in all non-hovered areas
+            const edgeLength = this.viewport.diagonalLength()
+            for (let i = 0; i + 1 < this.points.length; i += 2) {
+                // sort pair by y position for consistent angle measurement from +x axis
+                const pair = this.points.slice(i, i + 2).sort((a, b) => a[1] - b[1])
+
+                const line = sub(pair[1], pair[0])
+                const angle = angle_between([1, 0], line)
+                const fillDirection = Math.sign(dist_point_line(mousePos, pair))
+
+                this.ctx.save()
+                this.ctx.translate(...pair[0])
+                this.ctx.rotate(angle)
+                this.ctx.fillRect(-0.5 * edgeLength, 0, edgeLength, edgeLength * fillDirection)
+                this.ctx.restore()
+            }
+        } else {
+            // draw cursor at current mouse position, connect to last point
+            // if drawing second point in line
+            if (this.points.length % 2 === 1) {
+                const lastPoint = this.points[this.points.length - 1]
+                this.drawLine(lastPoint, mousePos)
+                this.drawCursor(...lastPoint)
+            }
+            this.drawCursor(...mousePos)
+        }
+
+        // draw all currently defined lines
+        for (let i = 0; i + 1 < this.points.length; i += 2) {
+            const [x0, y0] = this.points[i]
+            const [x1, y1] = this.points[i + 1]
+            const dx = this.canvas.width
+            const dy = dx * (y1 - y0) / (x1 - x0)
+            this.drawLine(
+                [x0 + dx, y0 + dy],
+                [x1 - dx, y1 - dy]
+            )
+        }
     }
 }
 
