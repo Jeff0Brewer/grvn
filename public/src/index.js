@@ -195,25 +195,12 @@ async function main (data) {
         const elapsed = now - g_last
         g_last = now
 
-        if (slice_interface.hasOutput()) {
-            const { lines, viewport } = slice_interface.getOutput()
-            slice(lines, viewport)
-        } else {
-            let slicesRemoved = false
-            for (let i = 0; i < slices.length; i++) {
-                if (slices[i].removed) {
-                    slicesRemoved = true
-                    const removed = slices.splice(i, 1)
-                    unslice(removed[0].planefilters)
-                    i--
-                }
-            }
-            if (slicesRemoved) {
-                context_image.update_slices(grainSurfaces.getSlicePositions(slices))
-            }
-        }
+        const updatedSlices = slice_interface.update(viewMatrix, projMatrix)
+        updateSlices(gl, updatedSlices, slice_interface.slices)
 
-        if (!frozen) { draw(elapsed) }
+        if (!frozen) {
+            draw(elapsed)
+        }
 
         requestAnimationFrame(tick, canvas)
     }
@@ -414,50 +401,21 @@ function draw (elapsed) {
     }
 }
 
-const getCurrentPlaneFilters = () => {
-    return slices.map(slice => slice.planefilters).flat()
-}
-
-function slice (lines, viewport) {
-    const rot = new Matrix4()
-    if (viewport.equals(viewports[0])) {
-        rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
-    } else if (viewport.equals(viewports[1])) {
-        rot.scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
+const updateSlices = (gl, updated, allSlices) => {
+    const { added, removed } = updated
+    if (added !== null) {
+        motionPlot.slice(added)
+        frozen = false
     }
-
-    const planes = []
-    for (let i = 0; i < lines.length; i++) {
-        for (let p = 0; p < 2; p++) {
-            lines[i][p][1] = viewport.height - (lines[i][p][1] - viewport.y)
-        }
-
-        const mid = midpoint(lines[i][0], lines[i][1])
-
-        const trio = []
-        trio.push(unprojectmouse(lines[i][0][0], lines[i][0][1], viewMatrix, projMatrix, viewport, 0, rot))
-        trio.push(unprojectmouse(lines[i][1][0], lines[i][1][1], viewMatrix, projMatrix, viewport, 0, rot))
-        trio.push(unprojectmouse(mid[0], mid[1], viewMatrix, projMatrix, viewport, 1, rot))
-
-        const plane = planefrompoints(trio[0], trio[1], trio[2])
-
-        planes.push(new PlaneFilter(plane, lines[i][2]))
+    if (removed.length !== 0) {
+        motionPlot.unslice(removed)
     }
-
-    slices.push(new SliceItem(slice_ind, planes, lines, viewport))
-    slice_ind++
-
-    forcePlot.updateSlices(gl, getCurrentPlaneFilters())
-    motionPlot.slice(planes)
-
-    context_image.update_slices(grainSurfaces.getSlicePositions(slices))
-
-    frozen = false
-}
-
-function unslice (planes) {
-    motionPlot.unslice(planes)
-    forcePlot.updateSlices(gl, getCurrentPlaneFilters())
+    // force plot / context image update from set of slices
+    // no individual slice / unslice methods
+    if (added !== null || removed.length !== 0) {
+        forcePlot.updateSlices(gl, allSlices)
+        context_image.update_slices(grainSurfaces.getSlicePositions(allSlices))
+    }
 }
 
 function brush_vecs (out) {

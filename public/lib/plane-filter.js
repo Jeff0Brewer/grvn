@@ -1,14 +1,19 @@
-const toFloatString = (num) => {
-    const str = num.toString()
-    return num % 1 !== 0 ? str : str + '.0'
-}
+const INV_SCALE_MAT = (new Matrix4()).scale(1 / 0.025, 1 / 0.025, 1 / 0.025)
 
 class PlaneFilter {
-    constructor (plane, sign) {
-        this.plane = plane
+    constructor (point0, point1, sign, viewMatrix, projMatrix, viewport) {
+        const [x0, y0] = point0
+        const [x1, y1] = point1
+        const [xC, yC] = midpoint(point0, point1)
+        this.plane = planeFromPoints(
+            unprojectmouse(x0, y0, viewMatrix, projMatrix, viewport, 0, INV_SCALE_MAT),
+            unprojectmouse(x1, y1, viewMatrix, projMatrix, viewport, 0, INV_SCALE_MAT),
+            unprojectmouse(xC, yC, viewMatrix, projMatrix, viewport, 1, INV_SCALE_MAT)
+        )
+
         this.sign = sign
 
-        const [x, y, z, w] = plane
+        const [x, y, z, w] = this.plane
         this.invDist = Math.sqrt(x * x + y * y + z * z)
 
         const fX = toFloatString(x)
@@ -29,4 +34,15 @@ class PlaneFilter {
         )
         return this.sign === Math.sign(det)
     }
+}
+
+function planeFromPoints (p0, p1, p2) {
+    const [nx, ny, nz] = norm(cross(sub(p1, p0), sub(p2, p0)))
+    const [cx, cy, cz] = p0
+    return [nx, ny, nz, -(nx * cx + ny * cy + nz * cz)]
+}
+
+const toFloatString = (num) => {
+    const str = num.toString()
+    return num % 1 !== 0 ? str : str + '.0'
 }

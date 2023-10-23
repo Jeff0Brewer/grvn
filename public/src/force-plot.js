@@ -97,10 +97,11 @@ class ForcePlot {
         gl.uniform1f(this.u_LineWidth, this.lineWidth)
     }
 
-    updateSlices (gl, planefilters) {
+    updateSlices (gl, slices) {
+        const filters = slices.map(s => s.planefilters).flat()
         // generate glsl filter
-        const glslFilter = planefilters.length > 0
-            ? filterToFunction(planefilters.map(f => f.glslCheck).join('||'))
+        const glslFilter = filters.length > 0
+            ? filterToFunction(filters.map(f => f.glslCheck).join('||'))
             : EMPTY_FILTER
 
         // recompile program with new filter

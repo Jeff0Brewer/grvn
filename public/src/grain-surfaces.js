@@ -117,12 +117,13 @@ class GrainSurfaces {
         return currentSlice
     }
 
-    getSlicePositions (subsets) {
-        if (subsets.length === 0) { return [] }
-
+    getSlicePositions (slices) {
+        if (slices.length === 0) {
+            return []
+        }
         const slicePositions = []
         for (let t = 0; t < this.numT; t++) {
-            const inds = this.getSliceInds(t, subsets)
+            const inds = this.getSliceInds(t, slices)
             const positions = inds.map(i => this.positions[t][i])
             slicePositions.push(positions)
         }

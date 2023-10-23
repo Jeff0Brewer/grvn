@@ -193,12 +193,13 @@ class MotionPlot {
         this.visibilityChanged = true
     }
 
-    slice (planefilters) {
-        this.updateSlice(planefilters, this.numT)
+    slice (slice) {
+        this.updateSlice(slice.planefilters, this.numT)
     }
 
-    unslice (planefilters) {
-        this.updateSlice(planefilters, -this.numT)
+    unslice (slices) {
+        const filters = slices.map(s => s.planefilters).flat()
+        this.updateSlice(filters, -this.numT)
     }
 
     resizeRibbons (gl, scale) {

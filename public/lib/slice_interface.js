@@ -25,23 +25,43 @@ class SliceInterface {
         this.points = []
         this.lines = []
 
+        this.slices = []
+        this.sliceInd = 0
+
         this.canvas.onmousedown = e => { this.mousedown(e) }
         this.canvas.onmousemove = e => { this.mousemove(e) }
         this.button.onmouseup = () => { this.state = SELECT_AREA }
     }
 
-    hasOutput () {
-        return this.lines.length > 0 && this.viewport
-    }
-
-    getOutput () {
-        const output = {
-            lines: this.lines,
-            viewport: this.viewport
+    update (view, proj) {
+        const removed = []
+        for (let i = 0; i < this.slices.length; i++) {
+            if (this.slices[i].removed) {
+                const slice = this.slices.splice(i, 1)
+                removed.push(...slice)
+                i--
+            }
         }
-        this.lines = []
-        this.viewport = null
-        return output
+
+        let added = null
+        if (this.lines.length > 0) {
+            const filters = this.lines.map(([p0, p1, sign]) =>
+                new PlaneFilter(p0, p1, sign, view, proj, this.viewport)
+            )
+            added = new SliceItem(
+                this.sliceInd,
+                filters,
+                this.lines,
+                this.viewport
+            )
+            this.slices.push(added)
+
+            this.sliceInd++
+            this.lines = []
+            this.viewport = null
+        }
+
+        return { added, removed }
     }
 
     activate (viewports) {
@@ -144,6 +164,9 @@ class SliceInterface {
                 for (let i = 0; i + 1 < this.points.length; i += 2) {
                     const pair = this.points.slice(i, i + 2)
                     const clickSide = Math.sign(dist_point_line(mousePos, pair)) * -1
+                    for (const point of pair) {
+                        point[1] = this.viewport.height - point[1]
+                    }
                     this.lines.push([pair[0], pair[1], clickSide])
                 }
 
