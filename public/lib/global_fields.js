@@ -1,174 +1,204 @@
-class GlobalTab {
-    constructor (source, dest, label, data, low, high) {
-        const cloned = source.cloneNode(false)
-        remove_class(cloned, ' hidden')
-        dest.insertBefore(cloned, source)
+class GlobalField {
+    constructor (label, data, strokeStyle, lineWidth, addTab, setPlot, setInd) {
+        const { root, canvas, minVal, maxVal, boundLeft, boundRight, currTime } = getGlobalPlotDom()
+        const { tab } = getGlobalTabDom()
 
-        cloned.value = label
+        addTab(tab)
+        setPlot(root)
 
-        this.tab = cloned
-        this.clicked = true
+        tab.value = label
 
-        this.data = data
-        this.low = low
-        this.high = high
+        canvas.width = canvas.clientWidth * window.devicePixelRatio
+        canvas.height = canvas.clientHeight * window.devicePixelRatio
+        const ctx = canvas.getContext('2d')
+
+        ctx.transform(1, 0, 0, -1, 0, canvas.height)
+        ctx.strokeStyle = strokeStyle
+        ctx.lineWidth = lineWidth
+
+        let min = Number.MAX_VALUE
+        let max = Number.MIN_VALUE
+        for (const val of data) {
+            min = Math.min(min, val)
+            max = Math.max(max, val)
+        }
+        const getPosY = (i) => map(data[i], min, max, 0, canvas.height)
+
+        ctx.beginPath()
+        ctx.moveTo(0, getPosY(0))
+        const incX = canvas.width / data.length
+        for (let i = 1; i < data.length; i++) {
+            ctx.lineTo(i * incX, getPosY(i))
+        }
+        ctx.stroke()
+
+        minVal.innerHTML = min.toFixed(2)
+        maxVal.innerHTML = max.toFixed(2)
+
+        canvas.addEventListener('mousedown', () => { this.dragging = true })
+        canvas.addEventListener('mouseup', () => { this.dragging = false })
+        canvas.addEventListener('mouseleave', () => { this.dragging = false })
+        tab.addEventListener('mousedown', () => {
+            setPlot(root)
+            setInd()
+        })
+
+        this.canvas = canvas
+        this.boundLeft = boundLeft
+        this.boundRight = boundRight
+        this.currTime = currTime
+        this.dragging = false
     }
-}
 
-function make_global_tab (label, data, low, high) {
-    const gt_source = document.getElementById('global_tab_source')
-    const gt_dest = document.getElementById('global_tabs')
-
-    const gt = new GlobalTab(gt_source, gt_dest, label, data, low, high)
-
-    gt.tab.onmousedown = function () {
-        gt.clicked = true
+    setTime (t, numT) {
+        const margin = (t / (numT - 1)) * this.canvas.clientWidth
+        this.currTime.style.marginLeft = `${margin}px`
     }
 
-    return gt
+    getTime (clientX, numT, leftBound, rightBound) {
+        const { left, width } = this.canvas.getBoundingClientRect()
+        const perX = clamp((clientX - left) / width, leftBound, rightBound)
+        const time = Math.floor(perX * numT)
+        this.setTime(time, numT)
+        return time
+    }
+
+    showTimeBounds () {
+        this.boundLeft.classList.remove('hidden')
+        this.boundRight.classList.remove('hidden')
+    }
+
+    hideTimeBounds () {
+        this.boundLeft.classList.add('hidden')
+        this.boundRight.classList.add('hidden')
+    }
+
+    setTimeBounds (leftBound, rightBound, t, numT) {
+        const leftWidth = leftBound * this.canvas.clientWidth
+        const rightWidth = (1 - rightBound) * this.canvas.clientWidth
+        this.boundLeft.style.width = `${leftWidth}px`
+        this.boundRight.style.width = `${rightWidth}px`
+        this.setTime(t, numT)
+    }
 }
 
 class GlobalFields {
-    constructor (line_color, line_width) {
-        this.elements = {
-            body: document.getElementById('global_section'),
-            tab_container: document.getElementById('global_tabs'),
-            axis: {
-                low: document.getElementById('global_low'),
-                high: document.getElementById('global_high')
-            },
-            workspace: {
-                low: document.getElementById('global_work_left'),
-                high: document.getElementById('global_work_right')
-            },
-            canvas: document.getElementById('global_canvas'),
-            time_bar: document.getElementById('global_time_bar')
-        }
+    constructor (strokeStyle, lineWidth) {
+        this.tabSection = document.getElementById('global-tabs')
+        this.plotSection = document.getElementById('global-plot')
+        this.strokeStyle = strokeStyle
+        this.lineWidth = lineWidth
 
-        this.dragging = false
+        this.fields = []
+        this.currInd = 0
+        this.leftBound = 0
+        this.rightBound = 1
 
-        this.elements.canvas.width = this.elements.canvas.clientWidth * window.devicePixelRatio
-        this.elements.canvas.height = this.elements.canvas.clientHeight * window.devicePixelRatio
-        this.ctx = this.elements.canvas.getContext('2d')
-        this.ctx.transform(1, 0, 0, -1, 0, this.elements.canvas.height)
-
-        this.line_color = line_color
-        this.line_width = line_width
-        this.buffer = 10
-
-        this.last_ind = -1
-
-        this.tabs = []
-    }
-
-    add_field (data) {
-        if (this.tabs.length < 4) {
-            remove_class(this.elements.body, ' hidden')
-            const parsed = []
-            let low = 1000000
-            let high = -1000000
-
-            for (let i = 0; i < data.length; i++) {
-                const val = data[i]
-                parsed.push(val)
-                low = min(low, val)
-                high = max(high, val)
+        this.addTab = (tab) => { this.tabSection.appendChild(tab) }
+        this.setPlot = (root) => {
+            while (this.plotSection.firstChild) {
+                this.plotSection.removeChild(this.plotSection.lastChild)
             }
-
-            this.tabs.push(make_global_tab('F' + this.tabs.length.toString(), parsed, low, high))
-            this.tab_changed()
+            this.plotSection.appendChild(root)
+        }
+        this.setInd = (ind) => {
+            const tabs = this.tabSection.children
+            tabs[this.currInd].dataset.current = false
+            this.currInd = ind
+            tabs[this.currInd].dataset.current = true
         }
     }
 
-    tab_changed () {
-        let new_ind = -1
-        for (let i = 0; i < this.tabs.length; i++) {
-            if (this.tabs[i].clicked) {
-                new_ind = i
-                this.tabs[i].clicked = false
-                break
-            }
-        }
-        if (new_ind >= 0) {
-            if (this.last_ind >= 0) {
-                remove_class(this.tabs[this.last_ind].tab, ' global_tab_active')
-            }
-            add_class(this.tabs[new_ind].tab, ' global_tab_active')
-            this.last_ind = new_ind
-            this.draw_tab(this.tabs[new_ind])
-        }
+    isDragging () {
+        return this.currInd < this.fields.length && this.fields[this.currInd].dragging
     }
 
-    draw_tab (tab) {
-        this.elements.axis.low.innerHTML = tab.low.toFixed(2)
-        this.elements.axis.high.innerHTML = tab.high.toFixed(2)
-
-        this.ctx.clearRect(0, 0, this.elements.canvas.width, this.elements.canvas.height)
-
-        this.ctx.strokeStyle = this.line_color
-        this.ctx.lineWidth = this.line_width
-        this.ctx.beginPath()
-        this.ctx.moveTo(0, map(tab.data[0], tab.low, tab.high, 0, this.elements.canvas.height))
-        const step = this.elements.canvas.width / tab.data.length
-        for (let i = 1; i < tab.data.length; i++) {
-            this.ctx.lineTo(i * step, map(tab.data[i], tab.low, tab.high, 0, this.elements.canvas.height))
-        }
-        this.ctx.stroke()
+    addField (data) {
+        const ind = this.fields.length
+        const field = new GlobalField(
+            `F${ind}`,
+            data,
+            this.strokeStyle,
+            this.lineWidth,
+            this.addTab,
+            this.setPlot,
+            () => { this.setInd(ind) }
+        )
+        this.fields.push(field)
+        this.setInd(ind)
     }
 
-    change_workspace (low, t, high, num_t) {
-        const low_width = (low / (num_t - 1)) * this.elements.canvas.clientWidth
-        this.elements.workspace.low.style.width = low_width.toString() + 'px'
-        this.elements.workspace.high.style.width = (((num_t - 1 - high) / (num_t - 1)) * this.elements.canvas.clientWidth).toString() + 'px'
-        this.set_time(t, num_t)
-    }
-
-    toggle_workspace (low, high) {
-        if (!(add_class(this.elements.workspace.low, ' hidden') | add_class(this.elements.workspace.high, ' hidden'))) {
-            remove_class(this.elements.workspace.low, ' hidden')
-            remove_class(this.elements.workspace.high, ' hidden')
+    setBounds (leftBound, rightBound, t, numT) {
+        this.leftBound = leftBound / (numT - 1)
+        this.rightBound = rightBound / (numT - 1)
+        for (const field of this.fields) {
+            field.setTimeBounds(this.leftBound, this.rightBound, t, numT)
         }
     }
 
-    set_time (t, num_t) {
-        this.elements.time_bar.style.marginLeft = ((t / (num_t - 1)) * this.elements.canvas.clientWidth).toString() + 'px'
+    showBounds () {
+        for (const field of this.fields) {
+            field.showTimeBounds()
+        }
     }
 
-    get_time (e, num_t, low, high) {
-        const canvas_rect = this.elements.canvas.getBoundingClientRect()
-        let t = Math.round(min((e.clientX - canvas_rect.left) / canvas_rect.width, 1) * (num_t - 1))
-        t = max(min(t, high), low)
-        this.set_time(t, num_t)
-        return t
+    hideBounds () {
+        for (const field of this.fields) {
+            field.hideTimeBounds()
+        }
     }
 
-    start_drag () {
-        this.dragging = true
+    setTime (t, numT) {
+        this.fields[this.currInd].setTime(t, numT)
     }
 
-    end_drag () {
-        this.dragging = false
+    getTime (clientX, numT) {
+        return this.fields[this.currInd].getTime(clientX, numT, this.leftBound, this.rightBound)
     }
 }
+const initGlobalPlotDom = () => {
+    const template =
+        `<div class="global-plot-wrap">
+            <div class="global-labels">
+                <p class="global-min-val">0</p>
+                <p class="global-max-val">1</p>
+            </div>
+            <div class="global-plot">
+                <canvas class="global-canvas"></canvas>
+                <div class="global-bound-left"></div>
+                <div class="global-bound-right"></div>
+                <div class="global-curr-time"></div>
+            </div>
+        </div>`
 
-function make_global_fields (line_color, line_width) {
-    const gf = new GlobalFields(line_color, line_width)
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(template, 'text/html')
+    return doc.body.firstChild.cloneNode(true)
+}
 
-    gf.elements.tab_container.onmousedown = function () {
-        gf.tab_changed()
-    }
+const initGlobalTabDom = () => {
+    const template = '<input type="text" class="global-tab" />'
 
-    gf.elements.canvas.onmousedown = function () {
-        gf.start_drag()
-    }
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(template, 'text/html')
+    return doc.body.firstChild.cloneNode(true)
+}
 
-    gf.elements.canvas.onmouseup = function () {
-        gf.end_drag()
-    }
+const PLOT_DOM = initGlobalPlotDom()
+const TAB_DOM = initGlobalTabDom()
 
-    gf.elements.onmouseleave = function () {
-        gf.end_drag()
-    }
+const getGlobalPlotDom = () => {
+    const root = PLOT_DOM.cloneNode(true)
+    const labels = root.children[0]
+    const plot = root.children[1]
+    const [minVal, maxVal] = labels.children
+    const [canvas, boundLeft, boundRight, currTime] = plot.children
 
-    return gf
+    return { root, canvas, minVal, maxVal, boundLeft, boundRight, currTime }
+}
+
+const getGlobalTabDom = () => {
+    const tab = TAB_DOM.cloneNode(true)
+
+    return { tab }
 }

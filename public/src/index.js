@@ -38,7 +38,7 @@ var sm_viewer
 
 var context_image
 
-var global_fields = make_global_fields('rgb(75,137,124)', 1.5)
+var global_fields = new GlobalFields('rgb(75, 137, 124)', 1.5)
 var global_reader = new FileReader()
 
 const colorMapColors = '#810126 0%, #d00c21 18.7%, #cf0f21 18.7%, #dd171e 23.2%, #df161d 23.2%, #df161d 23.5%, #df191d 23.5%, #e61e1e 26.3%, #e6221e 26.5%, #e8241f 27.7%, #e8261e 27.7%, #f13625 32.2%, #f13824 32.2%, #f63f27 34.2%, #f84528 35.6%, #f84727 35.6%, #fc502c 37.9%, #fd6e33 44.1%, #fc6f34 44.1%, #fd7235 44.9%, #fd7434 45.1%, #fd7b37 46.5%, #fc7d37 46.8%, #fd863a 48.8%, #fe8a3c 49.7%, #fd8c3b 49.7%, #fd9440 52.7%, #fc953f 52.7%, #fe953f 53.1%, #fd9641 53.1%, #fd9d43 55.9%, #fc9e45 55.9%, #fea145 57.5%, #fea346 57.5%, #ffa948 60%, #feaa49 60%, #feb04b 62.3%, #fdb24c 62.3%, #fdb24c 62.6%, #ffb14c 62.6%, #ffb14c 63.1%, #feb34d 63.1%, #feb853 64.9%, #fedd7e 77.8%, #fffecb 100%'
@@ -147,7 +147,7 @@ async function main (data) {
 
     color_mapper.setData(data.forces)
     grainSurfaces.colorMap(color_mapper)
-    global_fields.add_field(data.global)
+    global_fields.addField(data.global)
 
     // lose reference to dataset for gc
     data = {}
@@ -255,11 +255,11 @@ function draw (elapsed) {
 
         clearCanvas(gl, canvas)
 
-        if (!global_fields.dragging && !fs_camera.dragging) {
+        if (!global_fields.isDragging() && !fs_camera.dragging) {
             timeline.tick(elapsed)
         }
-        if (global_fields.tabs.length >= 0) {
-            global_fields.set_time(timeline.timestep, numT)
+        if (global_fields.fields.length >= 0) {
+            global_fields.setTime(timeline.timestep, numT)
         }
 
         if (selections.length > 0 && (flow_visible || vector_visible)) {
@@ -393,10 +393,10 @@ function draw (elapsed) {
                 : sm_viewer.hovering[1]
             const subset = grainSurfaces.getPositions(selections[sm_viewer.hovering[0]].inds, t)
             context_image.draw(t, subset)
-            global_fields.set_time(t, numT)
+            global_fields.setTime(t, numT)
         } else {
             context_image.draw(timeline.timestep, [])
-            global_fields.set_time(0, numT)
+            global_fields.setTime(0, numT)
         }
     }
 }
@@ -476,7 +476,11 @@ function switch_mode (mode) {
         }
 
         if (global_fields) {
-            global_fields.toggle_workspace()
+            if (vis_mode === 0) {
+                global_fields.showBounds()
+            } else {
+                global_fields.hideBounds()
+            }
         }
 
         if (mode == 0) { // full sample
@@ -574,26 +578,30 @@ document.body.onmousemove = function (e) {
     if (timeline) {
         const workspace = timeline.mousemove(e)
         if (workspace && global_fields) {
-            global_fields.change_workspace(workspace[0], workspace[1], workspace[2], numT)
+            const [low, t, high] = workspace
+            global_fields.setBounds(low, high, t, numT)
         }
     }
     if (color_mapper) {
         color_mapper.mouseMove(e)
     }
-    if (global_fields.dragging && timeline) {
-        timeline.set_time(global_fields.get_time(e, numT, timeline.workspace.low, timeline.workspace.high))
+    if (global_fields.isDragging() && timeline) {
+        timeline.set_time(global_fields.getTime(e.clientX, numT))
     }
     if (select_interface && select_interface.click_ind == 1) {
         select_interface.hover_rotate(e.clientX, e.clientY)
     }
 }
 
+document.body.onmousedown = function (e) {
+    if (global_fields.isDragging() && timeline) {
+        timeline.set_time(global_fields.getTime(e.clientX, numT))
+    }
+}
+
 document.body.onmouseup = function (e) {
     if (timeline) {
         timeline.mouseup()
-    }
-    if (global_fields) {
-        global_fields.end_drag()
     }
 }
 
@@ -934,7 +942,7 @@ document.getElementById('add_global').onchange = function () {
 }
 
 global_reader.onloadend = function () {
-    global_fields.add_field(this.result)
+    global_fields.addField(this.result)
 }
 
 const ui = document.getElementById('ui')

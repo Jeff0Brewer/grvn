@@ -13,6 +13,12 @@
     src: url("assets/Gudea-Regular.ttf");
 }
 
+:root {
+    --sidebar-width: 225px;
+    --global-plot-height: 115px;
+    --global-label-height: 15px;
+}
+
 * { /* temporary noselect all */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -44,7 +50,7 @@ button {
 .sidebar{
     position: relative;
     float: right;
-    width: 225px;
+    width: var(--sidebar-width);
     height: 100vh;
     background-color: rgb(16,16,16);
     overflow: hidden;
@@ -401,7 +407,7 @@ line-height: 17px;
     position: absolute;
     bottom: 0;
     left: 0;
-    width: calc(100vw - 225px);
+    width: calc(100vw - var(--sidebar-width));
     height: 43px;
     z-index: 2000;
 }
@@ -667,107 +673,6 @@ line-height: 17px;
     width: 2px;
     height: 15px;
     background-color: white;
-}
-
-.global_section{
-    width: 225px;
-    height: 155px;
-    overflow: hidden;
-}
-
-.global_tabs{
-    margin-bottom: 5px;
-    width: 100%;
-    height: 20px;
-
-    user-select: none;
-}
-
-.global_tab{
-    position: relative;
-    float: left;
-    height: 100%;
-    width: 24%;
-    padding: 0;
-
-    background-color: rgb(34,34,34);
-    border: solid;
-    border-color: rgb(16,16,16);
-    border-width: 0 1px 0 0;
-
-
-    line-height: 20px;
-    text-align: center;
-    font-family: t_web_reg;
-    font-size: 12px;
-    color: rgb(145, 145, 145);
-}
-
-.global_tab_active{
-    color: white;
-}
-
-.global_axis_label_container{
-    width: 125px;
-    transform-origin: 0 0;
-    transform: rotate(270deg) translate(-125px, 0);
-}
-
-.global_axis_label{
-    height: 0px;
-    font-family: t_web_xlte;
-    font-size: 10px;
-    color: white;
-    user-select: none;
-}
-
-.global_canvas{
-    position: relative;
-    left: 15px;
-    top: 0px;
-    height: 125px;
-    width: 200px;
-}
-
-.global_time_container{
-    position: relative;
-    left: 15px;
-    bottom: 129px;
-    height: 125px;
-    width: 200px;
-    border: solid;
-    border-width: 0 0 1px 1px;
-    border-color: white;
-    z-index: 300;
-
-    pointer-events: none;
-}
-
-.global_time_workspace{
-    position: relative;
-    height: 100%;
-    width: 0px;
-    background-color: rgba(16, 16, 16, .8);
-}
-
-.global_time_bar_container{
-    position: relative;
-    left: 15px;
-    bottom: 254px;
-    height: 125px;
-    width: 200px;
-    z-index: 300;
-
-    pointer-events: none;
-}
-
-.global_time_bar{
-    position: relative;
-    float: left;
-    margin-left: 0px;
-    width: 1px;
-    height: 100%;
-    background-color: rgba(255,255,255,.8);
 }
 
 .hidden{
@@ -1141,4 +1046,91 @@ textarea:focus, input:focus{
 
 #widthMenu input[type="range"] {
     width: 100%;
+}
+
+.global-section * {
+    box-sizing: border-box;
+}
+
+.global-section {
+    position: relative;
+    color: #fff;
+}
+
+#global-tabs {
+    display: flex;
+}
+
+#global-tabs input {
+    height: 20px;
+    width: 24%;
+    margin-bottom: 5px;
+    padding: 0;
+    line-height: 100%;
+    text-align: center;
+
+    background-color: rgb(34,34,34);
+    border: 1px solid rgb(16, 16, 16);
+    border-width: 0 1px 0 0;
+    font-family: t_web_reg;
+    font-size: 12px;
+    color: rgb(145, 145, 145);
+}
+
+#global-tabs input[data-current="true"] {
+    color: #fff;
+}
+
+.global-labels {
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    width: var(--global-plot-height);
+    height: var(--global-label-height);
+    transform-origin: 0 0;
+    transform: rotate(270deg) translate(calc(-1 * var(--global-plot-height)), 0);
+
+    font-family: t_web_xlte;
+    font-size: 10px;
+}
+
+.global-plot {
+    position: relative;
+    border: solid #fff;
+    border-width: 0 0 1px 1px;
+    width: calc(var(--sidebar-width) - var(--global-label-height) - 5px);
+    height: var(--global-plot-height);
+    left: var(--global-label-height);
+}
+
+.global-plot div {
+    pointer-events: none;
+}
+
+.global-plot canvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.global-curr-time {
+    position: relative;
+    height: 100%;
+    width: 1px;
+    right: 1px;
+    background-color: #fff;
+}
+
+.global-bound-left, .global-bound-right {
+    position: absolute;
+    height: 100%;
+    background-color: rgba(16, 16, 16, 0.8);
+}
+
+.global-bound-left {
+    left: 0;
+}
+
+.global-bound-right {
+    right: 0;
 }
