@@ -43,17 +43,16 @@ class SliceInterface {
 
     deactivate () {
         this.button.classList.add('hidden')
-        this.canvas.style.pointerEvents = 'none'
         this.ctx.restore()
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        this.canvas.style.pointerEvents = 'none'
     }
 
-    centerButtonInViewport (viewport) {
-        const buttonWidth = this.button.clientWidth
-        const buttonHeight = this.button.clientHeight
-        const { x, y, width, height } = viewport
-        this.button.style.left = `${x + (width - buttonWidth) * 0.5}px`
-        this.button.style.top = `${y + (height - buttonHeight) * 0.9}px`
+    resize (width, height) {
+        this.canvas.width = width
+        this.canvas.height = height
+        this.ctx.strokeStyle = this.strokeStyle
+        this.ctx.fillStyle = this.fillStyle
     }
 
     drawCursor (x, y) {
@@ -101,11 +100,12 @@ class SliceInterface {
         }
     }
 
-    resize (width, height) {
-        this.canvas.width = width
-        this.canvas.height = height
-        this.ctx.strokeStyle = this.strokeStyle
-        this.ctx.fillStyle = this.fillStyle
+    placeButtonInViewport (viewport) {
+        const buttonWidth = this.button.clientWidth
+        const buttonHeight = this.button.clientHeight
+        const { x, y, width, height } = viewport
+        this.button.style.left = `${x + (width - buttonWidth) * 0.5}px`
+        this.button.style.top = `${y + (height - buttonHeight) * 0.9}px`
     }
 
     mousedown (e) {
@@ -114,11 +114,11 @@ class SliceInterface {
             case PICK_VIEWPORT:
                 // setup line drawing state in selected viewport
                 clipViewport(this.ctx, this.viewport)
-                this.centerButtonInViewport(this.viewport)
+                this.placeButtonInViewport(this.viewport)
                 this.state = DRAW_LINES
 
                 // add clicked point as first position
-                this.points.push([e.clientX, e.clientY])
+                this.points.push(mousePos)
                 break
 
             case DRAW_LINES:
