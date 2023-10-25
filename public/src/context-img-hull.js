@@ -1,4 +1,4 @@
-importScripts('../lib/concave_hull.js')
+importScripts('../lib/concave-hull.js')
 
 onmessage = ({ data }) => {
     const { positions, scaling, delta, id } = data

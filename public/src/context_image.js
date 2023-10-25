@@ -27,7 +27,7 @@ class ContextImage {
         this.slice_sides = []
         this.slice_tops = []
 
-        this.worker = new Worker('./lib/context-img-hull.js')
+        this.worker = new Worker('./src/context-img-hull.js')
 
         this.worker.onmessage = ({ data }) => {
             const { sideBorders, topBorders, id } = data
