@@ -211,12 +211,14 @@ const updateFullSampleCamera = (elapsed) => {
     if (autoRotate) {
         fs_camera.autoRotate(elapsed, autoRotateSpeed)
     }
-    const { position, focus } = menu.cameraPath !== null
-        ? menu.cameraPath.get(elapsed)
-        : fs_camera
+    if (menu.cameraPath !== null) {
+        const { position, focus } = menu.cameraPath.get(elapsed)
+        fs_camera.position = position
+        fs_camera.focus = focus
+    }
     viewMatrix.setLookAt(
-        ...position,
-        ...focus,
+        ...fs_camera.position,
+        ...fs_camera.focus,
         0, 0, 1
     )
 }
