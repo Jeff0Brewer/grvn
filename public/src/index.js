@@ -96,6 +96,21 @@ forceWidthInput.addEventListener('input', e => {
     forcePlot.setLineWidth(gl, e.target.value)
 })
 
+// setup interface toggle
+let uiHidden = false
+const ui = document.getElementById('ui')
+window.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'h') {
+        if (uiHidden) {
+            ui.style.display = 'block'
+        } else {
+            collapseSidebar()
+            ui.style.display = 'none'
+        }
+        uiHidden = !uiHidden
+    }
+})
+
 const clearCanvas = (gl, canvas) => {
     gl.scissor(0, 0, canvas.width, canvas.height)
     gl.viewport(0, 0, canvas.width, canvas.height)
@@ -623,7 +638,9 @@ canvas.onmousemove = function (e) {
                 fs_camera.mousemove(e)
             }
             if (comparisonCursor) {
-                comparisonCursor.update(e.clientX, e.clientY, viewports)
+                // hack to hide comparision cursor when ui hidden, will refactor
+                const updateViewports = uiHidden ? [] : viewports
+                comparisonCursor.update(e.clientX, e.clientY, updateViewports)
             }
             break
         case 1: // small multiples
@@ -946,15 +963,3 @@ document.getElementById('add_global').onchange = function () {
 global_reader.onloadend = function () {
     global_fields.addField(this.result)
 }
-
-const ui = document.getElementById('ui')
-window.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key === 'h') {
-        if (ui.style.display === 'none') {
-            ui.style.display = 'block'
-        } else {
-            collapseSidebar()
-            ui.style.display = 'none'
-        }
-    }
-})
