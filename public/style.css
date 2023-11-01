@@ -45,6 +45,7 @@ button {
     border: none;
     font: inherit;
     font-size: inherit;
+    color: inherit;
 }
 
 .sidebar{
@@ -1038,6 +1039,8 @@ textarea:focus, input:focus{
     padding: 10px;
     color: #fff;
     background-color: #000;
+    border-radius: 5px 0 0 0;
+    overflow: hidden;
 }
 
 #widthMenu input[type="text"] {
@@ -1046,6 +1049,12 @@ textarea:focus, input:focus{
 
 #widthMenu input[type="range"] {
     width: 100%;
+}
+
+#widthMenu button {
+    border-radius: 5px;
+    background-color: #101010;
+    padding: 5px 10px;
 }
 
 .global-section * {
