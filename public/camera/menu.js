@@ -32,7 +32,8 @@ const menu = {
     axisPosition: null,
     axisChanged: true,
     getCameraPosition: () => [0, 0, 0],
-    getCameraFocus: () => [0, 0, 0]
+    getCameraFocus: () => [0, 0, 0],
+    resetCamera: () => {}
 }
 
 // update rendered path, must call whenever steps / smooth changes
@@ -130,6 +131,7 @@ const toggleDrawPath = () => {
 const stopPath = () => {
     menu.cameraPath = null
     menu.currStep = null
+    menu.resetCamera()
     updateCurrStepDom()
     updatePlayPauseDom()
 }

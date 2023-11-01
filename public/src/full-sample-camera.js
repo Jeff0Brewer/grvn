@@ -1,14 +1,18 @@
+const DEFAULT_POSITION = [0, 100, 50]
+const DEFAULT_FOCUS = [0, 0, 20]
 const ROTATE_SPEED = 0.5
 const ZOOM_SPEED = 0.1
 const UP_VEC = [0, 0, 1]
+
 const NEG_UP_VEC = UP_VEC.map(v => -v)
 const RAD_TO_DEG = 180 / Math.PI
 const ANGLE_BOUND = 0.1 // max vertical angle = 180 - ANGLE_BOUND
 
 class FullSampleCamera {
     constructor () {
-        this.position = [0, 100, 50]
-        this.focus = [0, 0, 20]
+        // copy defaults to prevent mutating via pointer
+        this.position = DEFAULT_POSITION.slice()
+        this.focus = DEFAULT_FOCUS.slice()
         this.dragging = false
         this.zRotation = 0
     }
@@ -56,6 +60,10 @@ class FullSampleCamera {
         if (!hasInverted) {
             this.position = add(this.focus, resized)
         }
+    }
+
+    resetFocus () {
+        this.focus = DEFAULT_FOCUS.slice()
     }
 
     autoRotate (elapsed, speed) {

@@ -56,6 +56,7 @@ var g_last = Date.now()
 // setup camera paths
 menu.getCameraPosition = () => { return fs_camera.position }
 menu.getCameraFocus = () => { return fs_camera.focus }
+menu.resetCamera = () => { fs_camera.resetFocus() }
 const cameraTrace = new CameraTrace()
 const cameraAxis = new CameraAxis()
 
