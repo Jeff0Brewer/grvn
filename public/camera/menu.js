@@ -189,7 +189,7 @@ const downloadPath = () => {
     const csv = serializePath(menu.steps, menu.durations, menu.smooth)
     const el = document.createElement('a')
     el.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv))
-    el.setAttribute('download', '3ddna_camera_path.csv')
+    el.setAttribute('download', 'GRVN_camera_path.csv')
     el.style.display = 'none'
 
     document.body.appendChild(el)
