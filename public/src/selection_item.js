@@ -1,3 +1,26 @@
+// from list of positions get center and max distance from center
+// for positioning groups of objects
+const getCenterAndMaxBound = (positions) => {
+    // find min and max bounds for each position coordinate
+    const bounds = Array.from({ length: positions[0].length }, _ => ({
+        min: Number.MAX_VALUE, max: Number.MIN_VALUE
+    }))
+    for (const position of positions) {
+        for (const [i, b] of bounds.entries()) {
+            b.min = Math.min(b.min, position[i])
+            b.max = Math.max(b.max, position[i])
+        }
+    }
+    // get center from midpoint of bounds in each coordinate
+    const center = bounds.map(({ min, max }) => min + 0.5 * (max - min))
+    // get max bound from bounds abs distance from center for each coordinate
+    const maxBound = Math.max(...bounds.flatMap(({ min, max }, i) => [
+        Math.abs(min - center[i]),
+        Math.abs(max - center[i])
+    ]))
+    return { center, maxBound }
+}
+
 class SelectionItem {
     constructor (source, dest, insert, inds, pos, num_t, select_ind) {
         this.inds = inds
@@ -14,32 +37,10 @@ class SelectionItem {
         this.offsets = []
         this.max_disp = 0
         for (let t = 0; t < num_t; t++) {
-            let min_x = 100000
-            let max_x = -100000
-            let min_y = 100000
-            let max_y = -100000
-            let min_z = 100000
-            let max_z = -100000
-            for (let i = 0; i < pos[t].length; i++) {
-                min_x = min(min_x, pos[t][i][0])
-                max_x = max(max_x, pos[t][i][0])
-                min_y = min(min_y, pos[t][i][1])
-                max_y = max(max_y, pos[t][i][1])
-                min_z = min(min_z, pos[t][i][2])
-                max_z = max(max_z, pos[t][i][2])
-            }
-            this.offsets.push({
-                x: max_x - (max_x - min_x) / 2,
-                y: max_y - (max_y - min_y) / 2,
-                z: max_z - (max_z - min_z) / 2
-            })
-            min_x = Math.abs(min_x - this.offsets[t].x)
-            max_x = Math.abs(max_x - this.offsets[t].x)
-            min_y = Math.abs(min_y - this.offsets[t].y)
-            max_x = Math.abs(max_y - this.offsets[t].y)
-            min_z = Math.abs(min_z - this.offsets[t].z)
-            max_z = Math.abs(max_z - this.offsets[t].z)
-            this.max_disp = max(this.max_disp, max(max(max(min_x, max_x), max(min_y, max_y)), max(min_z, max_z)))
+            const { center, maxBound } = getCenterAndMaxBound(pos[t])
+            const [x, y, z] = center
+            this.offsets.push({ x, y, z })
+            this.max_disp = Math.max(this.max_disp, maxBound)
         }
         this.rotation = {
             x: 0,
