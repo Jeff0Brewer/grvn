@@ -1,26 +1,3 @@
-// from list of positions get center and max distance from center
-// for positioning groups of objects
-const getCenterAndMaxBound = (positions) => {
-    // find min and max bounds for each position coordinate
-    const bounds = Array.from({ length: positions[0].length }, _ => ({
-        min: Number.MAX_VALUE, max: Number.MIN_VALUE
-    }))
-    for (const position of positions) {
-        for (const [i, b] of bounds.entries()) {
-            b.min = Math.min(b.min, position[i])
-            b.max = Math.max(b.max, position[i])
-        }
-    }
-    // get center from midpoint of bounds in each coordinate
-    const center = bounds.map(({ min, max }) => min + 0.5 * (max - min))
-    // get max bound from bounds abs distance from center for each coordinate
-    const maxBound = Math.max(...bounds.flatMap(({ min, max }, i) => [
-        Math.abs(min - center[i]),
-        Math.abs(max - center[i])
-    ]))
-    return { center, maxBound }
-}
-
 class SelectionItem {
     constructor (source, dest, insert, inds, pos, num_t, select_ind) {
         this.inds = inds
@@ -28,10 +5,18 @@ class SelectionItem {
         this.list_out = false
         this.removed = false
 
-        this.camera = {
-            x: 0,
-            y: 100,
-            z: 50
+        this.camera = { x: 0, y: 100, z: 50 }
+        this.rotation = { x: 0, y: 0, z: 0 }
+
+        this.num_t = num_t
+        this.paused = false
+        this.num_steps = 5
+        this.start_t = 0
+        this.end_t = num_t
+        this.step_t = Math.floor(num_t / this.num_steps)
+        this.updated = []
+        for (let i = this.start_t; i < this.end_t; i++) {
+            this.updated.push(true)
         }
 
         this.offsets = []
@@ -42,20 +27,6 @@ class SelectionItem {
             this.offsets.push({ x, y, z })
             this.max_disp = Math.max(this.max_disp, maxBound)
         }
-        this.rotation = {
-            x: 0,
-            y: 0,
-            z: 0
-        }
-
-        this.num_t = num_t
-        this.paused = false
-        this.num_steps = 5
-        this.start_t = 0
-        this.end_t = num_t
-        this.step_t = Math.floor(num_t / this.num_steps)
-        this.updated = []
-        for (let i = this.start_t; i < this.end_t; i++) { this.updated.push(true) }
 
         const cloned = source.cloneNode(true)
         dest.insertBefore(cloned, insert)
@@ -231,4 +202,27 @@ function make_selection_item (inds, pos, num_t, sel_ind) {
     }
 
     return si
+}
+
+// from list of positions get center and max distance from center
+// for positioning groups of objects
+const getCenterAndMaxBound = (positions) => {
+    // find min and max bounds for each position coordinate
+    const bounds = Array.from({ length: positions[0].length }, _ => ({
+        min: Number.MAX_VALUE, max: Number.MIN_VALUE
+    }))
+    for (const position of positions) {
+        for (const [i, b] of bounds.entries()) {
+            b.min = Math.min(b.min, position[i])
+            b.max = Math.max(b.max, position[i])
+        }
+    }
+    // get center from midpoint of bounds in each coordinate
+    const center = bounds.map(({ min, max }) => min + 0.5 * (max - min))
+    // get max bound from bounds abs distance from center for each coordinate
+    const maxBound = Math.max(...bounds.flatMap(({ min, max }, i) => [
+        Math.abs(min - center[i]),
+        Math.abs(max - center[i])
+    ]))
+    return { center, maxBound }
 }
